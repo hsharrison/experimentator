@@ -7,7 +7,7 @@ class Experiment():
     Experiments should subclass this and override, at minimum, the method run_trial(settings).
     """
     def __init__(self, **kwargs):
-        self.settings = kwargs
+        self.settings = [kwargs]
 
     def set_iv(self, name, levels, vary_over='trial'):
         pass
@@ -22,7 +22,12 @@ class Experiment():
         pass
 
     def run_session(self):
-        pass
+        self.session_start()
+        for i, t in enumerate(self.settings):
+            self.run_trial(t)
+            if i != len(self.settings):
+                self.inter_trial(t)
+        self.session_end()
 
     def run_trial(self, settings):
         pass
