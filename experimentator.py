@@ -23,10 +23,11 @@ class ConstantVariable(Variable):
 
 
 class IndependentVariable(Variable):
-    def __init__(self, name, levels):
+    def __init__(self, name, levels, design='within'):
         super(IndependentVariable, self).__init__(name)
         self.levels = levels
         self.n = len(levels)
+        self.design = design
 
     def value(self, idx, *args, **kwargs):
         return self.levels(idx)
@@ -63,9 +64,6 @@ class Experiment():
         self.variables = list(args)
         for k, v in kwargs.items():
             self.variables.append(new_variable(k, v))
-
-    def set_iv(self, name, levels, vary_over='trial'):
-        pass
 
     def cross(self, variables):
         pass
