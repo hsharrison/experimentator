@@ -1,6 +1,12 @@
+import numpy as np
+import pandas as pd
+
+
 class Experiment():
+    """
+    Experiments should subclass this and override, at minimum, the method run_trial(settings).
+    """
     def __init__(self, **kwargs):
-        self.n = kwargs.pop('n', 1)
         self.settings = kwargs
 
     def set_iv(self, name, levels, vary_over='trial'):
@@ -12,19 +18,13 @@ class Experiment():
     def cross(self):
         pass
 
-    def counterbalance(self, vary_over):
-        pass
-
     def randomize(self, vary_over):
         pass
 
-    def session(self):
+    def run_session(self):
         pass
 
-    def block(self):
-        pass
-
-    def trial(self):
+    def run_trial(self, settings):
         pass
 
     def session_start(self):
@@ -35,12 +35,3 @@ class Experiment():
 
     def inter_trial(self):
         pass
-
-    def block_start(self):
-        pass
-
-    def block_end(self):
-        pass
-
-    def inter_block(self):
-       pass
