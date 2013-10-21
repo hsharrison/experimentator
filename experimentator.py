@@ -6,8 +6,9 @@ class Experiment():
     """
     Experiments should subclass this and override, at minimum, the method run_trial(settings, current_trial).
     """
-    def __init__(self, **kwargs):
-        self.settings = [kwargs]
+    def __init__(self, **settings):
+        self.ivs = {k: v for k, v in settings if len(v) > 1}
+        self.settings = {k: v for k, v in settings if len(v) == 1}
 
     def set_iv(self, name, levels, vary_over='trial'):
         pass
