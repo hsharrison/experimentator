@@ -47,10 +47,10 @@ class RandomVariable(CustomVariable):
 
 
 def new_variable(name, levels):
-    if len(levels) == 1:
-        return ConstantVariable(name, levels)
-    elif callable(levels):
+    if callable(levels):
         return CustomVariable(name, levels)
+    elif len(levels) == 1:
+        return ConstantVariable(name, levels)
     else:
         return IndependentVariable(name, levels)
 
