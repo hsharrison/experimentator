@@ -74,12 +74,7 @@ class Experiment():
         pass
 
     def run_session(self):
-        self.session_start()
-        for i, t in enumerate(self.settings):
-            self.run_trial(t, i)
-            if i != len(self.settings):
-                self.inter_trial(t, i)
-        self.session_end()
+        pass
 
     def run_trial(self, settings, current_trial):
         pass
