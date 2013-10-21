@@ -59,24 +59,24 @@ class Experiment():
     """
     Experiments should subclass this and override, at minimum, the method run_trial(settings, current_trial).
     """
-    def __init__(self, variables, **kwargs):
-        self.variables = variables
+    def __init__(self, *args, **kwargs):
+        self.variables = list(args)
         for k, v in kwargs.items():
             self.variables.append(new_variable(k, v))
 
     def set_iv(self, name, levels, vary_over='trial'):
         pass
 
-    def cross(self):
+    def cross(self, variables):
         pass
 
-    def randomize(self, vary_over):
+    def randomize(self, trials_per_type):
         pass
 
     def run_session(self):
         pass
 
-    def run_trial(self, settings, current_trial):
+    def run_trial(self, current_trial, **kwargs):
         pass
 
     def session_start(self):
@@ -85,5 +85,5 @@ class Experiment():
     def session_end(self):
         pass
 
-    def inter_trial(self, settings, current_trial):
+    def inter_trial(self, current_trial, **kwargs):
         pass
