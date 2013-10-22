@@ -100,7 +100,7 @@ class Experiment():
         self.n_blocks = 0
         self.n_trials = 0
 
-    def block_list(self, trials_per_type_per_block, blocks_per_block_type=1, trial_sort='random', block_sort='random'):
+    def block_list(self, trials_per_type_per_block=1, blocks_per_block_type=1, trial_sort='random', block_sort='random'):
         if self.trial_ivs:
             iv_idxs = itertools.product(*[v.levels for v in self.trial_ivs])
             trial_types = [{iv.name: iv.levels[condition[idx]] for idx, iv in enumerate(self.trial_ivs)}
@@ -127,6 +127,9 @@ class Experiment():
             yield pd.DataFrame(trials)
 
     def run_session(self, **kwargs):
+        """
+        kwargs: trials_per_type_per_block, blocks_per_block_type, trial_sort, block_sort
+        """
         self.blocks = self.block_list(**kwargs)
         # TODO: initialize data
         self.session_start()
