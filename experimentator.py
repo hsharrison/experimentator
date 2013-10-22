@@ -56,7 +56,7 @@ class IndependentVariable(Variable):
             self.change_by = change_by
 
     def value(self, idx, *args, **kwargs):
-        return self.levels(idx)
+        return self.levels[idx]
 
 
 class CustomVariable(Variable):
@@ -100,17 +100,18 @@ class Experiment():
         self.n_blocks = 0
         self.n_trials = 0
 
-    def block_list(self, trials_per_type_per_block=1, blocks_per_block_type=1, trial_sort='random', block_sort='random'):
+    def block_list(self, trials_per_type_per_block=1, blocks_per_block_type=1,
+                   trial_sort='random', block_sort='random'):
         if self.trial_ivs:
             iv_idxs = itertools.product(*[v.levels for v in self.trial_ivs])
-            trial_types = [{iv.name: iv.levels[condition[idx]] for idx, iv in enumerate(self.trial_ivs)}
+            trial_types = [{iv.name: iv.value(condition[idx]) for idx, iv in enumerate(self.trial_ivs)}
                            for condition in iv_idxs]
         else:
             trial_types = [{v.name: v.value for v in self.variables if v not in self.block_ivs}]
 
         if self.block_ivs:
             iv_idxs = itertools.product(*[v.levels for v in self.block_ivs])
-            block_types = [{iv.name: iv.levels[condition[idx]] for idx, iv in enumerate(self.block_ivs)}
+            block_types = [{iv.name: iv.value(condition[idx]) for idx, iv in enumerate(self.block_ivs)}
                            for condition in iv_idxs]
         else:
             block_types = [{}]
@@ -131,7 +132,9 @@ class Experiment():
         kwargs: trials_per_type_per_block, blocks_per_block_type, trial_sort, block_sort
         """
         self.blocks = self.block_list(**kwargs)
+
         # TODO: initialize data
+
         self.session_start()
         for block_idx, block in enumerate(self.blocks):
             self.block_start(block_idx, block)
@@ -143,6 +146,7 @@ class Experiment():
             if block_idx < self.n_blocks - 1:
                 self.inter_block(block_idx, block)
         self.session_end()
+
         #TODO: save data
 
     def run_trial(self, trial_idx, **kwargs):
