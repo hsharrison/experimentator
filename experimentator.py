@@ -5,7 +5,7 @@ import functools
 import warnings
 
 
-def sort_factory(array, n, method):
+def make_sort_function(array, n, method):
     if method == 'random':
         return functools.partial(np.random.permutation, n * array)
     #TODO: More sorts (e.g. counterbalance)
@@ -14,7 +14,7 @@ def sort_factory(array, n, method):
             return lambda: n * array[method]
         except ValueError:
             warnings.warn('Unrecognized sort method {}.'.format(method), stacklevel=2)
-            return sort_factory(array, n, None)
+            return make_sort_function(array, n, None)
     else:
         return lambda: n * array
 
@@ -115,14 +115,14 @@ class Experiment():
         else:
             block_types = [{}]
 
-        sort_block = sort_factory(np.array(trial_types), trials_per_type_per_block, trial_sort)
-        sort_session = sort_factory(np.array(block_types), blocks_per_block_type, block_sort)
+        sort_block = make_sort_function(np.array(trial_types), trials_per_type_per_block, trial_sort)
+        sort_session = make_sort_function(np.array(block_types), blocks_per_block_type, block_sort)
 
         blocks = list(sort_session())
+        self.n_trials = len(blocks) * len(sort_block())
         self.n_blocks = len(blocks)
         for block in blocks:
             trials = list(sort_block())
-            self.n_trials += len(trials)
             [trial.update({k: v for k, v in block.items()}) for trial in trials]
             yield pd.DataFrame(trials)
 
