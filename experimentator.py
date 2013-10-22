@@ -109,6 +109,8 @@ class Experiment():
         self.n_trials = 0
 
     def block_list(self, trials_per_type_per_block=1, blocks_per_type=1, trial_sort='random', block_sort='random'):
+        # In this and the next block, we cross the indices of each IV's levels rather than the actual values.
+        # This allows for subclasses to override the value method and do stuff to determine the value.
         if self.trial_ivs:
             iv_idxs = itertools.product(*[range(len(v)) for v in self.trial_ivs])
             trial_types = [{iv.name: iv.value(condition[idx]) for idx, iv in enumerate(self.trial_ivs)}
