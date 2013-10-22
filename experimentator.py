@@ -52,7 +52,6 @@ class IndependentVariable(Variable):
     def __init__(self, name, levels, design='within', change_by='trial'):
         super(IndependentVariable, self).__init__(name)
         self.levels = levels
-        self.n = len(levels)
         self.design = design
         if self.design == 'between':
             self.change_by = 'participant'
@@ -61,6 +60,9 @@ class IndependentVariable(Variable):
 
     def value(self, idx, *args, **kwargs):
         return self.levels[idx]
+
+    def __len__(self):
+        return len(self.levels)
 
 
 class CustomVariable(Variable):
@@ -108,14 +110,14 @@ class Experiment():
 
     def block_list(self, trials_per_type_per_block=1, blocks_per_type=1, trial_sort='random', block_sort='random'):
         if self.trial_ivs:
-            iv_idxs = itertools.product(*[v.levels for v in self.trial_ivs])
+            iv_idxs = itertools.product(*[range(len(v)) for v in self.trial_ivs])
             trial_types = [{iv.name: iv.value(condition[idx]) for idx, iv in enumerate(self.trial_ivs)}
                            for condition in iv_idxs]
         else:
             trial_types = [{v.name: v.value for v in self.variables if v not in self.block_ivs}]
 
         if self.block_ivs:
-            iv_idxs = itertools.product(*[v.levels for v in self.block_ivs])
+            iv_idxs = itertools.product(*[range(len(v)) for v in self.block_ivs])
             block_types = [{iv.name: iv.value(condition[idx]) for idx, iv in enumerate(self.block_ivs)}
                            for condition in iv_idxs]
         else:
