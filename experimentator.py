@@ -95,13 +95,14 @@ class Experiment():
 
         self.trial_ivs = [v for v in self.variables if isinstance(v, IndependentVariable) and v.change_by == 'trial']
         self.block_ivs = [v for v in self.variables if isinstance(v, IndependentVariable) and v.change_by == 'block']
+        self.constants = [v for v in self.variables if isinstance(v, ConstantVariable)]
+        self.custom_vars = [v for v in self.variables if isinstance(v, CustomVariable)]
 
         self.blocks = []
         self.n_blocks = 0
         self.n_trials = 0
 
-    def block_list(self, trials_per_type_per_block=1, blocks_per_block_type=1,
-                   trial_sort='random', block_sort='random'):
+    def block_list(self, trials_per_type_per_block=1, blocks_per_type=1, trial_sort='random', block_sort='random'):
         if self.trial_ivs:
             iv_idxs = itertools.product(*[v.levels for v in self.trial_ivs])
             trial_types = [{iv.name: iv.value(condition[idx]) for idx, iv in enumerate(self.trial_ivs)}
@@ -116,20 +117,28 @@ class Experiment():
         else:
             block_types = [{}]
 
+        # TODO: Pass args/kwargs to custom_vars.value?
+        more_vars = lambda: {v.name: v.value() for v in self.custom_vars}.update(
+            {v.name: v.value for v in self.constants})
+
+        # Constructing sort functions, rather than directly sorting, allows for a different sort for each call
         sort_block = make_sort_function(np.array(trial_types), trials_per_type_per_block, trial_sort)
-        sort_session = make_sort_function(np.array(block_types), blocks_per_block_type, block_sort)
+        sort_session = make_sort_function(np.array(block_types), blocks_per_type, block_sort)
 
         blocks = list(sort_session())
         self.n_trials = len(blocks) * len(sort_block())
         self.n_blocks = len(blocks)
         for block in blocks:
             trials = list(sort_block())
-            [trial.update({k: v for k, v in block.items()}) for trial in trials]
+            for trial in trials:
+                # Add block-specific IVs, custom vars, and constants
+                trial.update({k: v for k, v in block.items()})
+                trial.update(more_vars())
             yield pd.DataFrame(trials)
 
     def run_session(self, **kwargs):
         """
-        kwargs: trials_per_type_per_block, blocks_per_block_type, trial_sort, block_sort
+        kwargs: trials_per_type_per_block, blocks_per_type, trial_sort, block_sort
         """
         self.blocks = self.block_list(**kwargs)
 
