@@ -2,21 +2,25 @@ import numpy as np
 import pandas as pd
 import itertools
 import functools
-import warnings
 
 
-def make_sort_function(array, n, method):
+class SortError(Exception):
+    pass
+
+
+def make_sort_function(array, repeats, method):
     if method == 'random':
-        return functools.partial(np.random.permutation, n * array)
+        return functools.partial(np.random.permutation, repeats * array)
     #TODO: More sorts (e.g. counterbalance)
+    elif isinstance(method, str):
+        raise SortError('Unrecognized sort method {}.'.format(method))
     elif len(method) == len(array):
-        try:
-            return lambda: n * array[method]
-        except ValueError:
-            warnings.warn('Unrecognized sort method {}.'.format(method), stacklevel=2)
-            return make_sort_function(array, n, None)
+        if sorted(method) == list(range(len(array))):
+            return lambda: repeats * array[method]
+        else:
+            raise SortError('Sort ''method'' {} cannot be interpreted as indices.'.format(method))
     else:
-        return lambda: n * array
+        raise SortError('Unrecognized sort method {}.'.format(method))
 
 
 class Variable():
