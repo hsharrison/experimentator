@@ -95,7 +95,16 @@ class Experiment():
     # TODO: between-subjects design
     # TODO: multi-session experiments
     def __init__(self, *args, **kwargs):
+        """
+        args: Variable instances
+        kwargs: trials_per_type_per_block, blocks_per_type, trial_sort, block_sort, any number of variables = values
+        """
         self.variables = list(args)
+        setting_defaults = {'trials_per_type_per_block': 1,
+                            'blocks_per_type': 1,
+                            'trial_sort': 'random',
+                            'block_sort': 'random'}
+        self.settings = {key: kwargs.pop(key, default) for key, default in setting_defaults.items()}
         for k, v in kwargs.items():
             self.variables.append(new_variable(k, v))
 
@@ -104,9 +113,10 @@ class Experiment():
         self.constants = [v for v in self.variables if isinstance(v, ConstantVariable)]
         self.custom_vars = [v for v in self.variables if isinstance(v, CustomVariable)]
 
-        self.blocks = []
         self.n_blocks = 0
         self.n_trials = 0
+
+        self.blocks = self.block_list(**self.settings)
 
     def block_list(self, trials_per_type_per_block=1, blocks_per_type=1, trial_sort='random', block_sort='random'):
         # In this and the next block, we cross the indices of each IV's levels rather than the actual values.
@@ -144,11 +154,7 @@ class Experiment():
                 trial.update(more_vars())
             yield pd.DataFrame(trials)
 
-    def run_session(self, **kwargs):
-        """
-        kwargs: trials_per_type_per_block, blocks_per_type, trial_sort, block_sort
-        """
-        self.blocks = self.block_list(**kwargs)
+    def run_session(self):
 
         # TODO: initialize data
 

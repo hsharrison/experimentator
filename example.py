@@ -17,11 +17,11 @@ class MyExperiment(exp.Experiment):
         print('Experiment complete.')
 
     def inter_trial(self, trial_idx, **kwargs):
-        print('Moving to trial {}'.format(current_trial))
+        print('Moving to trial {}'.format(trial_idx+2))
 
 
 if __name__ == '__main__':
     # Create the experiment with 4 associated variables.
-    experiment = MyExperiment(iv1=[4, 10], iv2=[0, 1, 2], cv=3, rv=np.random.random)
+    experiment = MyExperiment(trials_per_type_per_block=8, iv1=[4, 10], iv2=[0, 1, 2], cv=3, rv=np.random.random)
     # Randomize 8 trials of each type (total here: 8*6 = 48) and run all 48 trials.
-    experiment.run_session(trials_per_type_per_block=8)
+    experiment.run_session()
