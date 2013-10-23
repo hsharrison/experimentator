@@ -160,14 +160,14 @@ class Experiment():
 
         self.session_start()
         for block_idx, block in enumerate(self.blocks):
+            if block_idx > 1:
+                self.inter_block(block_idx, block)
             self.block_start(block_idx, block)
             for trial_idx, trial in block.iterrows():
-                self.run_trial(trial_idx, **dict(trial))
-                if trial_idx < len(block) - 1:
+                if trial_idx > 0:
                     self.inter_trial(trial_idx, **dict(trial))
+                self.run_trial(trial_idx, **dict(trial))
             self.block_end(block_idx, block)
-            if block_idx < self.n_blocks - 1:
-                self.inter_block(block_idx, block)
         self.session_end()
 
         #TODO: save data

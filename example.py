@@ -17,7 +17,7 @@ class MyExperiment(exp.Experiment):
         print('Experiment complete.')
 
     def inter_trial(self, trial_idx, **kwargs):
-        print('Moving to trial {}'.format(trial_idx+2))
+        print('Moving to trial {}'.format(trial_idx+1))
 
 
 if __name__ == '__main__':
