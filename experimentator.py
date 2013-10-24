@@ -8,7 +8,16 @@ class SortError(Exception):
     pass
 
 
+class DesignError(Exception):
+    pass
+
+
 def make_sort_function(array, repeats, method):
+    """
+    array: iterable to be sorted
+    repeats: number of times for each element in array to appear
+    method: either a string {'random', more options to be implemented} or a list of indices same length as array
+    """
     if method == 'random':
         return functools.partial(np.random.permutation, repeats * array)
     #TODO: More sorts (e.g. counterbalance)
@@ -55,6 +64,8 @@ class IndependentVariable(Variable):
         self.design = design
         if self.design == 'between':
             self.change_by = 'participant'
+        elif self.design == 'within' and change_by == 'participant':
+            raise DesignError('Cannot have a within-subjects IV change by participant.')
         else:
             self.change_by = change_by
 
