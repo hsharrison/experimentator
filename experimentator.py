@@ -131,7 +131,7 @@ class Experiment():
 
     def block_list(self, trials_per_type_per_block=1, blocks_per_type=1, trial_sort='random', block_sort='random'):
         # In this and the next block, we cross the indices of each IV's levels rather than the actual values.
-        # This allows for subclasses to override the value method and do stuff to determine the value.
+        # This allows for subclasses to override the value method and do stuff besides indexing to determine the value.
         if self.trial_ivs:
             iv_idxs = itertools.product(*[range(len(v)) for v in self.trial_ivs])
             trial_types = [{iv.name: iv.value(condition[idx]) for idx, iv in enumerate(self.trial_ivs)}
@@ -146,9 +146,9 @@ class Experiment():
         else:
             block_types = [{}]
 
-        # TODO: Pass args/kwargs to custom_vars.value?
-        more_vars = lambda: {v.name: v.value() for v in self.custom_vars}.update(
-            {v.name: v.value for v in self.constants})
+        # TODO: Pass other args/kwargs to custom_vars.value?
+        more_vars = lambda idx: {v.name: v.value(idx) for v in self.custom_vars}.update(
+            {v.name: v.value() for v in self.constants})
 
         # Constructing sort functions, rather than directly sorting, allows for a different sort for each call
         sort_block = make_sort_function(np.array(trial_types), trials_per_type_per_block, trial_sort)
@@ -159,10 +159,10 @@ class Experiment():
         self.n_blocks = len(blocks)
         for block in blocks:
             trials = list(sort_block())
-            for trial in trials:
+            for i, trial in enumerate(trials):
                 # Add block-specific IVs, custom vars, and constants
                 trial.update({k: v for k, v in block.items()})
-                trial.update(more_vars())
+                trial.update(more_vars(i))
             yield pd.DataFrame(trials)
 
     def run_session(self):
