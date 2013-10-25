@@ -109,6 +109,7 @@ class Experiment():
         """
         args: Variable instances
         kwargs: trials_per_type_per_block, blocks_per_type, trial_sort, block_sort, any number of variables = values
+                output_names (column names in saved data)
         """
         self.variables = list(args)
         setting_defaults = {'trials_per_type_per_block': 1,
@@ -127,7 +128,8 @@ class Experiment():
         self.n_blocks = 0
         self.n_trials = 0
 
-        self.blocks = self.block_list(**self.settings)
+        self.blocks = list(self.block_list(**self.settings))
+        self.raw_results = []
 
     def block_list(self, trials_per_type_per_block=1, blocks_per_type=1, trial_sort='random', block_sort='random'):
         # In this and the next block, we cross the indices of each IV's levels rather than the actual values.
@@ -157,34 +159,45 @@ class Experiment():
         blocks = list(sort_session())
         self.n_trials = len(blocks) * len(sort_block())
         self.n_blocks = len(blocks)
-        for block in blocks:
+        for block_idx, block in enumerate(blocks):
             trials = list(sort_block())
-            for i, trial in enumerate(trials):
+            for trial_idx, trial in enumerate(trials):
                 # Add block-specific IVs, custom vars, and constants
                 trial.update({k: v for k, v in block.items()})
-                trial.update(more_vars(i))
-            yield pd.DataFrame(trials)
+                trial.update(more_vars(block_idx*len(trials) + trial_idx))
+            yield pd.DataFrame(trials, index=block_idx*len(trials) + np.arange(len(trials)))
 
-    def run_session(self):
+    def save_data(self, output_file):
+        """
+        Trial settings and results are combined into one DataFrame, which is pickled.
+        """
+        # Concatenate trial settings
+        trial_inputs = pd.concat(self.blocks)
 
-        # TODO: initialize data
+        results = pd.DataFrame(self.raw_results, columns=self.settings.get('output_names'))
 
+        pd.concat([trial_inputs, results]).to_pickle(output_file)
+
+    def run_session(self, output_file):
         self.session_start()
+
         for block_idx, block in enumerate(self.blocks):
             if block_idx > 1:
                 self.inter_block(block_idx, block)
             self.block_start(block_idx, block)
+
             for trial_idx, trial in block.iterrows():
                 if trial_idx > 0:
                     self.inter_trial(trial_idx, **dict(trial))
-                self.run_trial(trial_idx, **dict(trial))
+                self.raw_results.append(self.run_trial(trial_idx, **dict(trial)))
+
             self.block_end(block_idx, block)
         self.session_end()
 
-        #TODO: save data
+        self.save_data(output_file)
 
     def run_trial(self, trial_idx, **kwargs):
-        pass
+        return None
 
     def block_start(self, block_idx, block):
         pass
