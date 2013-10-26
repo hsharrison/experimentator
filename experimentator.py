@@ -23,13 +23,8 @@ def make_sort_function(array, repeats, method):
     #TODO: More sorts (e.g. counterbalance)
     elif isinstance(method, str):
         raise SortError('Unrecognized sort method {}.'.format(method))
-    elif len(method) == len(array):
-        if sorted(method) == list(range(len(array))):
-            return lambda: repeats * array[method]
-        else:
-            raise SortError('Sort ''method'' {} cannot be interpreted as indices.'.format(method))
     else:
-        raise SortError('Unrecognized sort method {}.'.format(method))
+            return lambda: repeats * np.array(array)[method]
 
 
 class Variable():
@@ -81,8 +76,8 @@ class CustomVariable(Variable):
         super(CustomVariable, self).__init__(name)
         self.func = func
 
-    def value(self, *args, **kwargs):
-        return self.func(*args, **kwargs)
+    def value(self):
+        return self.func()
 
 
 class RandomVariable(CustomVariable):
@@ -93,7 +88,7 @@ class RandomVariable(CustomVariable):
 def new_variable(name, levels):
     if callable(levels):
         return CustomVariable(name, levels)
-    elif len(levels) == 1:
+    elif np.isscalar(levels):
         return ConstantVariable(name, levels)
     else:
         return IndependentVariable(name, levels)
@@ -111,12 +106,15 @@ class Experiment():
         kwargs: trials_per_type_per_block, blocks_per_type, trial_sort, block_sort, any number of variables = values
                 output_names (column names in saved data)
         """
+        self.output_names = kwargs.pop('output_names')
+        trial_list_settings_defaults = {'trials_per_type_per_block': 1,
+                                        'blocks_per_type': 1,
+                                        'trial_sort': 'random',
+                                        'block_sort': 'random'}
+        self.trial_list_settings = {key: kwargs.pop(key, default)
+                                    for key, default in trial_list_settings_defaults.items()}
+
         self.variables = list(args)
-        setting_defaults = {'trials_per_type_per_block': 1,
-                            'blocks_per_type': 1,
-                            'trial_sort': 'random',
-                            'block_sort': 'random'}
-        self.settings = {key: kwargs.pop(key, default) for key, default in setting_defaults.items()}
         for k, v in kwargs.items():
             self.variables.append(new_variable(k, v))
 
@@ -128,7 +126,7 @@ class Experiment():
         self.n_blocks = 0
         self.n_trials = 0
 
-        self.blocks = list(self.block_list(**self.settings))
+        self.blocks = list(self.block_list(**self.trial_list_settings))
         self.raw_results = []
 
     def block_list(self, trials_per_type_per_block=1, blocks_per_type=1, trial_sort='random', block_sort='random'):
@@ -148,13 +146,12 @@ class Experiment():
         else:
             block_types = [{}]
 
-        # TODO: Pass other args/kwargs to custom_vars.value?
-        more_vars = lambda idx: {v.name: v.value(idx) for v in self.custom_vars}.update(
-            {v.name: v.value() for v in self.constants})
+        # TODO: Pass any args/kwargs to custom_vars.value?
+        more_vars = lambda idx: {v.name: v.value() for v in np.concatenate((self.custom_vars, self.constants))}
 
         # Constructing sort functions, rather than directly sorting, allows for a different sort for each call
-        sort_block = make_sort_function(np.array(trial_types), trials_per_type_per_block, trial_sort)
-        sort_session = make_sort_function(np.array(block_types), blocks_per_type, block_sort)
+        sort_block = make_sort_function(trial_types, trials_per_type_per_block, trial_sort)
+        sort_session = make_sort_function(block_types, blocks_per_type, block_sort)
 
         blocks = list(sort_session())
         self.n_trials = len(blocks) * len(sort_block())
@@ -174,9 +171,9 @@ class Experiment():
         # Concatenate trial settings
         trial_inputs = pd.concat(self.blocks)
 
-        results = pd.DataFrame(self.raw_results, columns=self.settings.get('output_names'))
+        results = pd.DataFrame(self.raw_results, columns=self.output_names)
 
-        pd.concat([trial_inputs, results]).to_pickle(output_file)
+        pd.concat([trial_inputs, results], axis=1).to_pickle(output_file)
 
     def run_session(self, output_file):
         self.session_start()
