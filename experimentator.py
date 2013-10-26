@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import itertools
 import functools
+import collections
 
 
 class SortError(Exception):
@@ -9,6 +10,10 @@ class SortError(Exception):
 
 
 class DesignError(Exception):
+    pass
+
+
+class VariableError(Exception):
     pass
 
 
@@ -90,8 +95,10 @@ def new_variable(name, levels):
         return CustomVariable(name, levels)
     elif np.isscalar(levels):
         return ConstantVariable(name, levels)
-    else:
+    elif isinstance(levels, collections.abc.Iterable):
         return IndependentVariable(name, levels)
+    else:
+        raise VariableError('Cannot create variable {} = {}'.format(name, levels))
 
 
 class Experiment():
