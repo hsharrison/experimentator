@@ -96,7 +96,27 @@ def new_variable(name, levels):
 
 class Experiment():
     """
-    Experiments should subclass this and override, at minimum, the method run_trial(settings, current_trial).
+    Experiments should subclass this and override, at minimum, the method run_trial(trial_idx, **trial_settings).
+    Other methods to override:
+       session_start()
+       session_end()
+       block_start()
+       block_end()
+       inter_block()
+       inter_trial()
+
+    Inputs to Experiment.__init__:
+       *args: Variable objects
+       **kwargs: output_names (column names in saved data, length = number of outputs returned by run_trial)
+                 trial list settings:
+                     trials_per_type_per_block {default = 1}
+                     blocks_per_type {default = 1}
+                     trial_sort {'random' (default), array of indices}
+                     block_sort {'random' (default), array of indices}
+                 Any number of name = value pairs, creating Variables.
+                    ConstantVariable if value = constant
+                    CustomVariable if value is callable
+                    IndependentVariable (within-subjects) if value is iterable
     """
     # TODO: between-subjects design
     # TODO: multi-session experiments
