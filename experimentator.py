@@ -127,13 +127,9 @@ class Experiment():
     """
     # TODO: between-subjects design
     # TODO: multi-session experiments
-    def __init__(self, *args, **kwargs):
-        """
-        args: Variable instances
-        kwargs: trials_per_type_per_block, blocks_per_type, trial_sort, block_sort, any number of variables = values
-                output_names (column names in saved data)
-        """
-        self.output_names = kwargs.pop('output_names')
+    def __init__(self, *args, output_names=None, **kwargs):
+        self.output_names = output_names
+
         trial_list_settings_defaults = {'trials_per_type_per_block': 1,
                                         'blocks_per_type': 1,
                                         'trial_sort': 'random',
