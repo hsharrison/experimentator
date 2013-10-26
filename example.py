@@ -1,3 +1,5 @@
+#!/usr/bin/python3.3
+
 import numpy as np
 
 import experimentator as exp
@@ -7,6 +9,7 @@ class MyExperiment(exp.Experiment):
     """
     Example 'experiment' with two independent variables, one constant variable, and one random variable.
     """
+
     def run_trial(self, trial_idx, **kwargs):
         return kwargs['iv1'] % kwargs['iv2'] + kwargs['cv'] + kwargs['rv']
 
