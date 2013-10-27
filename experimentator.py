@@ -1,3 +1,5 @@
+# Copyright (c) 2013 Henry S. Harrison
+
 import numpy as np
 import pandas as pd
 import itertools
