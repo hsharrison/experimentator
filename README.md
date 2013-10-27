@@ -8,7 +8,7 @@ Usage
 
 Subclass ``Experiment``:
 
-  * Subclass ``Experiment``. Override, at minimum, the method ``run_trial(trial_idx, **trial_settings)`` with code for your trial. Inputs to ``run_trial`` should be kwargs with the exception of ``trial_idx``; all inputs and outputs of ``run_trial`` are saved in a pickled pandas DataFrame.
+  * Override, at minimum, the method ``run_trial(trial_idx, **trial_settings)`` with code for your trial. Inputs to ``run_trial`` should be kwargs with the exception of ``trial_idx``; all inputs and outputs of ``run_trial`` are saved in a pickled pandas DataFrame.
 
   * Also consider overriding ``inter_trial``, ``block_start``, ``block_end``, ``inter_block``, ``session_start``, and ``session_end``. For advanced behavior, such as persistent trial-to-trial states, you may have to override the ``__init__`` and/or ``save_data`` methods.
 
@@ -26,8 +26,8 @@ Create an instance of your new class:
     ``settings`` can include the following:
   * ``trials_per_type_per_block`` (default=1)
   * ``blocks_per_type`` (default=1)
-  * ``trial_sort`` (string or array of indices, default='random')
-  * ``block_sort`` (string or array of indices, default='random')
+  * ``trial_sort`` (string or array of indices, default=``'random'``)
+  * ``block_sort`` (string or array of indices, default=``'random'``)
 
 Call ``my_experiment_instance.run_session(output_file)`` to run your experiment.
 
