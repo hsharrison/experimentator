@@ -23,7 +23,7 @@ Usage
       * ``CustomVariable(name, fcn)``: passed to ``run_trial`` as ``name=fcn()``
       * ``RandomVariable(name, lower, upper)``: ``CustomVariable`` with ``fcn=lambda: lower + (upper-lower) * numpy.random.random()``
   * ``output_names`` is a list of strings to be used as column headers for outputs from ``run_trial``.
-  * ``more_variables`` is an alternative syntax to create variables: ``name=value`` for a ``ConstantVariable``, ``name=levels`` for an ``IndependentVariable``, or ``name=function`` for a CustomVariable.
+  * ``more_variables`` is an alternative syntax to create variables: ``name=value`` for a ``ConstantVariable``, ``name=levels`` for an ``IndependentVariable``, or ``name=function`` for a ``CustomVariable``.
   * ``settings`` can include the following:
       * ``trials_per_type_per_block`` (default=1)
       * ``blocks_per_type`` (default=1)
