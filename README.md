@@ -24,11 +24,11 @@ Usage
       * ``RandomVariable(name, lower, upper)``: ``CustomVariable`` with ``fcn=lambda: lower + (upper-lower) * numpy.random.random()``
   * ``output_names`` is a list of strings to be used as column headers for outputs from ``run_trial``.
   * ``more_variables`` is an alternative syntax to create variables: ``name=value`` for a ``ConstantVariable``, ``name=levels`` for an ``IndependentVariable``, or ``name=function`` for a CustomVariable.
-    ``settings`` can include the following:
-  * ``trials_per_type_per_block`` (default=1)
-  * ``blocks_per_type`` (default=1)
-  * ``trial_sort`` (string or array of indices, default=``'random'``)
-  * ``block_sort`` (string or array of indices, default=``'random'``)
+  * ``settings`` can include the following:
+      * ``trials_per_type_per_block`` (default=1)
+      * ``blocks_per_type`` (default=1)
+      * ``trial_sort`` (string or array of indices, default=``'random'``)
+      * ``block_sort`` (string or array of indices, default=``'random'``)
 
 **Third**, call ``my_experiment_instance.run_session(output_file)`` to run your experiment. All inputs (variables) and outputs (results) of ``run_trial`` are saved to a pickled pandas DataFrame as ``output_file``.
 
