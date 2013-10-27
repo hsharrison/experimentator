@@ -10,7 +10,7 @@ Usage
 
 **First**, subclass ``Experiment``:
 
-  * Override, at minimum, the method ``run_trial(trial_idx, **trial_settings)`` with code for your trial. Inputs to ``run_trial`` should be kwargs with the exception of ``trial_idx``; all inputs and outputs of ``run_trial`` are saved in a pickled pandas DataFrame.
+  * Override, at minimum, the method ``run_trial(trial_idx, **trial_settings)`` with code for your trial. Inputs to ``run_trial`` should be kwargs with the exception of ``trial_idx``.
 
   * Also consider overriding ``inter_trial``, ``block_start``, ``block_end``, ``inter_block``, ``session_start``, and ``session_end``. For advanced behavior, such as persistent trial-to-trial states, you may have to override the ``__init__`` and/or ``save_data`` methods.
 
@@ -21,7 +21,7 @@ Usage
       * ``ConstantVariable(name, value)``: passed to ``run_trial`` as ``name=value``
       * ``IndependentVariable(name, levels, design='within', vary_by='trial')``: passed to ``run_trial`` as ``name=levels[idx]`` with varying ``idx``. ``design`` can be any of ``{'within', 'between'}``; ``vary_by`` can be any of ``{'trial`, 'block', 'session', 'participant'}``. ``design='between'`` is the same as ``vary_by='participant'``.
       * ``CustomVariable(name, fcn)``: passed to ``run_trial`` as ``name=fcn()``
-      * ``RandomVariable(name, lower, upper)``: ``CustomVariable`` with ``fcn=lambda: lower + (upper-lower) * np.random.random()``
+      * ``RandomVariable(name, lower, upper)``: ``CustomVariable`` with ``fcn=lambda: lower + (upper-lower) * numpy.random.random()``
   * ``output_names`` is a list of strings to be used as column headers for outputs from ``run_trial``.
   * ``more_variables`` is an alternative syntax to create variables: ``name=value`` for a ``ConstantVariable``, ``name=levels`` for an ``IndependentVariable``, or ``name=function`` for a CustomVariable.
     ``settings`` can include the following:
@@ -30,7 +30,7 @@ Usage
   * ``trial_sort`` (string or array of indices, default=``'random'``)
   * ``block_sort`` (string or array of indices, default=``'random'``)
 
-**Third**, call ``my_experiment_instance.run_session(output_file)`` to run your experiment.
+**Third**, call ``my_experiment_instance.run_session(output_file)`` to run your experiment. All inputs (variables) and outputs (results) of ``run_trial`` are saved to a pickled pandas DataFrame as ``output_file``.
 
 TODO
 ----
