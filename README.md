@@ -17,9 +17,9 @@ Create an instance of your new class:
   * Use the syntax ``my_experiment_instance = MyExperiment(*variables, output_names=[], **more_variables, **settings)``.
   * ``variables`` should be instances of Variable and its subclasses:
       * ``Variable(name)``: master class
-      * ``ConstantVariable(name, value)``: passed to trial as ``name=value``
-      * ``IndependentVariable(name, levels)``: passed to trial as ``name=levels[idx]`` with varying ``idx``
-      * ``CustomVariable(name, fcn, design='within', vary_by='trial')``: passed to trial as ``name=fcn()``. ``design`` can be any of ``{'within', 'between'}``; ``vary_by`` can be any of ``{'trial`, 'block', 'session', 'participant'}``. ``design='between'`` is the same as ``vary_by='participant'``.
+      * ``ConstantVariable(name, value)``: passed to ``run_trial`` as ``name=value``
+      * ``IndependentVariable(name, levels)``: passed to ``run_trial`` as ``name=levels[idx]`` with varying ``idx``
+      * ``CustomVariable(name, fcn, design='within', vary_by='trial')``: passed to ``run_trial`` as ``name=fcn()``. ``design`` can be any of ``{'within', 'between'}``; ``vary_by`` can be any of ``{'trial`, 'block', 'session', 'participant'}``. ``design='between'`` is the same as ``vary_by='participant'``.
       * ``RandomVariable(name, lower, upper)``: ``CustomVariable`` with ``fcn=lower + (upper-lower) * np.random.random()``
   * ``output_names`` is a list of strings to be used as column headers for outputs from ``run_trial``.
   * ``more_variables`` is an alternative syntax to create variables: ``name=value`` for a ``ConstantVariable``, ``name=levels`` for an ``IndependentVariable``, or ``name=function`` for a CustomVariable.
