@@ -50,7 +50,7 @@ class ConstantVariable(Variable):
         super(ConstantVariable, self).__init__(name)
         self._value = value
 
-    def value(self, *args, **kwargs):
+    def value(self):
         return self._value
 
 
@@ -71,7 +71,7 @@ class IndependentVariable(Variable):
         else:
             self.change_by = change_by
 
-    def value(self, idx, *args, **kwargs):
+    def value(self, idx):
         return self.levels[idx]
 
     def __len__(self):
