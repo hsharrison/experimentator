@@ -49,4 +49,4 @@ Dependencies
 License
 -------
 
-Copyright (c) 2013 Henry S. Harrison under the MIT license. See LICENSE.txt.
+Copyright (c) 2013 Henry S. Harrison under the MIT license. See ``LICENSE.txt``.
