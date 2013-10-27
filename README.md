@@ -20,9 +20,9 @@ Create an instance of your new class:
       * ``ConstantVariable(name, value)``: passed to trial as ``name=value``
       * ``IndependentVariable(name, levels)``: passed to trial as ``name=levels[idx]`` with varying ``idx``
       * ``CustomVariable(name, fcn, design='within', vary_by='trial')``: passed to trial as ``name=fcn()``. ``design`` can be any of ``{'within', 'between'}``; ``vary_by`` can be any of ``{'trial`, 'block', 'session', 'participant'}``. ``design='between'`` is the same as ``vary_by='participant'``.
-      * ``RandomVariable(name, lower, upper)``: ``CustomVariable`` with ``fcn=lower + (upper - lower) * np.random.random()``
+      * ``RandomVariable(name, lower, upper)``: ``CustomVariable`` with ``fcn=lower + (upper-lower) * np.random.random()``
   * ``output_names`` is a list of strings to be used as column headers for outputs from ``run_trial``.
-  * ``more_variables`` is an alternative syntax to create variables: ``name=value`` for a ``ConstantVariable``, ``name=levels`` for an ``IndependentVariable``, or ``name=callable()`` for a CustomVariable.
+  * ``more_variables`` is an alternative syntax to create variables: ``name=value`` for a ``ConstantVariable``, ``name=levels`` for an ``IndependentVariable``, or ``name=function`` for a CustomVariable.
     ``settings`` can include the following:
   * ``trials_per_type_per_block`` (default=1)
   * ``blocks_per_type`` (default=1)
@@ -41,7 +41,7 @@ TODO
 Dependencies
 ------------
 
-  * Python3.3 (have not tested compatibility with other versions.
+  * Python3.3 (have not tested compatibility with other versions).
   * Numpy
   * Pandas
 
