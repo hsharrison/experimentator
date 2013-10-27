@@ -8,11 +8,12 @@ Usage
 
 Subclass ``Experiment``:
 
-  * Subclass ``Experiment``. Override, at minimum, the method ``run_trial(trial_idx, **trial_settings)`` with code for your trial. All inputs to ``run_trial`` should be kwargs (passed as ``trial_settings``), with the exception of ``trial_idx``; all inputs and outputs of ``run_trial`` are saved in a pickled pandas DataFrame.
+  * Subclass ``Experiment``. Override, at minimum, the method ``run_trial(trial_idx, **trial_settings)`` with code for your trial. Inputs to ``run_trial`` should be kwargs with the exception of ``trial_idx``; all inputs and outputs of ``run_trial`` are saved in a pickled pandas DataFrame.
 
-  * Also consider overriding ``inter_trial`` (same inputs as ``run_trial`` of following trial), ``block_start``, ``block_end``, ``inter_block`` (which all take ``block_idx`` and ``block`` (pandas DataFrame with one row for each ``trial_settings``), ``session_start``, and ``session_end``. For advanced behavior, such as persistent trial-to-trial states, you may have to override the ``__init__`` and/or ``save_data`` methods.
+  * Also consider overriding ``inter_trial``, ``block_start``, ``block_end``, ``inter_block``, ``session_start``, and ``session_end``. For advanced behavior, such as persistent trial-to-trial states, you may have to override the ``__init__`` and/or ``save_data`` methods.
 
 Create an instance of your new class:
+
   * Use the syntax ``my_experiment_instance = MyExperiment(*variables, output_names=[], **more_variables, **settings)``.
   * ``variables`` should be instances of Variable and its subclasses:
       * ``Variable(name)``: master class
