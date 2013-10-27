@@ -23,7 +23,7 @@ def make_sort_function(array, repeats, method):
     """
     array: iterable to be sorted
     repeats: number of times for each element in array to appear
-    method: either a string {'random', more options to be implemented} or a list of indices same length as array
+    method: either a string {'random', more options to be implemented} or a list of indices
     """
     if method == 'random':
         return functools.partial(np.random.permutation, repeats * array)
@@ -109,10 +109,10 @@ class Experiment():
     Other methods to override:
        session_start()
        session_end()
-       block_start()
-       block_end()
-       inter_block()
-       inter_trial()
+       block_start(block_idx, block) where block is a DataFrame with rows = trials
+       block_end(block_idx, block)
+       inter_block(block_idx, block) where block_idx and block refer to the next block
+       inter_trial(trial_idx, **trial_settings) where trial_idx and trial_settings refer to the next trial
 
     Inputs to Experiment.__init__:
        *args: Variable objects
