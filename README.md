@@ -15,8 +15,7 @@ Subclass ``Experiment``:
 Create an instance of your new class:
 
   * Use the syntax ``my_experiment_instance = MyExperiment(*variables, output_names=[], **more_variables, **settings)``.
-  * ``variables`` should be instances of Variable and its subclasses:
-      * ``Variable(name)``: master class
+  * ``variables`` should be instances of ``Variable`` subclasses:
       * ``ConstantVariable(name, value)``: passed to ``run_trial`` as ``name=value``
       * ``IndependentVariable(name, levels)``: passed to ``run_trial`` as ``name=levels[idx]`` with varying ``idx``
       * ``CustomVariable(name, fcn, design='within', vary_by='trial')``: passed to ``run_trial`` as ``name=fcn()``. ``design`` can be any of ``{'within', 'between'}``; ``vary_by`` can be any of ``{'trial`, 'block', 'session', 'participant'}``. ``design='between'`` is the same as ``vary_by='participant'``.
