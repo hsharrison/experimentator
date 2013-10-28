@@ -35,7 +35,7 @@ def make_sort_function(array, repeats, method):
             return lambda: repeats * np.array(array)[method]
 
 
-class Variable():
+class Variable(metaclass=collections.ABCMeta):
     def __init__(self, name):
         logging.debug('Creating variable %s of type %s.', name, type(self))
         self.name = name
@@ -43,6 +43,7 @@ class Variable():
     def __str__(self):
         return self.name
 
+    @collections.abstractmethod
     def value(self, *args, **kwargs):
         return None
 
@@ -103,7 +104,7 @@ def new_variable(name, levels):
         raise VariableError('Cannot create variable {} = {}'.format(name, levels))
 
 
-class Experiment():
+class Experiment(metaclass=collections.ABCMeta):
     """
     Experiments should subclass this and override, at minimum, the method run_trial(trial_idx, **trial_settings).
     Other methods to override:
@@ -243,6 +244,7 @@ class Experiment():
         logging.info('Saving data...')
         self.save_data(output_file)
 
+    @collections.abstractmethod
     def run_trial(self, trial_idx, **kwargs):
         return None
 
