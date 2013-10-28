@@ -22,9 +22,13 @@ class MyExperiment(exp.Experiment):
         print('Moving to trial {}'.format(trial_idx+1))
 
 
-if __name__ == '__main__':
+def main(output_file):
     # Create the experiment with 4 associated variables.
     experiment = MyExperiment(exp.RandomVariable('rv', 0, 1), iv1=[4, 10], iv2=[1, 2, 4], cv=3,
                               trials_per_type_per_block=8, output_names=['result'])
     # Randomize 8 trials of each type (total here: 8*6 = 48) and run all 48 trials.
-    experiment.run_session('sample_results.pkl')
+    experiment.run_session(output_file)
+
+if __name__ == '__main__':
+    import sys
+    main(sys.argv[1])
