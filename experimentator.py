@@ -37,7 +37,7 @@ def make_sort_function(array, repeats, method):
 
 class Variable():
     def __init__(self, name):
-        logging.info('Creating variable %s of type %s.', name, type(self))
+        logging.debug('Creating variable %s of type %s.', name, type(self))
         self.name = name
 
     def __str__(self):
@@ -95,7 +95,7 @@ class RandomVariable(CustomVariable):
 
 
 def new_variable(name, levels):
-    logging.info('Creating new variable from kwarg %s=%s...', name, levels)
+    logging.debug('Creating new variable from kwarg %s=%s...', name, levels)
     if callable(levels):
         return CustomVariable(name, levels)
     elif np.isscalar(levels):
@@ -148,7 +148,7 @@ class Experiment():
         for k, v in kwargs.items():
             self.variables.append(new_variable(k, v))
 
-        logging.info('Sorting variables by type...')
+        logging.debug('Sorting variables by type...')
         self.trial_ivs = [v for v in self.variables if isinstance(v, IndependentVariable) and v.change_by == 'trial']
         self.block_ivs = [v for v in self.variables if isinstance(v, IndependentVariable) and v.change_by == 'block']
         self.constants = [v for v in self.variables if isinstance(v, ConstantVariable)]
