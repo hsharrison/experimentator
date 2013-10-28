@@ -73,7 +73,7 @@ class IndependentVariable(Variable):
         else:
             self.change_by = change_by
 
-    def value(self, idx):
+    def value(self, idx, *args, **kwargs):
         return self.levels[idx]
 
 
