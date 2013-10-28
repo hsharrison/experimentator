@@ -224,7 +224,7 @@ class Experiment():
         self.session_start()
 
         for block_idx, block in enumerate(self.blocks):
-            logging.info('Block %s:', block_idx)
+            logging.debug('Block %s:', block_idx)
             if block_idx > 1:
                 logging.debug('Running inter_block()...')
                 self.inter_block(block_idx, block)
@@ -232,11 +232,10 @@ class Experiment():
             self.block_start(block_idx, block)
 
             for trial_idx, trial in block.iterrows():
-                logging.info('Trial %s:', trial_idx)
                 if trial_idx > 0:
                     logging.debug('Running inter_trial()...')
                     self.inter_trial(trial_idx, **dict(trial))
-                logging.debug('Running trial...')
+                logging.info('Running trial %s...', trial_idx)
                 self.raw_results.append(self.run_trial(trial_idx, **dict(trial)))
 
             logging.debug('Running block_end()')
