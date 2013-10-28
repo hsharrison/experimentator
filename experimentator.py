@@ -76,9 +76,6 @@ class IndependentVariable(Variable):
     def value(self, idx):
         return self.levels[idx]
 
-    def __len__(self):
-        return len(self.levels)
-
 
 class CustomVariable(Variable):
     def __init__(self, name, func):
