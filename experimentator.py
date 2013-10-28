@@ -186,21 +186,21 @@ class Experiment():
         more_vars = lambda idx: {v.name: v.value() for v in np.concatenate((self.custom_vars, self.constants))}
 
         # Constructing sort functions, rather than directly sorting, allows for a different sort for each call
-        logging.info('Creating sort method for trials within a block...')
+        logging.debug('Creating sort method for trials within a block...')
         sort_block = make_sort_function(trial_types, trials_per_type_per_block, trial_sort)
-        logging.info('Creating sort method for blocks within a session...')
+        logging.debug('Creating sort method for blocks within a session...')
         sort_session = make_sort_function(block_types, blocks_per_type, block_sort)
 
-        logging.info('Constructing blocks within session...')
+        logging.debug('Constructing blocks within session...')
         blocks = list(sort_session())
         self.n_trials = len(blocks) * len(sort_block())
         self.n_blocks = len(blocks)
         for block_idx, block in enumerate(blocks):
-            logging.info('Constructing trials within block %s...', block_idx)
+            logging.debug('Constructing trials within block %s...', block_idx)
             trials = list(sort_block())
             for trial_idx, trial in enumerate(trials):
                 # Add block-specific IVs, custom vars, and constants
-                logging.info('Constructing trial %s...', trial_idx)
+                logging.debug('Constructing trial %s...', trial_idx)
                 trial.update({k: v for k, v in block.items()})
                 trial.update(more_vars(block_idx*len(trials) + trial_idx))
             yield pd.DataFrame(trials, index=block_idx*len(trials) + np.arange(len(trials)))
@@ -210,38 +210,38 @@ class Experiment():
         Trial settings and results are combined into one DataFrame, which is pickled.
         """
         # Concatenate trial settings
-        logging.info('Combining trial inputs and outputs...')
+        logging.debug('Combining trial inputs and outputs...')
         trial_inputs = pd.concat(self.blocks)
 
         results = pd.DataFrame(self.raw_results, columns=self.output_names)
 
-        logging.info('Writing data to file %s...', output_file)
+        logging.debug('Writing data to file %s...', output_file)
         pd.concat([trial_inputs, results], axis=1).to_pickle(output_file)
 
     def run_session(self, output_file):
         logging.info('Running session...')
-        logging.info('Running start_session()...')
+        logging.debug('Running start_session()...')
         self.session_start()
 
         for block_idx, block in enumerate(self.blocks):
             logging.info('Block %s:', block_idx)
             if block_idx > 1:
-                logging.info('Running inter_block()...')
+                logging.debug('Running inter_block()...')
                 self.inter_block(block_idx, block)
-            logging.info('Running block_start()')
+            logging.debug('Running block_start()')
             self.block_start(block_idx, block)
 
             for trial_idx, trial in block.iterrows():
                 logging.info('Trial %s:', trial_idx)
                 if trial_idx > 0:
-                    logging.info('Running inter_trial()...')
+                    logging.debug('Running inter_trial()...')
                     self.inter_trial(trial_idx, **dict(trial))
-                logging.info('Running trial...')
+                logging.debug('Running trial...')
                 self.raw_results.append(self.run_trial(trial_idx, **dict(trial)))
 
-            logging.info('Running block_end()')
+            logging.debug('Running block_end()')
             self.block_end(block_idx, block)
-        logging.info('Running session_end()')
+        logging.debug('Running session_end()')
         self.session_end()
 
         logging.info('Saving data...')
