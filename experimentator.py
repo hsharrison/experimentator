@@ -35,7 +35,7 @@ def make_sort_function(array, repeats, method):
             return lambda: repeats * np.array(array)[method]
 
 
-class Variable(metaclass=collections.ABCMeta):
+class Variable(metaclass=collections.abc.ABCMeta):
     def __init__(self, name):
         logging.debug('Creating variable %s of type %s.', name, type(self))
         self.name = name
@@ -43,7 +43,7 @@ class Variable(metaclass=collections.ABCMeta):
     def __str__(self):
         return self.name
 
-    @collections.abstractmethod
+    @collections.abc.abstractmethod
     def value(self, *args, **kwargs):
         return None
 
@@ -77,6 +77,12 @@ class IndependentVariable(Variable):
     def value(self, idx, *args, **kwargs):
         return self.levels[idx]
 
+    def __len__(self):
+        return len(self.levels)
+
+    def __getattr__(self, item):
+        return self.value(item)
+
 
 class CustomVariable(Variable):
     def __init__(self, name, func):
@@ -104,7 +110,7 @@ def new_variable(name, levels):
         raise VariableError('Cannot create variable {} = {}'.format(name, levels))
 
 
-class Experiment(metaclass=collections.ABCMeta):
+class Experiment(metaclass=collections.abc.ABCMeta):
     """
     Experiments should subclass this and override, at minimum, the method run_trial(trial_idx, **trial_settings).
     Other methods to override:
@@ -244,7 +250,7 @@ class Experiment(metaclass=collections.ABCMeta):
         logging.info('Saving data...')
         self.save_data(output_file)
 
-    @collections.abstractmethod
+    @collections.abc.abstractmethod
     def run_trial(self, trial_idx, **kwargs):
         return None
 
