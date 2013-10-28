@@ -5,6 +5,7 @@ import pandas as pd
 import itertools
 import functools
 import collections
+import logging
 
 
 class SortError(Exception):
@@ -36,6 +37,7 @@ def make_sort_function(array, repeats, method):
 
 class Variable():
     def __init__(self, name):
+        logging.info('Creating variable %s of type %s.', name, type(self))
         self.name = name
 
     def __str__(self):
@@ -93,6 +95,7 @@ class RandomVariable(CustomVariable):
 
 
 def new_variable(name, levels):
+    logging.info('Creating new variable from kwarg %s=%s...', name, levels)
     if callable(levels):
         return CustomVariable(name, levels)
     elif np.isscalar(levels):
@@ -130,6 +133,7 @@ class Experiment():
     # TODO: between-subjects design
     # TODO: multi-session experiments
     def __init__(self, *args, output_names=None, **kwargs):
+        logging.info('Constructing new experiment...')
         self.output_names = output_names
 
         trial_list_settings_defaults = {'trials_per_type_per_block': 1,
@@ -139,10 +143,12 @@ class Experiment():
         self.trial_list_settings = {key: kwargs.pop(key, default)
                                     for key, default in trial_list_settings_defaults.items()}
 
+        logging.info('Constructing variables...')
         self.variables = list(args)
         for k, v in kwargs.items():
             self.variables.append(new_variable(k, v))
 
+        logging.info('Sorting variables by type...')
         self.trial_ivs = [v for v in self.variables if isinstance(v, IndependentVariable) and v.change_by == 'trial']
         self.block_ivs = [v for v in self.variables if isinstance(v, IndependentVariable) and v.change_by == 'block']
         self.constants = [v for v in self.variables if isinstance(v, ConstantVariable)]
@@ -151,6 +157,7 @@ class Experiment():
         self.n_blocks = 0
         self.n_trials = 0
 
+        logging.info('Constructing blocks and trials...')
         self.blocks = list(self.block_list(**self.trial_list_settings))
         self.raw_results = []
 
@@ -158,33 +165,42 @@ class Experiment():
         # In this and the next block, we cross the indices of each IV's levels rather than the actual values.
         # This allows for subclasses to override the value method and do stuff besides indexing to determine the value.
         if self.trial_ivs:
+            logging.info('Crossing IVs that vary by trial...')
             iv_idxs = itertools.product(*[range(len(v)) for v in self.trial_ivs])
             trial_types = [{iv.name: iv.value(condition[idx]) for idx, iv in enumerate(self.trial_ivs)}
                            for condition in iv_idxs]
         else:
-            trial_types = [{v.name: v.value for v in self.variables if v not in self.block_ivs}]
+            logging.info('No IVs that vary by trial.')
+            trial_types = [{}]
 
         if self.block_ivs:
+            logging.info('Crossing IVs that vary by block...')
             iv_idxs = itertools.product(*[range(len(v)) for v in self.block_ivs])
             block_types = [{iv.name: iv.value(condition[idx]) for idx, iv in enumerate(self.block_ivs)}
                            for condition in iv_idxs]
         else:
+            logging.info('No IVs that vary by block.')
             block_types = [{}]
 
         # TODO: Pass any args/kwargs to custom_vars.value?
         more_vars = lambda idx: {v.name: v.value() for v in np.concatenate((self.custom_vars, self.constants))}
 
         # Constructing sort functions, rather than directly sorting, allows for a different sort for each call
+        logging.info('Creating sort method for trials within a block...')
         sort_block = make_sort_function(trial_types, trials_per_type_per_block, trial_sort)
+        logging.info('Creating sort method for blocks within a session...')
         sort_session = make_sort_function(block_types, blocks_per_type, block_sort)
 
+        logging.info('Constructing blocks within session...')
         blocks = list(sort_session())
         self.n_trials = len(blocks) * len(sort_block())
         self.n_blocks = len(blocks)
         for block_idx, block in enumerate(blocks):
+            logging.info('Constructing trials within block %s...', block_idx)
             trials = list(sort_block())
             for trial_idx, trial in enumerate(trials):
                 # Add block-specific IVs, custom vars, and constants
+                logging.info('Constructing trial %s...', trial_idx)
                 trial.update({k: v for k, v in block.items()})
                 trial.update(more_vars(block_idx*len(trials) + trial_idx))
             yield pd.DataFrame(trials, index=block_idx*len(trials) + np.arange(len(trials)))
@@ -194,28 +210,41 @@ class Experiment():
         Trial settings and results are combined into one DataFrame, which is pickled.
         """
         # Concatenate trial settings
+        logging.info('Combining trial inputs and outputs...')
         trial_inputs = pd.concat(self.blocks)
 
         results = pd.DataFrame(self.raw_results, columns=self.output_names)
 
+        logging.info('Writing data to file %s...', output_file)
         pd.concat([trial_inputs, results], axis=1).to_pickle(output_file)
 
     def run_session(self, output_file):
+        logging.info('Running session...')
+        logging.info('Running start_session()...')
         self.session_start()
 
         for block_idx, block in enumerate(self.blocks):
+            logging.info('Block %s:', block_idx)
             if block_idx > 1:
+                logging.info('Running inter_block()...')
                 self.inter_block(block_idx, block)
+            logging.info('Running block_start()')
             self.block_start(block_idx, block)
 
             for trial_idx, trial in block.iterrows():
+                logging.info('Trial %s:', trial_idx)
                 if trial_idx > 0:
+                    logging.info('Running inter_trial()...')
                     self.inter_trial(trial_idx, **dict(trial))
+                logging.info('Running trial...')
                 self.raw_results.append(self.run_trial(trial_idx, **dict(trial)))
 
+            logging.info('Running block_end()')
             self.block_end(block_idx, block)
+        logging.info('Running session_end()')
         self.session_end()
 
+        logging.info('Saving data...')
         self.save_data(output_file)
 
     def run_trial(self, trial_idx, **kwargs):
