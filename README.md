@@ -27,8 +27,7 @@ Usage
   * ``settings`` can include the following:
       * ``trials_per_type_per_block`` (default=1)
       * ``blocks_per_type`` (default=1)
-      * ``trial_sort`` (string or array of indices, default=``'random'``)
-      * ``block_sort`` (string or array of indices, default=``'random'``)
+      * ``trial_sort``, ``block_sort``, ``participant_sort``  (string or array of indices, default=``'random'``)
 
 **Third**, call ``my_experiment_instance.run_session(output_file)`` to run your experiment. All inputs (variables) and outputs (results) of ``run_trial`` are saved to a pickled pandas DataFrame as ``output_file``.
 

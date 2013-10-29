@@ -127,14 +127,12 @@ class Experiment(metaclass=collections.abc.ABCMeta):
                  trial list settings:
                      trials_per_type_per_block {default = 1}
                      blocks_per_type {default = 1}
-                     trial_sort {'random' (default), array of indices}
-                     block_sort {'random' (default), array of indices}
+                     trial_sort, block_sort, participant_sort {'random' (default), array of indices}
                  Any number of name = value pairs, creating Variables.
                     ConstantVariable if value = constant
                     CustomVariable if value is callable
                     IndependentVariable (within-subjects) if value is iterable
     """
-    # TODO: between-subjects design
     # TODO: multi-session experiments
     def __init__(self, *args, output_names=None, **kwargs):
         logging.info('Constructing new experiment...')
@@ -143,7 +141,8 @@ class Experiment(metaclass=collections.abc.ABCMeta):
         trial_list_settings_defaults = {'trials_per_type_per_block': 1,
                                         'blocks_per_type': 1,
                                         'trial_sort': 'random',
-                                        'block_sort': 'random'}
+                                        'block_sort': 'random',
+                                        'participant_sort': 'random'}
         self.trial_list_settings = {key: kwargs.pop(key, default)
                                     for key, default in trial_list_settings_defaults.items()}
 
