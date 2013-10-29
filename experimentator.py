@@ -37,7 +37,7 @@ def make_sort_function(array, repeats, method):
 
 class Variable(metaclass=collections.abc.ABCMeta):
     def __init__(self, name):
-        logging.debug('Creating variable %s of type %s.', name, type(self))
+        logging.debug('Creating variable {} of type {}.'.format(name, type(self)))
         self.name = name
 
     def __str__(self):
@@ -99,7 +99,7 @@ class RandomVariable(CustomVariable):
 
 
 def new_variable(name, levels):
-    logging.debug('Creating new variable from kwarg %s=%s...', name, levels)
+    logging.debug('Creating new variable from kwarg {}={}...'.format(name, levels))
     if callable(levels):
         return CustomVariable(name, levels)
     elif np.isscalar(levels):
@@ -204,7 +204,7 @@ class Experiment(metaclass=collections.abc.ABCMeta):
             trials = list(sort_block())
             for trial_idx, trial in enumerate(trials):
                 # Add block-specific IVs, custom vars, and constants
-                logging.debug('Constructing trial %s...', trial_idx)
+                logging.debug('Constructing trial {}...'.format(trial_idx))
                 trial.update({k: v for k, v in block.items()})
                 trial.update(more_vars(block_idx*len(trials) + trial_idx))
             yield pd.DataFrame(trials, index=block_idx*len(trials) + np.arange(len(trials)))
@@ -219,7 +219,7 @@ class Experiment(metaclass=collections.abc.ABCMeta):
 
         results = pd.DataFrame(self.raw_results, columns=self.output_names)
 
-        logging.debug('Writing data to file %s...', output_file)
+        logging.debug('Writing data to file {}...'.format(output_file))
         pd.concat([trial_inputs, results], axis=1).to_pickle(output_file)
 
     def run_session(self, output_file):
@@ -239,7 +239,7 @@ class Experiment(metaclass=collections.abc.ABCMeta):
                 if trial_idx > 0:
                     logging.debug('Running inter_trial()...')
                     self.inter_trial(trial_idx, **dict(trial))
-                logging.info('Running trial %s...', trial_idx)
+                logging.info('Running trial {}...'.format(trial_idx))
                 self.raw_results.append(self.run_trial(trial_idx, **dict(trial)))
 
             logging.debug('Running block_end()')
