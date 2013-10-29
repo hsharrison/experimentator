@@ -147,15 +147,16 @@ class Experiment(metaclass=collections.abc.ABCMeta):
                                     for key, default in trial_list_settings_defaults.items()}
 
         logging.info('Constructing variables...')
-        self.variables = list(args)
+        self.unsorted_variables = list(args)
         for k, v in kwargs.items():
-            self.variables.append(new_variable(k, v))
+            self.unsorted_variables.append(new_variable(k, v))
 
         logging.debug('Sorting variables by type...')
-        self.trial_ivs = [v for v in self.variables if isinstance(v, IndependentVariable) and v.change_by == 'trial']
-        self.block_ivs = [v for v in self.variables if isinstance(v, IndependentVariable) and v.change_by == 'block']
-        self.constants = [v for v in self.variables if isinstance(v, ConstantVariable)]
-        self.custom_vars = [v for v in self.variables if isinstance(v, CustomVariable)]
+        filters = {'trial': lambda v: isinstance(v, IndependentVariable) and v.change_by == 'trial',
+                   'block': lambda v: isinstance(v, IndependentVariable) and v.change_by == 'block',
+                   'participant': lambda v: isinstance(v, IndependentVariable) and v.change_by == 'participant',
+                   'non_iv': lambda v: not isinstance(v, IndependentVariable)}
+        self.variables = {k: filter(self.unsorted_variables, v) for k, v in filters}
 
         self.n_blocks = 0
         self.n_trials = 0
@@ -167,26 +168,26 @@ class Experiment(metaclass=collections.abc.ABCMeta):
     def block_list(self, trials_per_type_per_block=1, blocks_per_type=1, trial_sort='random', block_sort='random'):
         # In this and the next block, we cross the indices of each IV's levels rather than the actual values.
         # This allows for subclasses to override the value method and do stuff besides indexing to determine the value.
-        if self.trial_ivs:
+        if self.variables['trial']:
             logging.info('Crossing IVs that vary by trial...')
-            iv_idxs = itertools.product(*[range(len(v)) for v in self.trial_ivs])
-            trial_types = [{iv.name: iv.value(condition[idx]) for idx, iv in enumerate(self.trial_ivs)}
+            iv_idxs = itertools.product(*[range(len(v)) for v in self.variables['trial']])
+            trial_types = [{iv.name: iv.value(condition[idx]) for idx, iv in enumerate(self.variables['trial'])}
                            for condition in iv_idxs]
         else:
             logging.info('No IVs that vary by trial.')
             trial_types = [{}]
 
-        if self.block_ivs:
+        if self.variables['block']:
             logging.info('Crossing IVs that vary by block...')
-            iv_idxs = itertools.product(*[range(len(v)) for v in self.block_ivs])
-            block_types = [{iv.name: iv.value(condition[idx]) for idx, iv in enumerate(self.block_ivs)}
+            iv_idxs = itertools.product(*[range(len(v)) for v in self.variables['block']])
+            block_types = [{iv.name: iv.value(condition[idx]) for idx, iv in enumerate(self.variables['block'])}
                            for condition in iv_idxs]
         else:
             logging.info('No IVs that vary by block.')
             block_types = [{}]
 
         # TODO: Pass any args/kwargs to custom_vars.value?
-        more_vars = lambda idx: {v.name: v.value() for v in np.concatenate((self.custom_vars, self.constants))}
+        more_vars = lambda idx: {v.name: v.value() for v in self.variables['non_iv']}
 
         # Constructing sort functions, rather than directly sorting, allows for a different sort for each call
         logging.debug('Creating sort method for trials within a block...')
