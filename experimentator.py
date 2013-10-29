@@ -35,15 +35,14 @@ def make_sort_function(array, repeats, method):
             return lambda: repeats * np.array(array)[method]
 
 
-class Variable(metaclass=collections.abc.ABCMeta):
+class Variable():
     def __init__(self, name):
-        logging.debug('Creating variable {} of type {}.'.format(name, type(self)))
+        logging.debug('Creating variable %s of type %s.', name, type(self))
         self.name = name
 
     def __str__(self):
         return self.name
 
-    @collections.abc.abstractmethod
     def value(self, *args, **kwargs):
         return None
 
@@ -77,12 +76,6 @@ class IndependentVariable(Variable):
     def value(self, idx, *args, **kwargs):
         return self.levels[idx]
 
-    def __len__(self):
-        return len(self.levels)
-
-    def __getattr__(self, item):
-        return self.value(item)
-
 
 class CustomVariable(Variable):
     def __init__(self, name, func):
@@ -99,7 +92,7 @@ class RandomVariable(CustomVariable):
 
 
 def new_variable(name, levels):
-    logging.debug('Creating new variable from kwarg {}={}...'.format(name, levels))
+    logging.debug('Creating new variable from kwarg %s=%s...', name, levels)
     if callable(levels):
         return CustomVariable(name, levels)
     elif np.isscalar(levels):
@@ -110,7 +103,7 @@ def new_variable(name, levels):
         raise VariableError('Cannot create variable {} = {}'.format(name, levels))
 
 
-class Experiment(metaclass=collections.abc.ABCMeta):
+class Experiment():
     """
     Experiments should subclass this and override, at minimum, the method run_trial(trial_idx, **trial_settings).
     Other methods to override:
@@ -187,7 +180,7 @@ class Experiment(metaclass=collections.abc.ABCMeta):
             block_types = [{}]
 
         # TODO: Pass any args/kwargs to custom_vars.value?
-        more_vars = lambda idx: {v.name: v.value() for v in np.concatenate((self.custom_vars, self.constants))}
+        more_vars = lambda idx: {v.name: v.value(idx) for v in np.concatenate((self.custom_vars, self.constants))}
 
         # Constructing sort functions, rather than directly sorting, allows for a different sort for each call
         logging.debug('Creating sort method for trials within a block...')
@@ -204,7 +197,7 @@ class Experiment(metaclass=collections.abc.ABCMeta):
             trials = list(sort_block())
             for trial_idx, trial in enumerate(trials):
                 # Add block-specific IVs, custom vars, and constants
-                logging.debug('Constructing trial {}...'.format(trial_idx))
+                logging.debug('Constructing trial %s...', trial_idx)
                 trial.update({k: v for k, v in block.items()})
                 trial.update(more_vars(block_idx*len(trials) + trial_idx))
             yield pd.DataFrame(trials, index=block_idx*len(trials) + np.arange(len(trials)))
@@ -219,7 +212,7 @@ class Experiment(metaclass=collections.abc.ABCMeta):
 
         results = pd.DataFrame(self.raw_results, columns=self.output_names)
 
-        logging.debug('Writing data to file {}...'.format(output_file))
+        logging.debug('Writing data to file %s...', output_file)
         pd.concat([trial_inputs, results], axis=1).to_pickle(output_file)
 
     def run_session(self, output_file):
@@ -239,7 +232,7 @@ class Experiment(metaclass=collections.abc.ABCMeta):
                 if trial_idx > 0:
                     logging.debug('Running inter_trial()...')
                     self.inter_trial(trial_idx, **dict(trial))
-                logging.info('Running trial {}...'.format(trial_idx))
+                logging.info('Running trial %s...', trial_idx)
                 self.raw_results.append(self.run_trial(trial_idx, **dict(trial)))
 
             logging.debug('Running block_end()')
@@ -250,7 +243,6 @@ class Experiment(metaclass=collections.abc.ABCMeta):
         logging.info('Saving data...')
         self.save_data(output_file)
 
-    @collections.abc.abstractmethod
     def run_trial(self, trial_idx, **kwargs):
         return None
 
