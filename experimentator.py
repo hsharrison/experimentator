@@ -37,7 +37,7 @@ def make_sort_function(array, repeats, method):
 
 class Variable():
     def __init__(self, name):
-        logging.debug('Creating variable %s of type %s.', name, type(self))
+        logging.debug('Creating variable {} of type{}.'.format(name, type(self)))
         self.name = name
 
     def __str__(self):
@@ -92,7 +92,7 @@ class RandomVariable(CustomVariable):
 
 
 def new_variable(name, levels):
-    logging.debug('Creating new variable from kwarg %s=%s...', name, levels)
+    logging.debug('Creating new variable from kwarg {}={}...'.format(name, levels))
     if callable(levels):
         return CustomVariable(name, levels)
     elif np.isscalar(levels):
@@ -100,7 +100,7 @@ def new_variable(name, levels):
     elif isinstance(levels, collections.abc.Iterable):
         return IndependentVariable(name, levels)
     else:
-        raise VariableError('Cannot create variable {} = {}'.format(name, levels))
+        raise VariableError('Cannot create variable {}={}.'.format(name, levels))
 
 
 class Experiment():
@@ -140,15 +140,16 @@ class Experiment():
                                     for key, default in trial_list_settings_defaults.items()}
 
         logging.info('Constructing variables...')
-        self.variables = list(args)
+        self.unsorted_variables = list(args)
         for k, v in kwargs.items():
-            self.variables.append(new_variable(k, v))
+            self.unsorted_variables.append(new_variable(k, v))
 
         logging.debug('Sorting variables by type...')
-        self.trial_ivs = [v for v in self.variables if isinstance(v, IndependentVariable) and v.change_by == 'trial']
-        self.block_ivs = [v for v in self.variables if isinstance(v, IndependentVariable) and v.change_by == 'block']
-        self.constants = [v for v in self.variables if isinstance(v, ConstantVariable)]
-        self.custom_vars = [v for v in self.variables if isinstance(v, CustomVariable)]
+        filters = {'trial': lambda v: isinstance(v, IndependentVariable) and v.change_by == 'trial',
+                   'block': lambda v: isinstance(v, IndependentVariable) and v.change_by == 'block',
+                   'participant': lambda v: isinstance(v, IndependentVariable) and v.change_by == 'participant',
+                   'non_iv': lambda v: not isinstance(v, IndependentVariable)}
+        self.variables = {k: filter(self.unsorted_variables, v) for k, v in filters}
 
         self.n_blocks = 0
         self.n_trials = 0
@@ -160,26 +161,26 @@ class Experiment():
     def block_list(self, trials_per_type_per_block=1, blocks_per_type=1, trial_sort='random', block_sort='random'):
         # In this and the next block, we cross the indices of each IV's levels rather than the actual values.
         # This allows for subclasses to override the value method and do stuff besides indexing to determine the value.
-        if self.trial_ivs:
+        if self.variables['trial']:
             logging.info('Crossing IVs that vary by trial...')
-            iv_idxs = itertools.product(*[range(len(v)) for v in self.trial_ivs])
-            trial_types = [{iv.name: iv.value(condition[idx]) for idx, iv in enumerate(self.trial_ivs)}
+            iv_idxs = itertools.product(*[range(len(v)) for v in self.variables['trial']])
+            trial_types = [{iv.name: iv.value(condition[idx]) for idx, iv in enumerate(self.variables['trial'])}
                            for condition in iv_idxs]
         else:
             logging.info('No IVs that vary by trial.')
             trial_types = [{}]
 
-        if self.block_ivs:
+        if self.variables['block']:
             logging.info('Crossing IVs that vary by block...')
-            iv_idxs = itertools.product(*[range(len(v)) for v in self.block_ivs])
-            block_types = [{iv.name: iv.value(condition[idx]) for idx, iv in enumerate(self.block_ivs)}
+            iv_idxs = itertools.product(*[range(len(v)) for v in self.variables['block']])
+            block_types = [{iv.name: iv.value(condition[idx]) for idx, iv in enumerate(self.variables['block'])}
                            for condition in iv_idxs]
         else:
             logging.info('No IVs that vary by block.')
             block_types = [{}]
 
         # TODO: Pass any args/kwargs to custom_vars.value?
-        more_vars = lambda idx: {v.name: v.value(idx) for v in np.concatenate((self.custom_vars, self.constants))}
+        more_vars = lambda idx: {v.name: v.value(idx) for v in self.variables['non_iv']}
 
         # Constructing sort functions, rather than directly sorting, allows for a different sort for each call
         logging.debug('Creating sort method for trials within a block...')
@@ -192,11 +193,11 @@ class Experiment():
         self.n_trials = len(blocks) * len(sort_block())
         self.n_blocks = len(blocks)
         for block_idx, block in enumerate(blocks):
-            logging.debug('Constructing trials within block %s...', block_idx)
+            logging.debug('Constructing trials within block{}...'.format(block_idx))
             trials = list(sort_block())
             for trial_idx, trial in enumerate(trials):
                 # Add block-specific IVs, custom vars, and constants
-                logging.debug('Constructing trial %s...', trial_idx)
+                logging.debug('Constructing trial {}...'.format(trial_idx))
                 trial.update({k: v for k, v in block.items()})
                 trial.update(more_vars(block_idx*len(trials) + trial_idx))
             yield pd.DataFrame(trials, index=block_idx*len(trials) + np.arange(len(trials)))
@@ -211,7 +212,7 @@ class Experiment():
 
         results = pd.DataFrame(self.raw_results, columns=self.output_names)
 
-        logging.debug('Writing data to file %s...', output_file)
+        logging.debug('Writing data to file {}...'.format(output_file))
         pd.concat([trial_inputs, results], axis=1).to_pickle(output_file)
 
     def run_session(self, output_file):
@@ -220,7 +221,7 @@ class Experiment():
         self.session_start()
 
         for block_idx, block in enumerate(self.blocks):
-            logging.debug('Block %s:', block_idx)
+            logging.debug('Block {}:'.format(block_idx))
             if block_idx > 1:
                 logging.debug('Running inter_block()...')
                 self.inter_block(block_idx, block)
@@ -231,7 +232,7 @@ class Experiment():
                 if trial_idx > 0:
                     logging.debug('Running inter_trial()...')
                     self.inter_trial(trial_idx, **dict(trial))
-                logging.info('Running trial %s...', trial_idx)
+                logging.info('Running trial {}...'.format(trial_idx))
                 self.raw_results.append(self.run_trial(trial_idx, **dict(trial)))
 
             logging.debug('Running block_end()')
