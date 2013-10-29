@@ -31,6 +31,8 @@ def make_sort_function(array, repeats, method):
     #TODO: More sorts (e.g. counterbalance)
     elif isinstance(method, str):
         raise SortError('Unrecognized sort method {}.'.format(method))
+    elif not method:
+        return lambda: repeats * array
     else:
             return lambda: repeats * np.array(array)[method]
 
