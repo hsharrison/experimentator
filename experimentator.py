@@ -35,7 +35,7 @@ def make_sort_function(array, repeats, method):
             return lambda: repeats * np.array(array)[method]
 
 
-class Variable():
+class Variable(metaclass=collections.abc.ABCMeta):
     def __init__(self, name):
         logging.debug('Creating variable %s of type %s.', name, type(self))
         self.name = name
@@ -43,6 +43,7 @@ class Variable():
     def __str__(self):
         return self.name
 
+    @collections.abc.abstractmethod
     def value(self, *args, **kwargs):
         return None
 
@@ -76,6 +77,12 @@ class IndependentVariable(Variable):
     def value(self, idx, *args, **kwargs):
         return self.levels[idx]
 
+    def __len__(self):
+        return len(self.levels)
+
+    def __getattr__(self, item):
+        return self.value(item)
+
 
 class CustomVariable(Variable):
     def __init__(self, name, func):
@@ -103,7 +110,7 @@ def new_variable(name, levels):
         raise VariableError('Cannot create variable {} = {}'.format(name, levels))
 
 
-class Experiment():
+class Experiment(metaclass=collections.abc.ABCMeta):
     """
     Experiments should subclass this and override, at minimum, the method run_trial(trial_idx, **trial_settings).
     Other methods to override:
@@ -120,14 +127,12 @@ class Experiment():
                  trial list settings:
                      trials_per_type_per_block {default = 1}
                      blocks_per_type {default = 1}
-                     trial_sort {'random' (default), array of indices}
-                     block_sort {'random' (default), array of indices}
+                     trial_sort, block_sort, participant_sort {'random' (default), array of indices}
                  Any number of name = value pairs, creating Variables.
                     ConstantVariable if value = constant
                     CustomVariable if value is callable
                     IndependentVariable (within-subjects) if value is iterable
     """
-    # TODO: between-subjects design
     # TODO: multi-session experiments
     def __init__(self, *args, output_names=None, **kwargs):
         logging.info('Constructing new experiment...')
@@ -136,7 +141,8 @@ class Experiment():
         trial_list_settings_defaults = {'trials_per_type_per_block': 1,
                                         'blocks_per_type': 1,
                                         'trial_sort': 'random',
-                                        'block_sort': 'random'}
+                                        'block_sort': 'random',
+                                        'participant_sort': 'random'}
         self.trial_list_settings = {key: kwargs.pop(key, default)
                                     for key, default in trial_list_settings_defaults.items()}
 
@@ -180,7 +186,7 @@ class Experiment():
             block_types = [{}]
 
         # TODO: Pass any args/kwargs to custom_vars.value?
-        more_vars = lambda idx: {v.name: v.value(idx) for v in np.concatenate((self.custom_vars, self.constants))}
+        more_vars = lambda idx: {v.name: v.value() for v in np.concatenate((self.custom_vars, self.constants))}
 
         # Constructing sort functions, rather than directly sorting, allows for a different sort for each call
         logging.debug('Creating sort method for trials within a block...')
@@ -243,6 +249,7 @@ class Experiment():
         logging.info('Saving data...')
         self.save_data(output_file)
 
+    @collections.abc.abstractmethod
     def run_trial(self, trial_idx, **kwargs):
         return None
 
