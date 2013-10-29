@@ -119,6 +119,7 @@ class Experiment():
     Inputs to Experiment.__init__:
        *args: Variable objects
        **kwargs: output_names (column names in saved data, length = number of outputs returned by run_trial)
+                 participant (participant number, for between-subjects experiments with deterministic participant order)
                  trial list settings:
                      trials_per_type_per_block {default = 1}
                      blocks_per_type {default = 1}
@@ -129,7 +130,7 @@ class Experiment():
                     IndependentVariable (within-subjects) if value is iterable
     """
     # TODO: multi-session experiments
-    def __init__(self, *args, output_names=None, **kwargs):
+    def __init__(self, *args, output_names=None, participant=0, **kwargs):
         logging.info('Constructing new experiment...')
         self.output_names = output_names
 
@@ -137,7 +138,7 @@ class Experiment():
                                         'blocks_per_type': 1,
                                         'trial_sort': 'random',
                                         'block_sort': 'random',
-                                        'participant_sort': 'random'}
+                                        'participant_sort': None}
         self.trial_list_settings = {key: kwargs.pop(key, default)
                                     for key, default in trial_list_settings_defaults.items()}
 
@@ -160,35 +161,30 @@ class Experiment():
         self.blocks = list(self.block_list(**self.trial_list_settings))
         self.raw_results = []
 
+    def cross_variables(self, vary_by):
+        if self.variables[vary_by]:
+            logging.debug('Crossing IVs that vary by {}...'.format(vary_by))
+            iv_idxs = itertools.product(*[range(len(v)) for v in self.variables[vary_by]])
+            return [{iv.name: iv.value(condition[idx]) for idx, iv in enumerate(self.variables[vary_by])}
+                    for condition in iv_idxs]
+        else:
+            logging.debug('No IVs that vary by {}...'.format(vary_by))
+            return [{}]
+
     def block_list(self, trials_per_type_per_block=1, blocks_per_type=1, trial_sort='random', block_sort='random'):
         # In this and the next block, we cross the indices of each IV's levels rather than the actual values.
         # This allows for subclasses to override the value method and do stuff besides indexing to determine the value.
-        if self.variables['trial']:
-            logging.info('Crossing IVs that vary by trial...')
-            iv_idxs = itertools.product(*[range(len(v)) for v in self.variables['trial']])
-            trial_types = [{iv.name: iv.value(condition[idx]) for idx, iv in enumerate(self.variables['trial'])}
-                           for condition in iv_idxs]
-        else:
-            logging.info('No IVs that vary by trial.')
-            trial_types = [{}]
-
-        if self.variables['block']:
-            logging.info('Crossing IVs that vary by block...')
-            iv_idxs = itertools.product(*[range(len(v)) for v in self.variables['block']])
-            block_types = [{iv.name: iv.value(condition[idx]) for idx, iv in enumerate(self.variables['block'])}
-                           for condition in iv_idxs]
-        else:
-            logging.info('No IVs that vary by block.')
-            block_types = [{}]
+        logging.info('Crossing IVs...')
+        types = {i: self.cross_variables(i) for i in ['trial', 'block', 'participant']}
 
         # TODO: Pass any args/kwargs to custom_vars.value?
         more_vars = lambda idx: {v.name: v.value(idx) for v in self.variables['non_iv']}
 
         # Constructing sort functions, rather than directly sorting, allows for a different sort for each call
         logging.debug('Creating sort method for trials within a block...')
-        sort_block = make_sort_function(trial_types, trials_per_type_per_block, trial_sort)
+        sort_block = make_sort_function(types['trial'], trials_per_type_per_block, trial_sort)
         logging.debug('Creating sort method for blocks within a session...')
-        sort_session = make_sort_function(block_types, blocks_per_type, block_sort)
+        sort_session = make_sort_function(types['block'], blocks_per_type, block_sort)
 
         logging.debug('Constructing blocks within session...')
         blocks = list(sort_session())

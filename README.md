@@ -16,13 +16,14 @@ Usage
 
 **Second**, create an instance of your new class:
 
-  * Use the syntax ``my_experiment_instance = MyExperiment(*variables, output_names=[], **more_variables, **settings)``.
+  * Use the syntax ``my_experiment_instance = MyExperiment(*variables, output_names=['output1', 'output2'], participant=0, **more_variables, **settings)``.
   * ``variables`` should be instances of ``Variable`` subclasses:
       * ``ConstantVariable(name, value)``: passed to ``run_trial`` as ``name=value``
       * ``IndependentVariable(name, levels, design='within', vary_by='trial')``: passed to ``run_trial`` as ``name=levels[idx]`` with varying ``idx``. ``design`` can be any of ``{'within', 'between'}``; ``vary_by`` can be any of ``{'trial`, 'block', 'session', 'participant'}``. ``design='between'`` is the same as ``vary_by='participant'``.
       * ``CustomVariable(name, fcn)``: passed to ``run_trial`` as ``name=fcn()``
       * ``RandomVariable(name, lower, upper)``: ``CustomVariable`` with ``fcn=lambda: lower + (upper-lower) * numpy.random.random()``
   * ``output_names`` is a list of strings to be used as column headers for outputs from ``run_trial``.
+  * ``participant`` is the index of the participant to be run.
   * ``more_variables`` is an alternative syntax to create variables: ``name=value`` for a ``ConstantVariable``, ``name=levels`` for an ``IndependentVariable``, or ``name=function`` for a ``CustomVariable``.
   * ``settings`` can include the following:
       * ``trials_per_type_per_block`` (default=1)
