@@ -32,7 +32,7 @@ def make_sort_function(array, repeats, method):
     elif isinstance(method, str):
         raise SortError('Unrecognized sort method {}.'.format(method))
     else:
-            return lambda: repeats * np.array(array)[np.array(method)]
+            return lambda: repeats * np.array(array)[method]
 
 
 class Variable():
