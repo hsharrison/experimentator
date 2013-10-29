@@ -162,6 +162,8 @@ class Experiment():
         self.raw_results = []
 
     def cross_variables(self, vary_by):
+        # We cross the indices of each IV's levels rather than the actual values.
+        # This allows for subclasses to override the value method and do stuff besides indexing to determine the value.
         if self.variables[vary_by]:
             logging.debug('Crossing IVs that vary by {}...'.format(vary_by))
             iv_idxs = itertools.product(*[range(len(v)) for v in self.variables[vary_by]])
@@ -172,9 +174,6 @@ class Experiment():
             return [{}]
 
     def block_list(self, trials_per_type_per_block=1, blocks_per_type=1, trial_sort='random', block_sort='random'):
-        # In this and the next block, we cross the indices of each IV's levels rather than the actual values.
-        # This allows for subclasses to override the value method and do stuff besides indexing to determine the value.
-        logging.info('Crossing IVs...')
         types = {i: self.cross_variables(i) for i in ['trial', 'block', 'participant']}
 
         # TODO: Pass any args/kwargs to custom_vars.value?
