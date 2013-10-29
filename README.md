@@ -35,7 +35,6 @@ Usage
 TODO
 ----
 
-  * Support for between-subjects designs.
   * Support for multi-session designs.
   * More sort options (e.g. counterbalancing).
 

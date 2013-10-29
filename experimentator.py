@@ -39,7 +39,7 @@ def make_sort_function(array, repeats, method):
 
 class Variable():
     def __init__(self, name):
-        logging.debug('Creating variable {} of type{}.'.format(name, type(self)))
+        logging.debug('Creating variable {} of type {}.'.format(name, type(self)))
         self.name = name
 
     def __str__(self):
@@ -54,7 +54,7 @@ class ConstantVariable(Variable):
         super(ConstantVariable, self).__init__(name)
         self._value = value
 
-    def value(self):
+    def value(self, idx):
         return self._value
 
 
@@ -78,13 +78,19 @@ class IndependentVariable(Variable):
     def value(self, idx, *args, **kwargs):
         return self.levels[idx]
 
+    def __len__(self):
+        return len(self.levels)
+
+    def __getitem__(self, item):
+        return self.levels[item]
+
 
 class CustomVariable(Variable):
     def __init__(self, name, func):
         super(CustomVariable, self).__init__(name)
         self.func = func
 
-    def value(self):
+    def value(self, idx):
         return self.func()
 
 
@@ -133,6 +139,7 @@ class Experiment():
     def __init__(self, *args, output_names=None, participant=0, **kwargs):
         logging.info('Constructing new experiment...')
         self.output_names = output_names
+        self.participant = participant
 
         trial_list_settings_defaults = {'trials_per_type_per_block': 1,
                                         'blocks_per_type': 1,
@@ -147,12 +154,15 @@ class Experiment():
         for k, v in kwargs.items():
             self.unsorted_variables.append(new_variable(k, v))
 
-        logging.debug('Sorting variables by type...')
+        logging.info('Sorting variables by type...')
         filters = {'trial': lambda v: isinstance(v, IndependentVariable) and v.change_by == 'trial',
                    'block': lambda v: isinstance(v, IndependentVariable) and v.change_by == 'block',
                    'participant': lambda v: isinstance(v, IndependentVariable) and v.change_by == 'participant',
                    'non_iv': lambda v: not isinstance(v, IndependentVariable)}
-        self.variables = {k: filter(self.unsorted_variables, v) for k, v in filters}
+        self.variables = {k: list(filter(v, self.unsorted_variables)) for k, v in filters.items()}
+        logging.debug('Found {} trial IVs, {} block IVs, {} participant IVs, and {} other variables.'.format(
+            len(self.variables['trial']), len(self.variables['block']), len(self.variables['participant']),
+            len(self.variables['non_iv'])))
 
         self.n_blocks = 0
         self.n_trials = 0
@@ -170,33 +180,45 @@ class Experiment():
             return [{iv.name: iv.value(condition[idx]) for idx, iv in enumerate(self.variables[vary_by])}
                     for condition in iv_idxs]
         else:
-            logging.debug('No IVs that vary by {}...'.format(vary_by))
+            logging.debug('No IVs that vary by {}.'.format(vary_by))
             return [{}]
 
-    def block_list(self, trials_per_type_per_block=1, blocks_per_type=1, trial_sort='random', block_sort='random'):
+    def block_list(self, trials_per_type_per_block=1, blocks_per_type=1, trial_sort='random', block_sort='random',
+                   participant_sort=None):
         types = {i: self.cross_variables(i) for i in ['trial', 'block', 'participant']}
-
-        # TODO: Pass any args/kwargs to custom_vars.value?
         more_vars = lambda idx: {v.name: v.value(idx) for v in self.variables['non_iv']}
 
         # Constructing sort functions, rather than directly sorting, allows for a different sort for each call
+        logging.debug('Creating sort method for participants within an experiment...')
+        sort_experiment = make_sort_function(types['participant'], 1, participant_sort)
         logging.debug('Creating sort method for trials within a block...')
         sort_block = make_sort_function(types['trial'], trials_per_type_per_block, trial_sort)
         logging.debug('Creating sort method for blocks within a session...')
         sort_session = make_sort_function(types['block'], blocks_per_type, block_sort)
 
-        logging.debug('Constructing blocks within session...')
+        logging.debug('Determining session variable values...')
+        participants = sort_experiment()
+        session_variables = participants[self.participant % len(participants)]
+        if session_variables:
+            logging.debug('Found {} session variables: {}.'.format(
+                len(session_variables), ', '.join(session_variables)))
+        else:
+            logging.debug('Found 0 session variables.')
+
+        logging.debug('Sorting blocks within session...')
         blocks = list(sort_session())
         self.n_trials = len(blocks) * len(sort_block())
+        logging.debug('Constructing {} trials in {} blocks...'.format(self.n_trials, self.n_blocks))
         self.n_blocks = len(blocks)
         for block_idx, block in enumerate(blocks):
-            logging.debug('Constructing trials within block{}...'.format(block_idx))
+            logging.debug('Sorting trials within block {}...'.format(block_idx))
             trials = list(sort_block())
             for trial_idx, trial in enumerate(trials):
                 # Add block-specific IVs, custom vars, and constants
                 logging.debug('Constructing trial {}...'.format(trial_idx))
-                trial.update({k: v for k, v in block.items()})
                 trial.update(more_vars(block_idx*len(trials) + trial_idx))
+                trial.update(block)
+                trial.update(session_variables)
             yield pd.DataFrame(trials, index=block_idx*len(trials) + np.arange(len(trials)))
 
     def save_data(self, output_file):
