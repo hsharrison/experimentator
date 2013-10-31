@@ -8,18 +8,6 @@ import collections
 import logging
 
 
-class SortError(Exception):
-    pass
-
-
-class DesignError(Exception):
-    pass
-
-
-class VariableError(Exception):
-    pass
-
-
 def make_sort_function(array, repeats, method):
     """
     array: iterable to be sorted
@@ -30,7 +18,7 @@ def make_sort_function(array, repeats, method):
         return functools.partial(np.random.permutation, repeats * array)
     #TODO: More sorts (e.g. counterbalance)
     elif isinstance(method, str):
-        raise SortError('Unrecognized sort method {}.'.format(method))
+        raise ValueError('Unrecognized sort method {}.'.format(method))
     elif not method:
         return lambda: repeats * array
     else:
@@ -72,7 +60,7 @@ class IndependentVariable(Variable):
         if self.design == 'between':
             self.change_by = 'participant'
         elif self.design == 'within' and change_by == 'participant':
-            raise DesignError('Cannot have a within-subjects IV change by participant.')
+            raise ValueError('Cannot have a within-subjects IV change by participant.')
         else:
             self.change_by = change_by
 
@@ -109,7 +97,7 @@ def new_variable(name, levels):
     elif isinstance(levels, collections.abc.Iterable):
         return IndependentVariable(name, levels)
     else:
-        raise VariableError('Cannot create variable {}={}.'.format(name, levels))
+        raise TypeError('Cannot create variable {}: cannot interpret type {}.'.format(name, type(levels)))
 
 
 class Experiment(metaclass=collections.abc.ABCMeta):
