@@ -1,274 +1,184 @@
 # Copyright (c) 2013 Henry S. Harrison
 
-import numpy as np
-import pandas as pd
 import itertools
-import functools
 import collections
 import logging
+import pickle
+import random
+import pandas as pd
 
 
-def make_sort_function(array, repeats, method):
-    """
-    array: iterable to be sorted
-    repeats: number of times for each element in array to appear
-    method: either a string {'random', more options to be implemented} or a list of indices
-    """
-    if method == 'random':
-        return functools.partial(np.random.permutation, repeats * array)
-    #TODO: More sorts (e.g. counterbalance)
-    elif isinstance(method, str):
-        raise ValueError('Unrecognized sort method {}.'.format(method))
-    elif not method:
-        return lambda: repeats * array
-    else:
-            return lambda: repeats * np.array(array)[method]
-
-
-class Variable(metaclass=collections.abc.ABCMeta):
-    def __init__(self, name):
-        logging.debug('Creating variable {} of type {}.'.format(name, type(self)))
-        self.name = name
+class QuitSession(BaseException):
+    def __init__(self, message):
+        self.message = message
 
     def __str__(self):
-        return self.name
-
-    @collections.abc.abstractmethod
-    def value(self, *args, **kwargs):
-        return None
+        return str(self.message)
 
 
-class ConstantVariable(Variable):
-    def __init__(self, name, value):
-        super(ConstantVariable, self).__init__(name)
-        self._value = value
-
-    def value(self, idx):
-        return self._value
+def load_experiment(file):
+    with open(file, 'r') as f:
+        return pickle.load(f)
 
 
-class IndependentVariable(Variable):
-    """
-    Additional args: levels (list of values for the IV)
-    Additional kwargs: design (between or within), change_by (trial, block, session, participant)
-        design='between' is equivalent to change_by='participant'
-    """
-    def __init__(self, name, levels, design='within', change_by='trial'):
-        super(IndependentVariable, self).__init__(name)
-        self.levels = levels
-        self.design = design
-        if self.design == 'between':
-            self.change_by = 'participant'
-        elif self.design == 'within' and change_by == 'participant':
-            raise ValueError('Cannot have a within-subjects IV change by participant.')
-        else:
-            self.change_by = change_by
-
-    def value(self, idx, *args, **kwargs):
-        return self.levels[idx]
-
-    def __len__(self):
-        return len(self.levels)
-
-    def __getitem__(self, item):
-        return self.levels[item]
+def run_experiment_section(file, **kwargs):
+    exp = load_experiment(file)
+    try:
+        exp.run(exp.find_section(**kwargs))
+    except QuitSession as e:
+        logging.warning('Quit event detected: {}.'.format(str(e)))
+    finally:
+        exp.save(file)
 
 
-class CustomVariable(Variable):
-    def __init__(self, name, func):
-        super(CustomVariable, self).__init__(name)
-        self.func = func
-
-    def value(self, idx):
-        return self.func()
+def export_experiment_data(experiment_file, data_file):
+    exp = load_experiment(experiment_file)
+    exp.export_data(data_file)
 
 
-class RandomVariable(CustomVariable):
-    def __init__(self, name, lower, upper):
-        super(RandomVariable, self).__init__(name, lambda: (upper - lower)*np.random.random() + lower)
-
-
-def new_variable(name, levels):
-    logging.debug('Creating new variable from kwarg {}={}...'.format(name, levels))
-    if callable(levels):
-        return CustomVariable(name, levels)
-    elif np.isscalar(levels):
-        return ConstantVariable(name, levels)
-    elif isinstance(levels, collections.abc.Iterable):
-        return IndependentVariable(name, levels)
+def section_sort(seq, method=None, n=1):
+    if method == 'random':
+        new_seq = n*seq
+        random.shuffle(new_seq)
+        yield from new_seq
+    #TODO: More sorts (e.g. counterbalance)
+    elif isinstance(method, str):
+        raise TypeError('Unrecognized sort method {}.'.format(method))
+    elif not method:
+        yield from n*seq
     else:
-        raise TypeError('Cannot create variable {}: cannot interpret type {}.'.format(name, type(levels)))
+        yield from n * seq[method]
+
+
+class ExperimentSection():
+    """
+    Each ExperimentSection is responsible for managing the sections immediately below it.
+    """
+    def __init__(self, context, levels, ivs, sort, repeats):
+        self.children = []
+        self.context = context
+        self.level = levels[0]
+        self.results = None
+        self.is_bottom_level = self.level == levels[-1]
+        if self.is_bottom_level:
+            self.next_level = None
+            self.next_ivs = None
+            self.next_sort = None
+            self.next_repeats = None
+            self.next_level_inputs = None
+        else:
+            self.next_level = levels[1]
+            self.next_ivs = ivs.get(self.next_level, [])
+            self.next_sort = sort.get(self.next_level)
+            self.next_repeats = repeats.get(self.next_level, 1)
+            self.next_level_inputs = (levels[1:], ivs, sort, repeats)
+
+            for i, section_context in enumerate(self.get_contexts()):
+                child_context = self.context.new_child()
+                child_context.update(section_context)
+                child_context[self.next_level] = i+1
+                logging.debug('Generating {}.'.format(child_context))
+                self.children.append(ExperimentSection(child_context, *self.next_level_inputs))
+
+    def get_contexts(self):
+        iv_tuples = itertools.product(*[v for v in self.next_ivs.values()])
+        next_section_types = [{k: v for k, v in zip(self.next_ivs, condition)} for condition in iv_tuples]
+        logging.debug('Sorting {}.'.format(self.next_level))
+        yield from section_sort(next_section_types, method=self.next_sort, n=self.next_repeats)
+
+    def add_child_ad_hoc(self, **kwargs):
+        child_context = self.context.new_child()
+        child_context[self.next_level] = self.children[-1][self.next_level] + 1
+        child_context.update({k: random.choice(v) for k, v in self.next_ivs.items()})
+        child_context.update(kwargs)
+        self.children.append(ExperimentSection(child_context, *self.next_level_inputs))
 
 
 class Experiment(metaclass=collections.abc.ABCMeta):
-    """
-    Experiments should subclass this and override, at minimum, the method run_trial(trial_idx, **trial_settings).
-    Other methods to override:
-       session_start()
-       session_end()
-       block_start(block_idx, block) where block is a DataFrame with rows = trials
-       block_end(block_idx, block)
-       inter_block(block_idx, block) where block_idx and block refer to the next block
-       inter_trial(trial_idx, **trial_settings) where trial_idx and trial_settings refer to the next trial
+    def __init__(self, ivs_by_level, repeats_by_level, sort_by_level,
+                 levels=('participant', 'session', 'block', 'trial'),
+                 experiment_file=None,
+                 output_names=None,
+                 ):
+        for level in collections.ChainMap([ivs_by_level, sort_by_level, repeats_by_level]):
+            if level not in levels:
+                raise TypeError('Unknown level {}.'.format(level))
 
-    Inputs to Experiment.__init__:
-       *args: Variable objects
-       **kwargs: output_names (column names in saved data, length = number of outputs returned by run_trial)
-                 participant (participant number, for between-subjects experiments with deterministic participant order)
-                 trial list settings:
-                     trials_per_type_per_block {default = 1}
-                     blocks_per_type {default = 1}
-                     trial_sort, block_sort, participant_sort {'random' (default), array of indices}
-                 Any number of name = value pairs, creating Variables.
-                    ConstantVariable if value = constant
-                    CustomVariable if value is callable
-                    IndependentVariable (within-subjects) if value is iterable
-    """
-    # TODO: multi-session experiments
-    def __init__(self, *args, output_names=None, participant=0, **kwargs):
-        logging.info('Constructing new experiment...')
+        self.levels = levels
+        self.ivs_by_level = ivs_by_level
+        self.sort_by_level = sort_by_level
+        self.repeats_by_level = repeats_by_level
         self.output_names = output_names
-        self.participant = participant
 
-        trial_list_settings_defaults = {'trials_per_type_per_block': 1,
-                                        'blocks_per_type': 1,
-                                        'trial_sort': 'random',
-                                        'block_sort': 'random',
-                                        'participant_sort': None}
-        self.trial_list_settings = {key: kwargs.pop(key, default)
-                                    for key, default in trial_list_settings_defaults.items()}
+        actual_levels = ['root']
+        actual_levels.extend(self.levels)
+        self.root = ExperimentSection(
+            collections.ChainMap(), actual_levels, self.ivs_by_level, self.sort_by_level, self.repeats_by_level)
 
-        logging.info('Constructing variables...')
-        self.unsorted_variables = list(args)
-        for k, v in kwargs.items():
-            self.unsorted_variables.append(new_variable(k, v))
-
-        logging.info('Sorting variables by type...')
-        filters = {'trial': lambda v: isinstance(v, IndependentVariable) and v.change_by == 'trial',
-                   'block': lambda v: isinstance(v, IndependentVariable) and v.change_by == 'block',
-                   'participant': lambda v: isinstance(v, IndependentVariable) and v.change_by == 'participant',
-                   'non_iv': lambda v: not isinstance(v, IndependentVariable)}
-        self.variables = {k: list(filter(v, self.unsorted_variables)) for k, v in filters.items()}
-        logging.debug('Found {} trial IVs, {} block IVs, {} participant IVs, and {} other variables.'.format(
-            len(self.variables['trial']), len(self.variables['block']), len(self.variables['participant']),
-            len(self.variables['non_iv'])))
-
-        self.n_blocks = 0
-        self.n_trials = 0
-
-        logging.info('Constructing blocks and trials...')
-        self.blocks = list(self.block_list(**self.trial_list_settings))
-        self.raw_results = []
-
-    def cross_variables(self, vary_by):
-        # We cross the indices of each IV's levels rather than the actual values.
-        # This allows for subclasses to override the value method and do stuff besides indexing to determine the value.
-        if self.variables[vary_by]:
-            logging.debug('Crossing IVs that vary by {}...'.format(vary_by))
-            iv_idxs = itertools.product(*[range(len(v)) for v in self.variables[vary_by]])
-            return [{iv.name: iv.value(condition[idx]) for idx, iv in enumerate(self.variables[vary_by])}
-                    for condition in iv_idxs]
+        if experiment_file:
+            self.save(experiment_file)
         else:
-            logging.debug('No IVs that vary by {}.'.format(vary_by))
-            return [{}]
+            logging.warning('No experiment_file provided, not saving Experiment instance.')
 
-    def block_list(self, trials_per_type_per_block=1, blocks_per_type=1, trial_sort='random', block_sort='random',
-                   participant_sort=None):
-        types = {i: self.cross_variables(i) for i in ['trial', 'block', 'participant']}
-        more_vars = lambda idx: {v.name: v.value(idx) for v in self.variables['non_iv']}
+    @property
+    def data(self):
+        data = pd.DataFrame(self.generate_data(self.root), columns=self.output_names).set_index(self.levels)
+        return data
 
-        # Constructing sort functions, rather than directly sorting, allows for a different sort for each call
-        logging.debug('Creating sort method for participants within an experiment...')
-        sort_experiment = make_sort_function(types['participant'], 1, participant_sort)
-        logging.debug('Creating sort method for trials within a block...')
-        sort_block = make_sort_function(types['trial'], trials_per_type_per_block, trial_sort)
-        logging.debug('Creating sort method for blocks within a session...')
-        sort_session = make_sort_function(types['block'], blocks_per_type, block_sort)
+    def save(self, filename):
+        logging.debug('Saving Experiment instance to {}.'.format(filename))
+        with open(filename, 'w') as f:
+            pickle.dump(self, f)
 
-        logging.debug('Determining session variable values...')
-        participants = sort_experiment()
-        session_variables = participants[self.participant % len(participants)]
-        if session_variables:
-            logging.debug('Found {} session variables: {}.'.format(
-                len(session_variables), ', '.join(session_variables)))
+    def generate_data(self, node):
+        for child in node.children:
+            if child.is_bottom_level:
+                yield child.results
+            else:
+                yield from self.generate_data(child)
+
+    def export_data(self, filename):
+        with open(filename, 'w') as f:
+            self.data.to_csv(f)
+
+    def find_section(self, **kwargs):
+        node = self.root
+        for level in self.levels:
+            if level in kwargs:
+                logging.debug('Found specified {}.'.format(level))
+                node = node.children[kwargs[level]-1]
+            else:
+                logging.info('No {} specified, returning previous level.'.format(level))
+                return node
+
+    def add_section(self, **kwargs):
+        find_section_kwargs = {}
+        for k in kwargs:
+            if k in self.levels:
+                find_section_kwargs[k] = kwargs.pop(k)
+        self.find_section(**find_section_kwargs).add_child_ad_hoc(**kwargs)
+
+    def run(self, section):
+        logging.debug('Running {} with context {}.'.format(section.level, section.context))
+        if section.is_bottom_level:
+            section.results = self.run_trial(**section.context)
         else:
-            logging.debug('Found 0 session variables.')
+            self.start(section.level, **section.context)
+            for i, next_section in enumerate(section.children):
+                if i:
+                    self.inter(next_section.level, **next_section.context)
+                self.run(next_section)
+            self.end(section.level, **section.context)
 
-        logging.debug('Sorting blocks within session...')
-        blocks = list(sort_session())
-        self.n_trials = len(blocks) * len(sort_block())
-        logging.debug('Constructing {} trials in {} blocks...'.format(self.n_trials, self.n_blocks))
-        self.n_blocks = len(blocks)
-        for block_idx, block in enumerate(blocks):
-            logging.debug('Sorting trials within block {}...'.format(block_idx))
-            trials = list(sort_block())
-            for trial_idx, trial in enumerate(trials):
-                # Add block-specific IVs, custom vars, and constants
-                logging.debug('Constructing trial {}...'.format(trial_idx))
-                trial.update(more_vars(block_idx*len(trials) + trial_idx))
-                trial.update(block)
-                trial.update(session_variables)
-            yield pd.DataFrame(trials, index=block_idx*len(trials) + np.arange(len(trials)))
+    def start(self, level, **kwargs):
+        pass
 
-    def save_data(self, output_file):
-        """
-        Trial settings and results are combined into one DataFrame, which is pickled.
-        """
-        # Concatenate trial settings
-        logging.debug('Combining trial inputs and outputs...')
-        trial_inputs = pd.concat(self.blocks)
+    def end(self, level, **kwargs):
+        pass
 
-        results = pd.DataFrame(self.raw_results, columns=self.output_names)
-
-        logging.debug('Writing data to file {}...'.format(output_file))
-        pd.concat([trial_inputs, results], axis=1).to_pickle(output_file)
-
-    def run_session(self, output_file):
-        logging.info('Running session...')
-        logging.debug('Running start_session()...')
-        self.session_start()
-
-        for block_idx, block in enumerate(self.blocks):
-            logging.debug('Block {}:'.format(block_idx))
-            if block_idx > 1:
-                logging.debug('Running inter_block()...')
-                self.inter_block(block_idx, block)
-            logging.debug('Running block_start()')
-            self.block_start(block_idx, block)
-
-            for trial_idx, trial in block.iterrows():
-                if trial_idx > 0:
-                    logging.debug('Running inter_trial()...')
-                    self.inter_trial(trial_idx, **dict(trial))
-                logging.info('Running trial {}...'.format(trial_idx))
-                self.raw_results.append(self.run_trial(trial_idx, **dict(trial)))
-
-            logging.debug('Running block_end()')
-            self.block_end(block_idx, block)
-        logging.debug('Running session_end()')
-        self.session_end()
-
-        logging.info('Saving data...')
-        self.save_data(output_file)
+    def inter(self, level, **kwargs):
+        pass
 
     @collections.abc.abstractmethod
-    def run_trial(self, trial_idx, **kwargs):
-        return None
-
-    def block_start(self, block_idx, block):
-        pass
-
-    def block_end(self, block_idx, block):
-        pass
-
-    def inter_block(self, block_idx, block):
-        pass
-
-    def session_start(self):
-        pass
-
-    def session_end(self):
-        pass
-
-    def inter_trial(self, current_trial, **kwargs):
-        pass
+    def run_trial(self, **_):
+        return None, None
