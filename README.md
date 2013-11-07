@@ -111,6 +111,8 @@ If you change your mind and want to run more participants than you initially spe
 
 If `dual_task=True` had not been specified, it would have been randomly chosen. Other `kwarg` inputs to `add_section` can determine where your new session is added. For example, if your experiment has a level `'group'` in between `'participant'` and `'session'`, you could specify `group=n` to add a new session under group `n`.
 
+To handle custom quit events, e.g. pressing the `ESCAPE` key, raise the custom exception `QuitSession` in your `run_trial` method. Otherwise, ending the trial manually will start the next trial.
+
 Finally, you can grab your data in a pandas DataFrame by accessing the `data` property. The data frame includes all the level numbers (indexed by 1) and IV values. Or, you can export directly to a comma-separated values file:
 
     from experimentator import export_experiment_data
