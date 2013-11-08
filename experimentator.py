@@ -1,4 +1,12 @@
-# Copyright (c) 2013 Henry S. Harrison
+"""
+A module for running experiments.
+
+The basic use case is that you have already written code to run a single trial and would like to run a set of
+experimental sessions in which inputs to your trial function are systematically varied and repeated.
+
+
+Copyright (c) 2013 Henry S. Harrison
+"""
 
 import itertools
 import collections
@@ -9,6 +17,13 @@ import pandas as pd
 
 
 class QuitSession(BaseException):
+    """
+    Raised to exit the experimental session.
+
+    Raise this exception from inside a trial when the entire session should be exited, for example if the user presses
+    a 'quit' key.
+
+    """
     def __init__(self, message):
         self.message = message
 
@@ -16,45 +31,67 @@ class QuitSession(BaseException):
         return str(self.message)
 
 
-def load_experiment(file):
-    with open(file, 'r') as f:
+def load_experiment(experiment_file):
+    """
+    Loads an experiment file. Returns the experiment instance.
+    """
+    with open(experiment_file, 'r') as f:
         return pickle.load(f)
 
 
-def run_experiment_section(file, **kwargs):
-    exp = load_experiment(file)
+def run_experiment_section(experiment_file, **kwargs):
+    """
+    Run an experiment instance from a file, and saves it. Monitors for QuitSession exceptions (If a QuitSession
+    exception is raised, still saves the data. Running the section again will overwrite it.).
+    """
+    exp = load_experiment(experiment_file)
     try:
         exp.run(exp.find_section(**kwargs))
     except QuitSession as e:
         logging.warning('Quit event detected: {}.'.format(str(e)))
     finally:
-        exp.save(file)
+        exp.save(experiment_file)
 
 
 def export_experiment_data(experiment_file, data_file):
-    exp = load_experiment(experiment_file)
-    exp.export_data(data_file)
-
-
-def section_sort(seq, method=None, n=1):
-    if method == 'random':
-        new_seq = n*seq
-        random.shuffle(new_seq)
-        yield from new_seq
-    #TODO: More sorts (e.g. counterbalance)
-    elif isinstance(method, str):
-        raise TypeError('Unrecognized sort method {}.'.format(method))
-    elif not method:
-        yield from n*seq
-    else:
-        yield from n * seq[method]
+    """
+    Reads a pickled experiment instance from experiment_file and saves its data in csv format to data_file.
+    """
+    load_experiment(experiment_file).export_data(data_file)
 
 
 class ExperimentSection():
     """
-    Each ExperimentSection is responsible for managing the sections immediately below it.
+    A section of an experiment, e.g. session, block, trial.
+
+    Each ExperimentSection is responsible for managing its children, sections immediately below it. For example, in the
+    default hierarchy, a block manages trials. An ExperimentSection maintains a context, a ChainMap containing all the
+    independent variable values that apply to all of its children.
+
+    Attributes:
+        children: A list of ExperimentSection instances.
+        context: A ChainMap of IV name: value mappings that apply to all of the section's children.
+        levels: A list of names for each step in the hierarchy (e.g. ['session', 'block', 'trial'] where levels[0] is
+            the level of the current section and levels[1] is the level of its children. For sections at the last level,
+            length(levels) == 1.
+        results: Initially none, for the lowest level this is where the outputs of run_trial are stored, as a tuple.
+        is_bottom_level: A boolean, True if this section is at the lowest level of the tree (a trial in the default
+            hierarchy.
+
     """
     def __init__(self, context, levels, ivs, sort, repeats):
+        """
+        Initialize an ExperimentSection.
+
+        Args:
+            context: A ChainMap containing all the IV name: value mapping that apply to this section and all its
+                children. Set by the parent section.
+            levels: A list of names in the hierarchy, with levels[0] being the name of this section, and the levels[1:]
+                the names of its descendants.
+            ivs: A mapping of level names to IV name: value dicts. Passed without modification through the entire tree.
+            sort: A mapping of level names to sort methods. Passed without modification.
+            repeats: A mapping of level names to number of sections per level. Passed without modification.
+        """
         self.children = []
         self.context = context
         self.level = levels[0]
@@ -63,30 +100,64 @@ class ExperimentSection():
         if self.is_bottom_level:
             self.next_level = None
             self.next_ivs = None
-            self.next_sort = None
+            self.next_sort_method = None
             self.next_repeats = None
             self.next_level_inputs = None
         else:
             self.next_level = levels[1]
             self.next_ivs = ivs.get(self.next_level, [])
-            self.next_sort = sort.get(self.next_level)
+            self.next_sort_method = sort.get(self.next_level)
             self.next_repeats = repeats.get(self.next_level, 1)
             self.next_level_inputs = (levels[1:], ivs, sort, repeats)
 
-            for i, section_context in enumerate(self.get_contexts()):
+            for i, section_context in enumerate(self.get_child_contexts()):
                 child_context = self.context.new_child()
                 child_context.update(section_context)
                 child_context[self.next_level] = i+1
                 logging.debug('Generating {}.'.format(child_context))
                 self.children.append(ExperimentSection(child_context, *self.next_level_inputs))
 
-    def get_contexts(self):
+    def get_child_contexts(self):
+        """
+        Crosses the section's independent variables, and sorts and repeats the unique combinations to yield the
+        context for the section's children.
+        """
         iv_tuples = itertools.product(*[v for v in self.next_ivs.values()])
-        next_section_types = [{k: v for k, v in zip(self.next_ivs, condition)} for condition in iv_tuples]
+        unique_contexts = [{k: v for k, v in zip(self.next_ivs, condition)} for condition in iv_tuples]
         logging.debug('Sorting {}.'.format(self.next_level))
-        yield from section_sort(next_section_types, method=self.next_sort, n=self.next_repeats)
+        yield from self.sort_and_repeat(unique_contexts)
+
+    def sort_and_repeat(self, unique_contexts):
+        """
+        Sorts and repeats the unique contexts for children of the section.
+
+        Args:
+            unique_contexts: A list of unique ChainMaps describing the possible combinations of the independent
+               variables at the section's level.
+
+        Yields the sorted and repeated contexts, according to the section's next_sort_method and next_repeats
+            attributes.
+        """
+        if self.next_sort_method == 'random':
+            new_seq = self.next_repeats * unique_contexts
+            random.shuffle(new_seq)
+            yield from new_seq
+        #TODO: More sorts (e.g. counterbalance)
+        elif isinstance(self.next_sort_method, str):
+            raise TypeError('Unrecognized sort method {}.'.format(self.next_sort_method))
+        elif not self.next_sort_method:
+            yield from self.next_repeats * unique_contexts
+        else:
+            yield from self.next_repeats * unique_contexts[self.next_sort_method]
 
     def add_child_ad_hoc(self, **kwargs):
+        """
+        Add an extra child to the section.
+
+        Args:
+            **kwargs: IV name=value assignments to determine the child's context. Any IV name not specified here will
+               be chosen randomly from the IV's possible values.
+        """
         child_context = self.context.new_child()
         child_context[self.next_level] = self.children[-1][self.next_level] + 1
         child_context.update({k: random.choice(v) for k, v in self.next_ivs.items()})
@@ -95,11 +166,48 @@ class ExperimentSection():
 
 
 class Experiment(metaclass=collections.abc.ABCMeta):
+    """
+    Abstract base class for Experiments.
+
+    Subclass this to create experiments. Experiments should override the run_trial method at minimum and optionally the
+    start, end, and inter methods.
+
+    Attributes:
+        levels: A list of level names describing the experiment hierarchy.
+        ivs_by_level: A mapping of level names to IV name: value dicts, describing which IVs are varied (crossed) at
+            each level.
+        repeats_by_level: A mapping of level names to integers, describing the number of each unique section type to
+            appear at each level.
+        sort_by_level: A mapping of level names to sort methods, determining how the sections at each level are sorted.
+        output_names: A list of the same length as the number of DVs (outputs of the run_trial method), naming each.
+        root: An ExperimentSection instance from which all experiment sections descend.
+
+    Properties:
+        data: A pandas DataFrame. Before any sections are run, contains only the IV values of each trial. Afterwards,
+           contains both IV and DV values.
+
+    """
     def __init__(self, ivs_by_level, repeats_by_level, sort_by_level,
                  levels=('participant', 'session', 'block', 'trial'),
                  experiment_file=None,
                  output_names=None,
                  ):
+        """
+        Initialize an Experiment instance.
+
+        Args:
+            ivs_by_level: A mapping of level names to IV name: value dicts, describing which IVs are varied (crossed) at
+                each level.
+            repeats_by_level: A mapping of level names to integers, describing the number of each unique section type to
+                appear at each level. Values are used by the ExperimentSection sort_and_repeat method.
+            sort_by_level: A mapping of level names to sort methods, determining how the sections at each level are
+                sorted. Values are used by the ExperimentSection sort_and_repeat method.
+            levels=('participant', 'session', 'block', 'trial'): The experiment's hierarchy of sections.
+            experiment_file=None: A filename where the experiment instance will be pickled, in order to run some
+                sections in a later Python session.
+            output_names=None: A list of the same length as the number of DVs (outputs of the run_trial method), naming
+                each. Will be column labels on the DataFrame in the data property.
+        """
         for level in collections.ChainMap([ivs_by_level, sort_by_level, repeats_by_level]):
             if level not in levels:
                 raise TypeError('Unknown level {}.'.format(level))
@@ -142,6 +250,18 @@ class Experiment(metaclass=collections.abc.ABCMeta):
             self.data.to_csv(f)
 
     def find_section(self, **kwargs):
+        """
+        Find the experiment section.
+
+        Args:
+            kwargs: level=n describing how to descend the hierarchy.
+
+        For example:
+            >> first_session = experiment_instance.find_section(participant=1, session=1)
+
+        Returns an ExperimentSection object at the first level where no input kwarg describes how to descend the
+            hierarchy.
+        """
         node = self.root
         for level in self.levels:
             if level in kwargs:
@@ -152,6 +272,12 @@ class Experiment(metaclass=collections.abc.ABCMeta):
                 return node
 
     def add_section(self, **kwargs):
+        """
+        Add section to experiment.
+
+        Args:
+            kwargs: Same as the input to find_section, describing which section is the parent of the added section.
+        """
         find_section_kwargs = {}
         for k in kwargs:
             if k in self.levels:
@@ -159,6 +285,16 @@ class Experiment(metaclass=collections.abc.ABCMeta):
         self.find_section(**find_section_kwargs).add_child_ad_hoc(**kwargs)
 
     def run(self, section):
+        """
+        Run an experiment section.
+
+        Runs a section by descending the hierarchy and running each child section. Also calls the start, end, and inter
+        methods where appropriate. Results are saved in the ExperimentSection instances at the lowest level (i.e.,
+        trials). Will overwrite any existing results.
+
+        Args:
+            section: An ExperimentSection instance to be run.
+        """
         logging.debug('Running {} with context {}.'.format(section.level, section.context))
         if section.is_bottom_level:
             section.results = self.run_trial(**section.context)
