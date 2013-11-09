@@ -94,8 +94,6 @@ class ExperimentSection():
                 sort: sort method, string (e.g., 'random'), sequence of indices, or None
                 n: number of repeats of each unique combination of ivs
         """
-        assert all(level in settings_by_level for level in levels[1:])
-        assert all(level in levels[1:] for level in settings_by_level)
         self.children = []
         self.context = context
         self.level = levels[0]
@@ -107,14 +105,14 @@ class ExperimentSection():
             self.next_level_inputs = None
         else:
             self.next_level = levels[1]
-            self.next_settings = settings_by_level.pop(self.next_level)
+            self.next_settings = settings_by_level.get(self.next_level, dict())
             self.next_level_inputs = (levels[1:], settings_by_level)
 
             for i, section_context in enumerate(self.get_child_contexts()):
                 child_context = self.context.new_child()
                 child_context.update(section_context)
                 child_context[self.next_level] = i+1
-                logging.debug('Generating {}.'.format(child_context))
+                logging.debug('Generating {} with context {}.'.format(self.next_level, child_context))
                 self.children.append(ExperimentSection(child_context, *self.next_level_inputs))
 
     def get_child_contexts(self):
@@ -125,7 +123,7 @@ class ExperimentSection():
         ivs = self.next_settings.get('ivs', dict())
         iv_combinations = itertools.product(*[v for v in ivs.values()])
         unique_contexts = [{k: v for k, v in zip(ivs, condition)} for condition in iv_combinations]
-        logging.debug('Sorting {}.'.format(self.next_level))
+        logging.debug('Sorting {} with unique contexts {}.'.format(self.next_level, unique_contexts))
         yield from self.sort_and_repeat(unique_contexts)
 
     def sort_and_repeat(self, unique_contexts):
@@ -151,7 +149,7 @@ class ExperimentSection():
         elif not method:
             yield from n * unique_contexts
         else:
-            yield from n * unique_contexts[method]
+            yield from n * list(unique_contexts[idx] for idx in method)
 
     def add_child_ad_hoc(self, **kwargs):
         """
