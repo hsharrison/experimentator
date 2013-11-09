@@ -71,15 +71,16 @@ class ExperimentSection():
     Attributes:
         children: A list of ExperimentSection instances.
         context: A ChainMap of IV name: value mappings that apply to all of the section's children.
-        levels: A list of names for each step in the hierarchy (e.g. ['session', 'block', 'trial'] where levels[0] is
-            the level of the current section and levels[1] is the level of its children. For sections at the last level,
-            length(levels) == 1.
+        level: The current level.
         results: Initially none, for the lowest level this is where the outputs of run_trial are stored, as a tuple.
         is_bottom_level: A boolean, True if this section is at the lowest level of the tree (a trial in the default
             hierarchy.
+        next_level: The next level.
+        next_settings: The next settings, a dict with keys 'ivs', 'sort', and 'n'.
+        next_level_inputs: the inputs to be passed when constructing children.
 
     """
-    def __init__(self, context, levels, ivs, sort, repeats):
+    def __init__(self, context, levels, settings_by_level):
         """
         Initialize an ExperimentSection.
 
@@ -88,10 +89,13 @@ class ExperimentSection():
                 children. Set by the parent section.
             levels: A list of names in the hierarchy, with levels[0] being the name of this section, and the levels[1:]
                 the names of its descendants.
-            ivs: A mapping of level names to IV name: value dicts. Passed without modification through the entire tree.
-            sort: A mapping of level names to sort methods. Passed without modification.
-            repeats: A mapping of level names to number of sections per level. Passed without modification.
+            settings_by_level: A mapping from the elements of levels to dicts with keys:
+                ivs: independent variables, as mapping from names to possible values
+                sort: sort method, string (e.g., 'random'), sequence of indices, or None
+                n: number of repeats of each unique combination of ivs
         """
+        assert all(level in settings_by_level for level in levels[1:])
+        assert all(level in levels[1:] for level in settings_by_level)
         self.children = []
         self.context = context
         self.level = levels[0]
@@ -99,16 +103,12 @@ class ExperimentSection():
         self.is_bottom_level = self.level == levels[-1]
         if self.is_bottom_level:
             self.next_level = None
-            self.next_ivs = None
-            self.next_sort_method = None
-            self.next_repeats = None
+            self.next_settings = None
             self.next_level_inputs = None
         else:
             self.next_level = levels[1]
-            self.next_ivs = ivs.get(self.next_level, [])
-            self.next_sort_method = sort.get(self.next_level)
-            self.next_repeats = repeats.get(self.next_level, 1)
-            self.next_level_inputs = (levels[1:], ivs, sort, repeats)
+            self.next_settings = settings_by_level.pop(self.next_level)
+            self.next_level_inputs = (levels[1:], settings_by_level)
 
             for i, section_context in enumerate(self.get_child_contexts()):
                 child_context = self.context.new_child()
@@ -122,8 +122,9 @@ class ExperimentSection():
         Crosses the section's independent variables, and sorts and repeats the unique combinations to yield the
         context for the section's children.
         """
-        iv_tuples = itertools.product(*[v for v in self.next_ivs.values()])
-        unique_contexts = [{k: v for k, v in zip(self.next_ivs, condition)} for condition in iv_tuples]
+        ivs = self.next_settings.get('ivs', dict())
+        iv_combinations = itertools.product(*[v for v in ivs.values()])
+        unique_contexts = [{k: v for k, v in zip(ivs, condition)} for condition in iv_combinations]
         logging.debug('Sorting {}.'.format(self.next_level))
         yield from self.sort_and_repeat(unique_contexts)
 
@@ -135,20 +136,22 @@ class ExperimentSection():
             unique_contexts: A list of unique ChainMaps describing the possible combinations of the independent
                variables at the section's level.
 
-        Yields the sorted and repeated contexts, according to the section's next_sort_method and next_repeats
-            attributes.
+        Yields the sorted and repeated contexts, according to the section's sort and n entries in its next_level_dict
+            attribute.
         """
-        if self.next_sort_method == 'random':
-            new_seq = self.next_repeats * unique_contexts
+        method = self.next_settings.get('sort', None)
+        n = self.next_settings.get('n', 1)
+        if method == 'random':
+            new_seq = n * unique_contexts
             random.shuffle(new_seq)
             yield from new_seq
         #TODO: More sorts (e.g. counterbalance)
-        elif isinstance(self.next_sort_method, str):
-            raise TypeError('Unrecognized sort method {}.'.format(self.next_sort_method))
-        elif not self.next_sort_method:
-            yield from self.next_repeats * unique_contexts
+        elif isinstance(method, str):
+            raise TypeError('Unrecognized sort method {}.'.format(method))
+        elif not method:
+            yield from n * unique_contexts
         else:
-            yield from self.next_repeats * unique_contexts[self.next_sort_method]
+            yield from n * unique_contexts[method]
 
     def add_child_ad_hoc(self, **kwargs):
         """
@@ -160,7 +163,7 @@ class ExperimentSection():
         """
         child_context = self.context.new_child()
         child_context[self.next_level] = self.children[-1][self.next_level] + 1
-        child_context.update({k: random.choice(v) for k, v in self.next_ivs.items()})
+        child_context.update({k: random.choice(v) for k, v in self.next_level_dict.get('ivs', dict()).items()})
         child_context.update(kwargs)
         self.children.append(ExperimentSection(child_context, *self.next_level_inputs))
 
@@ -187,7 +190,7 @@ class Experiment(metaclass=collections.abc.ABCMeta):
            contains both IV and DV values.
 
     """
-    def __init__(self, ivs_by_level, repeats_by_level, sort_by_level,
+    def __init__(self, settings_by_level,
                  levels=('participant', 'session', 'block', 'trial'),
                  experiment_file=None,
                  output_names=None,
@@ -196,32 +199,30 @@ class Experiment(metaclass=collections.abc.ABCMeta):
         Initialize an Experiment instance.
 
         Args:
-            ivs_by_level: A mapping of level names to IV name: value dicts, describing which IVs are varied (crossed) at
-                each level.
-            repeats_by_level: A mapping of level names to integers, describing the number of each unique section type to
-                appear at each level. Values are used by the ExperimentSection sort_and_repeat method.
-            sort_by_level: A mapping of level names to sort methods, determining how the sections at each level are
-                sorted. Values are used by the ExperimentSection sort_and_repeat method.
+            settings_by_level: A mapping of level names to dicts with settings for each level, each mappings with the
+                following keys:
+                ivs: A mapping of independent variables names to possible values, for the IVs that vary at the
+                    associated level.
+                sort: The sort method for the level: 'random', indices, or None.
+                n: The number of times each unique combination of variables should appear at the associated level.
             levels=('participant', 'session', 'block', 'trial'): The experiment's hierarchy of sections.
             experiment_file=None: A filename where the experiment instance will be pickled, in order to run some
                 sections in a later Python session.
             output_names=None: A list of the same length as the number of DVs (outputs of the run_trial method), naming
                 each. Will be column labels on the DataFrame in the data property.
         """
-        for level in collections.ChainMap([ivs_by_level, sort_by_level, repeats_by_level]):
+        for level in settings_by_level:
             if level not in levels:
-                raise TypeError('Unknown level {}.'.format(level))
+                raise KeyError('Unknown level {}.'.format(level))
 
         self.levels = levels
-        self.ivs_by_level = ivs_by_level
-        self.sort_by_level = sort_by_level
-        self.repeats_by_level = repeats_by_level
+        self.settings_by_level = settings_by_level
         self.output_names = output_names
 
         actual_levels = ['root']
         actual_levels.extend(self.levels)
         self.root = ExperimentSection(
-            collections.ChainMap(), actual_levels, self.ivs_by_level, self.sort_by_level, self.repeats_by_level)
+            collections.ChainMap(), actual_levels, self.settings_by_level)
 
         if experiment_file:
             self.save(experiment_file)

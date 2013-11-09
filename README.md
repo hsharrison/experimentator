@@ -30,12 +30,12 @@ Overriding `run_trial` is required, the rest are optional and allow you to run c
 
 The `Experiment` subclass you've now written is agnostic to organization of the IVs it takes. These are determined when you create an instance of your subclass, as so:
 
-    my_experiment_instance = MyExperimentSubclass(ivs_by_level, repeats_by_level, sort_by_level,
+    my_experiment_instance = MyExperimentSubclass(settings_by_level,
                                                   levels=('participant', 'session', 'block', 'trial'),
                                                   experiment_file=None,
                                                   output_names=None)
 
-The positional arguments should all be dictionaries keyed on values of `levels`. The values of `ivs_by_level` are dictionaries keyed on IV names containing the possible values of each IV (see example below). The values of `sort_by_level` determine how the conditions in that level are sorted, and can be either a sequence of indices or a string like `random` or `counterbalance` (_counterbalance not yet implemented_). The values of `repeats_by_level` are integers determining how many times each condition should be repeated before it is sorted. _Note: 'repeats' is a potentially confusing name. `repeats_by_level['trial']=1` means that there will be only one (not two) of each trial type. If you come up with a more informative variable name, let me know!_
+The positional argument is a mapping keyed on values of `levels`. The values are mappings keyed on `'ivs'`, `'sort'` and `'n'`. `ivs` is a mapping from independent variable names to a sequence of the possible values it can take. `sort` is a string (`random` currently the only option), list of indices or None for no sort. `n` is the number of times each unique combination of IV values should appear at the associated level.
 
 These dictionaries aren't required to have an entry for each level. If there isn't an entry for any given level, that level will take the default behavior, which is no variables, one repeat, and no sort.
 
@@ -75,12 +75,13 @@ Example
 
 
     levels = ('experiment', 'participant', 'session', 'block', 'trial')
-    ivs = {'trial': dict(target=['left', 'center', 'right'], congruent=[False, True]),
-           'participant': dict(dual_task=[False, True])}
-    repeats = {'trial': 50, 'block': 3, 'participant': 20}
-    sorts = {'trial': 'random', 'participant': 'random'}
-
-    my_experiment = MyExperiment(ivs, repeats, sorts,
+    settings = {'trial': dict(ivs={'target': ['left', 'center', 'right'],
+                                  'congruent', [False, True]},
+                              sort='random',
+                              n=50),
+                'participant': dict(ivs={'dual_task': [False, True]}),
+                'block': dict(n=3)}
+    my_experiment = MyExperiment(settings,
                                  levels=levels,
                                  experiment_file='my_experiment.dat',
                                  output_names=['Correct', 'Reaction Time'])
