@@ -161,7 +161,7 @@ class ExperimentSection():
         """
         child_context = self.context.new_child()
         child_context[self.next_level] = self.children[-1][self.next_level] + 1
-        child_context.update({k: random.choice(v) for k, v in self.next_level_dict.get('ivs', dict()).items()})
+        child_context.update({k: random.choice(v) for k, v in self.next_settings.get('ivs', dict()).items()})
         child_context.update(kwargs)
         self.children.append(ExperimentSection(child_context, *self.next_level_inputs))
 
