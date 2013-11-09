@@ -97,13 +97,14 @@ class ExperimentSection():
         self.children = []
         self.context = context
         self.level = levels[0]
-        self.results = None
         self.is_bottom_level = self.level == levels[-1]
         if self.is_bottom_level:
             self.next_level = None
             self.next_settings = None
             self.next_level_inputs = None
+            self.results = self.context
         else:
+            self.results = None
             self.next_level = levels[1]
             self.next_settings = settings_by_level.get(self.next_level, dict())
             self.next_level_inputs = (levels[1:], settings_by_level)
@@ -229,7 +230,7 @@ class Experiment(metaclass=collections.abc.ABCMeta):
 
     @property
     def data(self):
-        data = pd.DataFrame(self.generate_data(self.root), columns=self.output_names).set_index(self.levels)
+        data = pd.DataFrame(self.generate_data(self.root)).set_index(list(self.levels[1:]))
         return data
 
     def save(self, filename):
@@ -296,7 +297,9 @@ class Experiment(metaclass=collections.abc.ABCMeta):
         """
         logging.debug('Running {} with context {}.'.format(section.level, section.context))
         if section.is_bottom_level:
-            section.results = self.run_trial(**section.context)
+            results = self.run_trial(**section.context)
+            logging.debug('Results: {}.'.format(results))
+            section.results.update({n: r for n, r in zip(self.output_names, results)})
         else:
             self.start(section.level, **section.context)
             for i, next_section in enumerate(section.children):
