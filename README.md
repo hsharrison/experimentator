@@ -35,7 +35,7 @@ The `Experiment` subclass you've now written is agnostic to organization of the 
                                                   experiment_file=None,
                                                   output_names=None)
 
-The positional argument is a mapping keyed on values of `levels`. The values are mappings keyed on `'ivs'`, `'sort'` and `'n'`. `ivs` is a mapping from independent variable names to a sequence of the possible values it can take. `sort` is a string (`random` currently the only option), list of indices or None for no sort. `n` is the number of times each unique combination of IV values should appear at the associated level.
+The positional argument is a mapping keyed on values of `levels`. The values are mappings keyed on `'ivs'`, `'sort'` and `'n'`. `ivs` is a mapping from independent variable names to a sequence of the possible values it can take. `sort` is a string (`random` currently the only option), or list of indices. `n` is the number of times each unique combination of IV values should appear at the associated level.
 
 These dictionaries aren't required to have an entry for each level. If there isn't an entry for any given level, that level will take the default behavior, which is no variables, one repeat, and no sort.
 
