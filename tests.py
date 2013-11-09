@@ -37,13 +37,13 @@ def check_n_children(node):
 
 
 class SampleExperiment(exp.Experiment):
-    def run_trial(self, **kwargs):
-        branch = kwargs['a'] + kwargs['b']
-        if kwargs['e']:
-            stem = kwargs['c'] + str(kwargs['d'])
+    def run_trial(self, **iv):
+        branch = iv['a'] + iv['b']
+        if iv['e']:
+            stem = iv['c'] + str(iv['d'])
         else:
-            stem = str(kwargs['d']) + kwargs['c']
-        leaf = kwargs['f'] * 2
+            stem = str(iv['d']) + iv['c']
+        leaf = iv['f'] * 2
         return branch, stem, leaf
 
 sample_experiment = SampleExperiment(settings,
