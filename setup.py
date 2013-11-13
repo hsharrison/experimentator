@@ -10,5 +10,6 @@ setup(name='experimentator',
       download_url='https://bitbucket.org/hharrison/experimentator/get/default.tar.gz',
       description='Experiment Builder',
       long_description='Turn code for a single trial into an entire experiment by systematically varying parameters',
-      packages=['experimentator'],
+      packages=[''],
+      py_modules=[''],
       )
