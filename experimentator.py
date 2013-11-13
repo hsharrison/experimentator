@@ -85,14 +85,14 @@ def load_experiment(experiment_file):
         return pickle.load(f)
 
 
-def run_experiment_section(experiment_file, **kwargs):
+def run_experiment_section(experiment_file, demo=False, **kwargs):
     """
     Run an experiment instance from a file, and saves it. Monitors for QuitSession exceptions (If a QuitSession
     exception is raised, still saves the data. Running the section again will overwrite it.).
     """
     exp = load_experiment(experiment_file)
     try:
-        exp.run(exp.find_section(**kwargs))
+        exp.run(exp.find_section(**kwargs), demo=demo)
     except QuitSession as e:
         logging.warning('Quit event detected: {}.'.format(str(e)))
     finally:
@@ -331,7 +331,7 @@ class Experiment(metaclass=collections.abc.ABCMeta):
                 find_section_kwargs[k] = kwargs.pop(k)
         self.find_section(**find_section_kwargs).add_child_ad_hoc(**kwargs)
 
-    def run(self, section):
+    def run(self, section, demo=False):
         """
         Run an experiment section.
 
@@ -340,13 +340,15 @@ class Experiment(metaclass=collections.abc.ABCMeta):
         trials). Will overwrite any existing results.
 
         Args:
-            section: An ExperimentSection instance to be run.
+            section:    An ExperimentSection instance to be run.
+            demo=False: If demo, don't save data.
         """
         logging.debug('Running {} with context {}.'.format(section.level, section.context))
         if section.is_bottom_level:
             results = self.run_trial(**section.context)
             logging.debug('Results: {}.'.format(results))
-            section.results.update({n: r for n, r in zip(self.output_names, results)})
+            if not demo:
+                section.results.update({n: r for n, r in zip(self.output_names, results)})
         else:
             self.start(section.level, **section.context)
             for i, next_section in enumerate(section.children):
