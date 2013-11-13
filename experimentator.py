@@ -69,14 +69,13 @@ class ExperimentSection():
     independent variable values that apply to all of its children.
 
     Attributes:
-        children: A list of ExperimentSection instances.
-        context: A ChainMap of IV name: value mappings that apply to all of the section's children.
-        level: The current level.
-        results: Initially none, for the lowest level this is where the outputs of run_trial are stored, as a tuple.
-        is_bottom_level: A boolean, True if this section is at the lowest level of the tree (a trial in the default
-            hierarchy.
-        next_level: The next level.
-        next_settings: The next settings, a dict with keys 'ivs', 'sort', and 'n'.
+        children:          A list of ExperimentSection instances.
+        context:           A ChainMap of IV name: value mappings that apply to all of the section's children.
+        level:             The current level.
+        results:           (lowest level only) The results, as a dict which includes the IV values and section numbers.
+        is_bottom_level:   True if this section is at the lowest level of the tree (a trial in the default hierarchy).
+        next_level:        The next level.
+        next_settings:     The next settings, a dict with keys 'ivs', 'sort', and 'n'.
         next_level_inputs: the inputs to be passed when constructing children.
 
     """
@@ -85,14 +84,14 @@ class ExperimentSection():
         Initialize an ExperimentSection.
 
         Args:
-            context: A ChainMap containing all the IV name: value mapping that apply to this section and all its
-                children. Set by the parent section.
-            levels: A list of names in the hierarchy, with levels[0] being the name of this section, and the levels[1:]
-                the names of its descendants.
-            settings_by_level: A mapping from the elements of levels to dicts with keys:
-                ivs: independent variables, as mapping from names to possible values
-                sort: sort method, string (e.g., 'random'), sequence of indices, or None
-                n: number of repeats of each unique combination of ivs
+            context:            A ChainMap containing all the IV name: value mapping that apply to this section and all
+                                its children. Set by the parent section.
+            levels:             A list of names in the hierarchy, with levels[0] being the name of this section, and the
+                                levels[1:] the names of its descendants.
+            settings_by_level:  A mapping from the elements of levels to dicts with keys:
+                                ivs:   independent variables, as mapping from names to possible values
+                                sort:  sort method, string (e.g., 'random'), sequence of indices, or None
+                                n:     number of repeats of each unique combination of ivs
         """
         self.children = []
         self.context = context
@@ -133,10 +132,10 @@ class ExperimentSection():
 
         Args:
             unique_contexts: A list of unique ChainMaps describing the possible combinations of the independent
-               variables at the section's level.
+                             variables at the section's level.
 
         Yields the sorted and repeated contexts, according to the section's sort and n entries in its next_level_dict
-            attribute.
+        attribute.
         """
         method = self.next_settings.get('sort', None)
         n = self.next_settings.get('n', 1)
@@ -158,7 +157,7 @@ class ExperimentSection():
 
         Args:
             **kwargs: IV name=value assignments to determine the child's context. Any IV name not specified here will
-               be chosen randomly from the IV's possible values.
+                      be chosen randomly from the IV's possible values.
         """
         child_context = self.context.new_child()
         child_context[self.next_level] = self.children[-1][self.next_level] + 1
@@ -175,18 +174,18 @@ class Experiment(metaclass=collections.abc.ABCMeta):
     start, end, and inter methods.
 
     Attributes:
-        levels: A list of level names describing the experiment hierarchy.
-        ivs_by_level: A mapping of level names to IV name: value dicts, describing which IVs are varied (crossed) at
-            each level.
-        repeats_by_level: A mapping of level names to integers, describing the number of each unique section type to
-            appear at each level.
-        sort_by_level: A mapping of level names to sort methods, determining how the sections at each level are sorted.
-        output_names: A list of the same length as the number of DVs (outputs of the run_trial method), naming each.
-        root: An ExperimentSection instance from which all experiment sections descend.
-
-    Properties:
-        data: A pandas DataFrame. Before any sections are run, contains only the IV values of each trial. Afterwards,
-           contains both IV and DV values.
+        settings_by_level: A mapping of level names to dicts with settings for each level, each mappings with the
+        following keys:
+                           ivs:  A mapping of independent variables names to possible values, for the IVs that vary at
+                                 the associated level.
+                           sort: The sort method for the level: 'random', indices, or None.
+                           n:    The number of times each unique combination of variables should appear at the
+                                 associated level.
+        levels:            A list of level names describing the experiment hierarchy.
+        output_names:      A list naming each DV (outputs of the run_trial method).
+        root:              An ExperimentSection instance from which all experiment sections descend.
+        data:              A pandas DataFrame. Before any sections are run, contains only the IV values of each trial.
+                           Afterwards, contains both IV and DV values.
 
     """
     def __init__(self, settings_by_level,
@@ -198,17 +197,19 @@ class Experiment(metaclass=collections.abc.ABCMeta):
         Initialize an Experiment instance.
 
         Args:
-            settings_by_level: A mapping of level names to dicts with settings for each level, each mappings with the
-                following keys:
-                ivs: A mapping of independent variables names to possible values, for the IVs that vary at the
-                    associated level.
-                sort: The sort method for the level: 'random', indices, or None.
-                n: The number of times each unique combination of variables should appear at the associated level.
-            levels=('participant', 'session', 'block', 'trial'): The experiment's hierarchy of sections.
+            settings_by_level:    A mapping of level names to dicts with settings for each level, each mappings with the
+                                  following keys:
+                                  ivs:  A mapping of independent variables names to possible values, for the IVs that
+                                        vary at the associated level.
+                                  sort: The sort method for the level: 'random', indices, or None.
+                                  n:    The number of times each unique combination of variables should appear at the
+                                        associated level.
+            levels=('participant', 'session', 'block', 'trial'):
+                                  The experiment's hierarchy of sections.
             experiment_file=None: A filename where the experiment instance will be pickled, in order to run some
-                sections in a later Python session.
-            output_names=None: A list of the same length as the number of DVs (outputs of the run_trial method), naming
-                each. Will be column labels on the DataFrame in the data property.
+                                  sections in a later Python session.
+            output_names=None:    A list naming each DV (outputs of the run_trial method). Will be column labels on the
+                                  data DataFrame.
         """
         for level in settings_by_level:
             if level not in levels:
@@ -260,7 +261,7 @@ class Experiment(metaclass=collections.abc.ABCMeta):
             >> first_session = experiment_instance.find_section(participant=1, session=1)
 
         Returns an ExperimentSection object at the first level where no input kwarg describes how to descend the
-            hierarchy.
+        hierarchy.
         """
         node = self.root
         for level in self.levels:
