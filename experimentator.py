@@ -52,7 +52,7 @@ def parse_config(config_file):
     the Python interpreter, so proper syntax should be used for values that aren't simple strings or numbers.
     """
     config = ConfigParser()
-    config.read_file(open(config_file))
+    config.read_file(config_file)
     levels = config['Experiment']['levels'].split(',')
     sort_methods = config['Experiment']['sort methods'].split(',')
     number = config['Experiment']['number'].split(',')
