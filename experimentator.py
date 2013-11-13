@@ -85,18 +85,24 @@ def load_experiment(experiment_file):
         return pickle.load(f)
 
 
-def run_experiment_section(experiment_file, demo=False, **kwargs):
+def run_experiment_section(experiment, demo=False, **kwargs):
     """
     Run an experiment instance from a file, and saves it. Monitors for QuitSession exceptions (If a QuitSession
     exception is raised, still saves the data. Running the section again will overwrite it.).
     """
-    exp = load_experiment(experiment_file)
+    if isinstance(experiment, Experiment):
+        loaded_from_file = False
+        exp = experiment
+    else:
+        loaded_from_file = True
+        exp = load_experiment(experiment)
     try:
         exp.run(exp.find_section(**kwargs), demo=demo)
     except QuitSession as e:
         logging.warning('Quit event detected: {}.'.format(str(e)))
     finally:
-        exp.save(experiment_file)
+        if loaded_from_file:
+            exp.save(experiment)
 
 
 def export_experiment_data(experiment_file, data_file):
