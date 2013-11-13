@@ -129,6 +129,8 @@ class ExperimentSection():
         next_level:        The next level.
         next_settings:     The next settings, a dict with keys 'ivs', 'sort', and 'n'.
         next_level_inputs: the inputs to be passed when constructing children.
+        has_children:      True if the section has started to be run.
+        has_finished:      True if the section has finished running.
 
     """
     def __init__(self, context, levels, settings_by_level):
@@ -145,6 +147,8 @@ class ExperimentSection():
                                 sort:  sort method, string (e.g., 'random'), sequence of indices, or None
                                 n:     number of repeats of each unique combination of ivs
         """
+        self.has_started = False
+        self.has_finished = False
         self.children = []
         self.context = context
         self.level = levels[0]
@@ -324,6 +328,28 @@ class Experiment(metaclass=collections.abc.ABCMeta):
                 logging.info('No {} specified, returning previous level.'.format(level))
                 return node
 
+    def find_first_not_run(self, at_level, by_started=True):
+        """
+        Search through all sections at the specified level, and return a dict specifying the first not already run. If
+        by_started=True, a section is considered already run if it has started. Otherwise, it is considered already run
+        only if it has finished.
+        """
+        attribute = {True: 'has_started', False: 'has_finished'}[by_started]
+        node = self.root
+        section = {}
+        for level in self.levels:
+            for i, child in enumerate(node.children):
+                if not getattr(child, attribute):
+                    node = child
+                    section[level] = i+1
+                    break
+                raise ValueError('Cannot find a {} that has not run.'.format(at_level))
+
+            if level == at_level:
+                break
+
+        return section
+
     def add_section(self, **kwargs):
         """
         Add section to experiment.
@@ -350,6 +376,7 @@ class Experiment(metaclass=collections.abc.ABCMeta):
             demo=False: If demo, don't save data.
         """
         logging.debug('Running {} with context {}.'.format(section.level, section.context))
+        section.has_started = True
         if section.is_bottom_level:
             results = self.run_trial(**section.context)
             logging.debug('Results: {}.'.format(results))
@@ -362,6 +389,7 @@ class Experiment(metaclass=collections.abc.ABCMeta):
                     self.inter(next_section.level, **next_section.context)
                 self.run(next_section)
             self.end(section.level, **section.context)
+        section.has_finished = True
 
     def start(self, level, **kwargs):
         pass
