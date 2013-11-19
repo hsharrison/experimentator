@@ -287,7 +287,7 @@ class Experiment(metaclass=collections.abc.ABCMeta):
 
     @property
     def data(self):
-        data = pd.DataFrame(self.generate_data(self.root)).set_index(list(self.levels[1:]))
+        data = pd.DataFrame(self.generate_data(self.root)).set_index(list(self.levels))
         return data
 
     def save(self, filename):
