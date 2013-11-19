@@ -303,7 +303,7 @@ class Experiment(metaclass=collections.abc.ABCMeta):
                 yield from self.generate_data(child)
 
     def export_data(self, filename):
-        with open(filename, 'wb') as f:
+        with open(filename, 'w') as f:
             self.data.to_csv(f)
 
     def find_section(self, **kwargs):
