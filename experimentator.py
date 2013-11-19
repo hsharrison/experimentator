@@ -338,17 +338,25 @@ class Experiment(metaclass=collections.abc.ABCMeta):
         node = self.root
         section = {}
         for level in self.levels:
+            logging.debug('Checking all {}s...'.format(level))
+            found = False
             for i, child in enumerate(node.children):
+                print(child)
+                print(attribute)
+                print(getattr(child, attribute))
                 if not getattr(child, attribute):
                     node = child
                     section[level] = i+1
+                    found = True
                     break
-                raise ValueError('Cannot find a {} that has not run.'.format(at_level))
 
             if level == at_level:
                 break
 
-        return section
+        if found:
+            return section
+        else:
+            return {}
 
     def add_section(self, **kwargs):
         """
