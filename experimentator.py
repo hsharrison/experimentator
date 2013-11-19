@@ -341,9 +341,6 @@ class Experiment(metaclass=collections.abc.ABCMeta):
             logging.debug('Checking all {}s...'.format(level))
             found = False
             for i, child in enumerate(node.children):
-                print(child)
-                print(attribute)
-                print(getattr(child, attribute))
                 if not getattr(child, attribute):
                     node = child
                     section[level] = i+1
