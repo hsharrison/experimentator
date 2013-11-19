@@ -81,7 +81,7 @@ def load_experiment(experiment_file):
     """
     Loads an experiment file. Returns the experiment instance.
     """
-    with open(experiment_file, 'r') as f:
+    with open(experiment_file, 'rb') as f:
         return pickle.load(f)
 
 
@@ -292,7 +292,7 @@ class Experiment(metaclass=collections.abc.ABCMeta):
 
     def save(self, filename):
         logging.debug('Saving Experiment instance to {}.'.format(filename))
-        with open(filename, 'w') as f:
+        with open(filename, 'wb') as f:
             pickle.dump(self, f)
 
     def generate_data(self, node):
@@ -303,7 +303,7 @@ class Experiment(metaclass=collections.abc.ABCMeta):
                 yield from self.generate_data(child)
 
     def export_data(self, filename):
-        with open(filename, 'w') as f:
+        with open(filename, 'wb') as f:
             self.data.to_csv(f)
 
     def find_section(self, **kwargs):
