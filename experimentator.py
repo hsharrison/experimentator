@@ -343,9 +343,9 @@ class Experiment(metaclass=collections.abc.ABCMeta):
 
     def find_first_not_run(self, at_level, by_started=True):
         """
-        Search through all sections at the specified level, and return a dict specifying the first not already run. If
-        by_started=True, a section is considered already run if it has started. Otherwise, it is considered already run
-        only if it has finished.
+        Search through all sections at the specified level, and return the first not already run. If by_started=True, a
+        section is considered already run if it has started. Otherwise, it is considered already run only if it has
+        finished.
         """
         attribute = {True: 'has_started', False: 'has_finished'}[by_started]
         node = self.root
@@ -364,9 +364,10 @@ class Experiment(metaclass=collections.abc.ABCMeta):
                 break
 
         if found:
-            return section
+            return self.find_section(**section)
         else:
-            return {}
+            logging.warning('Could not find a {} not run.'.format(at_level))
+            return None
 
     def add_section(self, **kwargs):
         """
