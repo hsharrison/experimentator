@@ -221,6 +221,17 @@ class ExperimentSection():
         child_context.update(kwargs)
         self.children.append(ExperimentSection(child_context, *self.next_level_inputs))
 
+    def add_data(self, data_dict):
+        """
+        Add data to all trials in a section. For example, add participant information to all entries under that
+        participant.
+        """
+        if self.is_bottom_level:
+            self.results.update(data_dict)
+        else:
+            for child in self.children:
+                child.add_data(data_dict)
+
 
 class Experiment(metaclass=collections.abc.ABCMeta):
     """
