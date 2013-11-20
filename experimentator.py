@@ -418,5 +418,5 @@ class Experiment(metaclass=collections.abc.ABCMeta):
         pass
 
     @collections.abc.abstractmethod
-    def run_trial(self, **_):
+    def run_trial(self, **kwargs):
         return None, None
