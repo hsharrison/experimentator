@@ -372,6 +372,7 @@ class Experiment(metaclass=collections.abc.ABCMeta):
 
         Args:
             kwargs: Same as the input to find_section, describing which section is the parent of the added section.
+                    Any other kwargs are passed onto add_child_ad_hoc as section settings.
         """
         find_section_kwargs = {}
         for k in kwargs:
