@@ -334,7 +334,7 @@ class Experiment(metaclass=collections.abc.ABCMeta):
         Find the experiment section.
 
         Args:
-            kwargs: level=n describing how to descend the hierarchy.
+            kwargs: level=n describing how to descend the hierarchy (uses one-based indexing).
 
         For example:
             >> first_session = experiment_instance.find_section(participant=1, session=1)
