@@ -232,6 +232,13 @@ class ExperimentSection():
             for child in self.children:
                 child.add_data(data_dict)
 
+    def generate_data(self):
+        for child in self.children:
+            if child.is_bottom_level:
+                yield child.results
+            else:
+                yield from child.generate_data
+
 
 class Experiment(metaclass=collections.abc.ABCMeta):
     """
@@ -298,20 +305,13 @@ class Experiment(metaclass=collections.abc.ABCMeta):
 
     @property
     def data(self):
-        data = pd.DataFrame(self.generate_data(self.root)).set_index(list(self.levels))
+        data = pd.DataFrame(self.root.generate_data()).set_index(list(self.levels))
         return data
 
     def save(self, filename):
         logging.debug('Saving Experiment instance to {}.'.format(filename))
         with open(filename, 'wb') as f:
             pickle.dump(self, f)
-
-    def generate_data(self, node):
-        for child in node.children:
-            if child.is_bottom_level:
-                yield child.results
-            else:
-                yield from self.generate_data(child)
 
     def export_data(self, filename):
         with open(filename, 'w') as f:
