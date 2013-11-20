@@ -135,7 +135,7 @@ class ExperimentSection():
     """
     def __init__(self, context, levels, settings_by_level):
         """
-        Initialize an ExperimentSection.
+        Initialize an ExperimentSection. Creating an ExperimentSection also creates all its descendant sections.
 
         Args:
             context:            A ChainMap containing all the IV name: value mapping that apply to this section and all
@@ -164,6 +164,7 @@ class ExperimentSection():
             self.next_settings = settings_by_level.get(self.next_level, dict())
             self.next_level_inputs = (levels[1:], settings_by_level)
 
+            # Create the section tree. Creating any section also creates the sections below it
             for i, section_context in enumerate(self.get_child_contexts()):
                 child_context = self.context.new_child()
                 child_context.update(section_context)
@@ -205,6 +206,7 @@ class ExperimentSection():
         elif not method:
             yield from n * unique_contexts
         else:
+            # Try to index as the last resort
             yield from n * list(unique_contexts[idx] for idx in method)
 
     def add_child_ad_hoc(self, **kwargs):
