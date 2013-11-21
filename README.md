@@ -104,9 +104,9 @@ Other features
 ----
 If you change your mind and want to run more participants than you initially specified, you can use the `add_section` method:
 
-    from experimentator import load_experiment
+    from my-module import MyExperimentSubclass
 
-    my_experiment = load_experiment('my_experiment.dat')
+    my_experiment = MyExperimentSubclass.load_experiment('my_experiment.dat')
     my_experiment.add_section(dual_task=True)
     my_experiment.save('my_experiment.dat')
 
