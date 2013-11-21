@@ -406,7 +406,8 @@ class Experiment(metaclass=collections.abc.ABCMeta):
             demo=False: If demo, don't save data.
         """
         logging.debug('Running {} with context {}.'.format(section.level, section.context))
-        section.has_started = True
+        if not demo:
+            section.has_started = True
         if section.is_bottom_level:
             results = self.run_trial(**section.context)
             logging.debug('Results: {}.'.format(results))
@@ -419,7 +420,8 @@ class Experiment(metaclass=collections.abc.ABCMeta):
                     self.inter(next_section.level, **next_section.context)
                 self.run(next_section)
             self.end(section.level, **section.context)
-        section.has_finished = True
+        if not demo:
+            section.has_finished = True
 
     def start(self, level, **kwargs):
         pass
