@@ -13,7 +13,7 @@ In `experimentator`, an `Experiment` is defined as a set of experimental section
 
 then your experiment has two IVs, one named `target` and the other named `congruent`. Of course, if you don't need to vary a `kwarg` input, you can rely on its default in the method declaration.
 
-Traditionally, independent variables are categorized as varying over participants (in a _between-subjects_ design) or over trials (in a _within-subjects_ design). In reality however, a variable can be associated with any level. One variable may change every  trial, another may take on a new variable only when the participant comes back for a second session.
+Traditionally, independent variables are categorized as varying over participants (in a _between-subjects_ design) or over trials (in a _within-subjects_ design). In reality however, a variable can be associated with any level. One variable may change every  trial, another may take on a new value only when the participant comes back for a second session.
 
 If you would like some variables to have other behavior, for example to vary randomly, you should code this behavior in the `run_trials` method.
 
