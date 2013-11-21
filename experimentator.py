@@ -238,11 +238,7 @@ class ExperimentSection():
         Add data to all trials in a section. For example, add participant information to all entries under that
         participant.
         """
-        if self.is_bottom_level:
-            self.results.update(data_dict)
-        else:
-            for child in self.children:
-                child.add_data(data_dict)
+        self.context.update(data_dict)
 
     def generate_data(self):
         for child in self.children:
