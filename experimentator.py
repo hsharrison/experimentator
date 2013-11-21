@@ -249,7 +249,7 @@ class ExperimentSection():
             if child.is_bottom_level:
                 yield child.results
             else:
-                yield from child.generate_data
+                yield from child.generate_data()
 
 
 class Experiment(metaclass=collections.abc.ABCMeta):
