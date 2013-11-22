@@ -59,5 +59,4 @@ def test_experiment_data():
     assert all(sample_data['f'] == pd.Series([5, 4, 3, 2, 1, 0] * 2 * total_stems))
     assert all(sample_data['leaf_results'] == pd.Series([10, 8, 6, 4, 2, 0] * 2 * total_stems))
     assert all(sample_data['a'] + sample_data['b'] == sample_data['branch_results'])
-    assert all(sample_data['a'] == pd.Series(total_leafs//2 * [0] + total_leafs//2 * [1]))
     assert all(sample_data['b'] == pd.Series((total_leafs//6 * [0] + total_leafs//6 * [1] + total_leafs//6 * [2]) * 2))
