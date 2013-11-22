@@ -391,11 +391,14 @@ class Experiment(metaclass=collections.abc.ABCMeta):
         logging.debug('Running {} with context {}.'.format(section.level, section.context))
         if not demo:
             section.has_started = True
+
         if section.is_bottom_level:
             results = self.run_trial(**section.context)
             logging.debug('Results: {}.'.format(results))
             if not demo:
-                section.context.update(results)
+                section.add_data(results)
+                logging.debug('New context: {}.'.format(section.context))
+
         else:
             self.start(section.level, **section.context)
             for i, next_section in enumerate(section.children):
