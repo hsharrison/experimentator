@@ -44,11 +44,11 @@ class SampleExperiment(exp.Experiment):
         else:
             stem = str(iv['d']) + iv['c']
         leaf = iv['f'] * 2
-        return branch, stem, leaf
+        return {'branch_results': branch,
+                'stem_results': stem,
+                'leaf_results': leaf}
 
-sample_experiment = SampleExperiment(settings,
-                                     levels=levels,
-                                     output_names=('branch_results', 'stem_results', 'leaf_results'))
+sample_experiment = SampleExperiment(settings, levels=levels)
 sample_experiment.run(sample_experiment.root)
 sample_data = sample_experiment.data
 

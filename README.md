@@ -32,14 +32,13 @@ The `Experiment` subclass you've now written is agnostic to organization of the 
 
     my_experiment_instance = MyExperimentSubclass(settings_by_level,
                                                   levels=('participant', 'session', 'block', 'trial'),
-                                                  experiment_file=None,
-                                                  output_names=None)
+                                                  experiment_file=None)
 
 The positional argument is a mapping keyed on values of `levels`. The values are mappings keyed on `'ivs'`, `'sort'` and `'n'`. `ivs` is a mapping from independent variable names to a sequence of the possible values it can take. `sort` is a string (`random` currently the only option), or list of indices. `n` is the number of times each unique combination of IV values should appear at the associated level.
 
 These dictionaries aren't required to have an entry for each level. If there isn't an entry for any given level, that level will take the default behavior, which is no variables, one repeat, and no sort.
 
-Finally, `experiment_file` is a location to save the experiment instance (so that additional sessions can be run after closing the Python interpreter), and `output_names` is a sequence with one string per output of `run_trial` - it determines how the results are labeled in the output.
+Finally, `experiment_file` is a location to save the experiment instance (so that additional sessions can be run after closing the Python interpreter).
 
 Example
 ---
@@ -62,7 +61,7 @@ Example
 
         def run_trial(self, target='center', congruent=True, dual_task=False):
             ...
-            return correct, rt
+            return dict(correct=correct, rt=rt)
 
         def initialize_display(self):
             ...
@@ -83,8 +82,7 @@ Example
                 'block': dict(n=3)}
     my_experiment = MyExperiment(settings,
                                  levels=levels,
-                                 experiment_file='my_experiment.dat',
-                                 output_names=['Correct', 'Reaction Time'])
+                                 experiment_file='my_experiment.dat')
 
 This experiment has a mixed design, with one between-subjects IV, `dual_task`, and two within-subjects IVs, `target` and `congruent`. Each session will have 150 trials, organized into 3 blocks. The `'session'` and `'block'` levels in this experiment are only organizational (as they have no associated variables) and facilitate calls to `initialize_display`, `close_display`, and `offer_break`.
 

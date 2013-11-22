@@ -254,7 +254,6 @@ class Experiment(metaclass=collections.abc.ABCMeta):
                            n:    The number of times each unique combination of variables should appear at the
                                  associated level.
         levels:            A list of level names describing the experiment hierarchy.
-        output_names:      A list naming each DV (outputs of the run_trial method).
         root:              An ExperimentSection instance from which all experiment sections descend.
         data:              A pandas DataFrame. Before any sections are run, contains only the IV values of each trial.
                            Afterwards, contains both IV and DV values.
@@ -263,7 +262,6 @@ class Experiment(metaclass=collections.abc.ABCMeta):
     def __init__(self, settings_by_level,
                  levels=('participant', 'session', 'block', 'trial'),
                  experiment_file=None,
-                 output_names=None,
                  ):
         """
         Initialize an Experiment instance.
@@ -289,7 +287,6 @@ class Experiment(metaclass=collections.abc.ABCMeta):
 
         self.levels = levels
         self.settings_by_level = settings_by_level
-        self.output_names = output_names
 
         actual_levels = ['root']
         actual_levels.extend(self.levels)
@@ -398,7 +395,7 @@ class Experiment(metaclass=collections.abc.ABCMeta):
             results = self.run_trial(**section.context)
             logging.debug('Results: {}.'.format(results))
             if not demo:
-                section.context.update({n: r for n, r in zip(self.output_names, results)})
+                section.context.update(results)
         else:
             self.start(section.level, **section.context)
             for i, next_section in enumerate(section.children):
