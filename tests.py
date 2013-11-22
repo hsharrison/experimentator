@@ -3,7 +3,7 @@
 import collections
 import pandas as pd
 
-import experimentator as exp
+import experimentator.experimentator as exp
 
 levels = ('trunk', 'branch', 'stem', 'leaf')
 settings = {'trunk': dict(),
