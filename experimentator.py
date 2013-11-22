@@ -124,9 +124,9 @@ class ExperimentSection():
 
     Attributes:
         children:          A list of ExperimentSection instances.
-        context:           A ChainMap of IV name: value mappings that apply to all of the section's children.
+        context:           A ChainMap of IV name: value mappings that apply to all of the section's children. Contains
+                           results as well, if the section is at the lowest level.
         level:             The current level.
-        results:           (lowest level only) The results, as a dict which includes the IV values and section numbers.
         is_bottom_level:   True if this section is at the lowest level of the tree (a trial in the default hierarchy).
         next_level:        The next level.
         next_settings:     The next settings, a dict with keys 'ivs', 'sort', and 'n'.
@@ -159,9 +159,7 @@ class ExperimentSection():
             self.next_level = None
             self.next_settings = None
             self.next_level_inputs = None
-            self.results = self.context
         else:
-            self.results = None
             self.next_level = levels[1]
             self.next_settings = settings_by_level.get(self.next_level, dict())
             self.next_level_inputs = (levels[1:], settings_by_level)
@@ -235,7 +233,7 @@ class ExperimentSection():
     def generate_data(self):
         for child in self.children:
             if child.is_bottom_level:
-                yield child.results
+                yield child.context
             else:
                 yield from child.generate_data()
 
@@ -400,7 +398,7 @@ class Experiment(metaclass=collections.abc.ABCMeta):
             results = self.run_trial(**section.context)
             logging.debug('Results: {}.'.format(results))
             if not demo:
-                section.results.update({n: r for n, r in zip(self.output_names, results)})
+                section.context.update({n: r for n, r in zip(self.output_names, results)})
         else:
             self.start(section.level, **section.context)
             for i, next_section in enumerate(section.children):
