@@ -51,8 +51,12 @@ def parse_config(config_file):
     Experiment section. The other elements are the possible values (levels) of the IV. These values are interpreted by
     the Python interpreter, so proper syntax should be used for values that aren't simple strings or numbers.
     """
-    config = ConfigParser()
-    config.read_file(config_file)
+    if isinstance(config_file, ConfigParser):
+        config = config_file
+    else:
+        config = ConfigParser()
+        config.read_file(config_file)
+
     levels = config['Experiment']['levels'].split(',')
     sort_methods = config['Experiment']['sort methods'].split(',')
     number = config['Experiment']['number'].split(',')
