@@ -428,4 +428,4 @@ class Experiment(metaclass=collections.abc.ABCMeta):
 
     @collections.abc.abstractmethod
     def run_trial(self, **kwargs):
-        return None, None
+        return {}
