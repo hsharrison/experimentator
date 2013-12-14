@@ -336,7 +336,9 @@ class Experiment(metaclass=collections.abc.ABCMeta):
                 node = node.children[kwargs[level]-1]
             else:
                 logging.info('No {} specified, returning previous level.'.format(level))
-                return node
+                break
+
+        return node
 
     def find_first_not_run(self, at_level, by_started=True):
         """
