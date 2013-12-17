@@ -277,6 +277,15 @@ class Experiment():
         end_callbacks:     Dicts of levels mapped to lists of callbacks to be run at the start, between, and after
                            sections of the experiment.
 
+    Decorator methods:
+        run:               Run the decorated function at the lowest level of the experiment (e.g., each trial).
+        start:             Run the decorated function at the beginning of each section as a specific level. Input the
+                           level name to the decorator.
+        inter:             Run the decorated function at between each section as a specific level. Input the level name
+                           to the decorator.
+        end:               Run the decorated function after each section as a specific level. Input the level name to
+                           the decorator.
+
     """
     def __init__(self, config_file=None,
                  settings_by_level=None,
