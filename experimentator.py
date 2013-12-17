@@ -269,6 +269,11 @@ class Experiment():
         root:              An ExperimentSection instance from which all experiment sections descend.
         data:              A pandas DataFrame. Before any sections are run, contains only the IV values of each trial.
                            Afterwards, contains both IV and DV values.
+        run_callbacks:     A list of functions that are run at the lowest level.
+        start_callbacks,
+        inter_callbacks,
+        end_callbacks:     Dicts of levels mapped to lists of callbacks to be run at the start, between, and after
+                           sections of the experiment.
 
     """
     def __init__(self, config_file=None,
@@ -280,6 +285,8 @@ class Experiment():
         Initialize an Experiment instance.
 
         Args:
+            config_file:          Config filename or ConfigParser object which sets levels and settings_by_level. See
+                                  function parse_config for a description of the syntax.
             settings_by_level:    A mapping of level names to dicts with settings for each level, each mappings with the
                                   following keys:
                                   ivs:  A mapping of independent variables names to possible values, for the IVs that
@@ -291,8 +298,6 @@ class Experiment():
                                   The experiment's hierarchy of sections.
             experiment_file=None: A filename where the experiment instance will be pickled, in order to run some
                                   sections in a later Python session.
-            output_names=None:    A list naming each DV (outputs of the run_trial method). Will be column labels on the
-                                  data DataFrame.
         """
         if config_file:
             levels, settings_by_level = parse_config(config_file)
