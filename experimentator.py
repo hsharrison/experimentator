@@ -271,7 +271,8 @@ class Experiment(metaclass=collections.abc.ABCMeta):
                            Afterwards, contains both IV and DV values.
 
     """
-    def __init__(self, settings_by_level,
+    def __init__(self, config_file=None,
+                 settings_by_level=None,
                  levels=('participant', 'session', 'block', 'trial'),
                  experiment_file=None,
                  ):
@@ -293,6 +294,9 @@ class Experiment(metaclass=collections.abc.ABCMeta):
             output_names=None:    A list naming each DV (outputs of the run_trial method). Will be column labels on the
                                   data DataFrame.
         """
+        if config_file:
+            levels, settings_by_level = parse_config(config_file)
+
         for level in settings_by_level:
             if level not in levels:
                 raise KeyError('Unknown level {}.'.format(level))
