@@ -250,7 +250,7 @@ class ExperimentSection():
                 yield from child.generate_data()
 
 
-class Experiment(metaclass=collections.abc.ABCMeta):
+class Experiment():
     """
     Abstract base class for Experiments.
 
@@ -313,6 +313,11 @@ class Experiment(metaclass=collections.abc.ABCMeta):
             self.save(experiment_file)
         else:
             logging.warning('No experiment_file provided, not saving Experiment instance.')
+
+        self.run_callbacks = []
+        self.start_callbacks = {level: [] for level in levels}
+        self.inter_callbacks = {level: [] for level in levels}
+        self.end_callbacks = {level: [] for level in levels}
 
     @property
     def data(self):
@@ -407,36 +412,33 @@ class Experiment(metaclass=collections.abc.ABCMeta):
             demo=False: If demo, don't save data.
         """
         logging.debug('Running {} with context {}.'.format(section.level, section.context))
+
         if not demo:
             section.has_started = True
 
         if section.is_bottom_level:
-            results = self.run_trial(**section.context)
+            results = {}
+            for func in self.run_callbacks:
+                results.update(func(**section.context))
             logging.debug('Results: {}.'.format(results))
+
             if not demo:
                 section.add_data(**results)
                 logging.debug('New context: {}.'.format(section.context))
 
         else:
-            self.start(section.level, **section.context)
+            for func in self.start_callbacks:
+                func(**section.context)
+
             for i, next_section in enumerate(section.children):
-                if i:
-                    self.inter(next_section.level, **next_section.context)
+                if i:  # don't run inter on first section of level
+                    for func in self.inter_callbacks:
+                        func(**section.context)
+
                 self.run(next_section)
-            self.end(section.level, **section.context)
+
+            for func in self.end_callbacks:
+                func(**section.context)
+
         if not demo:
             section.has_finished = True
-
-    def start(self, level, **kwargs):
-        pass
-
-    def end(self, level, **kwargs):
-        pass
-
-    def inter(self, level, **kwargs):
-        pass
-
-    @collections.abc.abstractmethod
-    def run_trial(self, **kwargs):
-        return {}
-
