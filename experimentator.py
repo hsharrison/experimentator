@@ -106,6 +106,7 @@ def run_experiment_section(experiment, demo=False, section=None, **kwargs):
     else:
         loaded_from_file = True
         exp = load_experiment(experiment)
+        exp.experiment_file = experiment
 
     if not section:
         section = exp.find_section(**kwargs)
@@ -116,7 +117,7 @@ def run_experiment_section(experiment, demo=False, section=None, **kwargs):
         logging.warning('Quit event detected: {}.'.format(str(e)))
     finally:
         if loaded_from_file:
-            exp.save(experiment)
+            exp.save()
 
 
 def export_experiment_data(experiment_file, data_file):
@@ -269,6 +270,7 @@ class Experiment():
         root:              An ExperimentSection instance from which all experiment sections descend.
         data:              A pandas DataFrame. Before any sections are run, contains only the IV values of each trial.
                            Afterwards, contains both IV and DV values.
+        experiment_file:   Filename where the experiment is saved to.
         run_callbacks:     A list of functions that are run at the lowest level.
         start_callbacks,
         inter_callbacks,
@@ -314,25 +316,27 @@ class Experiment():
         self.root = ExperimentSection(
             collections.ChainMap(), actual_levels, self.settings_by_level)
 
-        if experiment_file:
-            self.save(experiment_file)
-        else:
-            logging.warning('No experiment_file provided, not saving Experiment instance.')
-
         self.run_callbacks = []
         self.start_callbacks = {level: [] for level in levels}
         self.inter_callbacks = {level: [] for level in levels}
         self.end_callbacks = {level: [] for level in levels}
+
+        self.experiment_file = experiment_file
+        self.save()
 
     @property
     def data(self):
         data = pd.DataFrame(self.root.generate_data()).set_index(list(self.levels))
         return data
 
-    def save(self, filename):
-        logging.debug('Saving Experiment instance to {}.'.format(filename))
-        with open(filename, 'wb') as f:
-            pickle.dump(self, f)
+    def save(self):
+        if self.experiment_file:
+            logging.debug('Saving Experiment instance to {}.'.format(self.experiment_file))
+            with open(self.experiment_file, 'wb') as f:
+                pickle.dump(self, f)
+
+        else:
+            logging.warning('Cannot save experiment: No filename provided.')
 
     def export_data(self, filename):
         with open(filename, 'w') as f:
