@@ -454,22 +454,35 @@ class Experiment():
 
     # Decorators
     def run(self, func):
+        """
+        Decorate a function with this to run that function at each trial.
+        """
         self.run_callbacks.append(func)
         self.save()
 
     def start(self, level):
+        """
+        Decorate a function with this to run it at the start of a section. Pass the level name as an input to the
+        decorator.
+        """
         def start_decorator(func):
             self.start_callbacks[level].append(func)
             self.save()
         return start_decorator
 
     def inter(self, level):
+        """
+        Decorate a function with this to run it at between sections. Pass the level name as an input to the decorator.
+        """
         def inter_decorator(func):
             self.inter_callbacks[level].append(func)
             self.save()
         return inter_decorator
 
     def end(self, level):
+        """
+        Decorate a function with this to run it at after each section. Pass the level name as an input to the decorator.
+        """
         def end_decorator(func):
             self.end_callbacks[level].append(func)
             self.save()
