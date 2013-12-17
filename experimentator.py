@@ -111,7 +111,7 @@ def run_experiment_section(experiment, demo=False, section=None, **kwargs):
         section = exp.find_section(**kwargs)
 
     try:
-        exp.run(section, demo=demo)
+        exp.run_section(section, demo=demo)
     except QuitSession as e:
         logging.warning('Quit event detected: {}.'.format(str(e)))
     finally:
@@ -399,7 +399,7 @@ class Experiment():
                 find_section_kwargs[k] = kwargs.pop(k)
         self.find_section(**find_section_kwargs).add_child_ad_hoc(**kwargs)
 
-    def run(self, section, demo=False):
+    def run_section(self, section, demo=False):
         """
         Run an experiment section.
 
@@ -435,10 +435,29 @@ class Experiment():
                     for func in self.inter_callbacks:
                         func(**section.context)
 
-                self.run(next_section)
+                self.run_section(next_section)
 
             for func in self.end_callbacks:
                 func(**section.context)
 
         if not demo:
             section.has_finished = True
+
+    # Decorators
+    def run(self, func):
+        self.run_callbacks.append(func)
+
+    def start(self, level):
+        def start_decorator(func):
+            self.start_callbacks[level].append(func)
+        return start_decorator
+
+    def inter(self, level):
+        def inter_decorator(func):
+            self.inter_callbacks[level].append(func)
+        return inter_decorator
+
+    def end(self, level):
+        def end_decorator(func):
+            self.end_callbacks[level].append(func)
+        return end_decorator
