@@ -81,6 +81,14 @@ def parse_config(config_file):
     return levels, settings_by_level
 
 
+def load_experiment(experiment_file):
+    """
+    Loads an experiment file. Returns the experiment instance.
+    """
+    with open(experiment_file, 'rb') as f:
+        return pickle.load(f)
+
+
 def run_experiment_section(experiment, demo=False, section=None, **kwargs):
     """
     Run an experiment instance from a file, and saves it. Monitors for QuitSession exceptions (If a QuitSession
@@ -97,7 +105,7 @@ def run_experiment_section(experiment, demo=False, section=None, **kwargs):
         exp = experiment
     else:
         loaded_from_file = True
-        exp = Experiment.load_experiment(experiment)
+        exp = load_experiment(experiment)
 
     if not section:
         section = exp.find_section(**kwargs)
@@ -115,7 +123,7 @@ def export_experiment_data(experiment_file, data_file):
     """
     Reads a pickled experiment instance from experiment_file and saves its data in csv format to data_file.
     """
-    Experiment.load_experiment(experiment_file).export_data(data_file)
+    load_experiment(experiment_file).export_data(data_file)
 
 
 class ExperimentSection():
@@ -415,14 +423,6 @@ class Experiment(metaclass=collections.abc.ABCMeta):
         if not demo:
             section.has_finished = True
 
-    @staticmethod
-    def load_experiment(experiment_file):
-        """
-        Loads an experiment file. Returns the experiment instance.
-        """
-        with open(experiment_file, 'rb') as f:
-            return pickle.load(f)
-
     def start(self, level, **kwargs):
         pass
 
@@ -435,3 +435,4 @@ class Experiment(metaclass=collections.abc.ABCMeta):
     @collections.abc.abstractmethod
     def run_trial(self, **kwargs):
         return {}
+
