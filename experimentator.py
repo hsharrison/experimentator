@@ -445,17 +445,17 @@ class Experiment():
                 logging.debug('New context: {}.'.format(section.context))
 
         else:
-            for func in self.start_callbacks:
+            for func in self.start_callbacks[section.level]:
                 func(**section.context)
 
             for i, next_section in enumerate(section.children):
                 if i:  # don't run inter on first section of level
-                    for func in self.inter_callbacks:
-                        func(**section.context)
+                    for func in self.inter_callbacks[section.next_level]:
+                        func(**next_section.context)
 
                 self.run_section(next_section)
 
-            for func in self.end_callbacks:
+            for func in self.end_callbacks[section.level]:
                 func(**section.context)
 
         if not demo:
