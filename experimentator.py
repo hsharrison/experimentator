@@ -81,6 +81,14 @@ def parse_config(config_file):
     return levels, settings_by_level
 
 
+def load_experiment(experiment_file):
+    """
+    Loads an experiment file. Returns the experiment instance.
+    """
+    with open(experiment_file, 'rb') as f:
+        return pickle.load(f)
+
+
 def run_experiment_section(experiment, demo=False, section=None, **kwargs):
     """
     Run an experiment instance from a file, and saves it. Monitors for QuitSession exceptions (If a QuitSession
@@ -97,25 +105,26 @@ def run_experiment_section(experiment, demo=False, section=None, **kwargs):
         exp = experiment
     else:
         loaded_from_file = True
-        exp = Experiment.load_experiment(experiment)
+        exp = load_experiment(experiment)
+        exp.experiment_file = experiment
 
     if not section:
         section = exp.find_section(**kwargs)
 
     try:
-        exp.run(section, demo=demo)
+        exp.run_section(section, demo=demo)
     except QuitSession as e:
         logging.warning('Quit event detected: {}.'.format(str(e)))
     finally:
         if loaded_from_file:
-            exp.save(experiment)
+            exp.save()
 
 
 def export_experiment_data(experiment_file, data_file):
     """
     Reads a pickled experiment instance from experiment_file and saves its data in csv format to data_file.
     """
-    Experiment.load_experiment(experiment_file).export_data(data_file)
+    load_experiment(experiment_file).export_data(data_file)
 
 
 class ExperimentSection():
@@ -242,7 +251,7 @@ class ExperimentSection():
                 yield from child.generate_data()
 
 
-class Experiment(metaclass=collections.abc.ABCMeta):
+class Experiment():
     """
     Abstract base class for Experiments.
 
@@ -261,9 +270,25 @@ class Experiment(metaclass=collections.abc.ABCMeta):
         root:              An ExperimentSection instance from which all experiment sections descend.
         data:              A pandas DataFrame. Before any sections are run, contains only the IV values of each trial.
                            Afterwards, contains both IV and DV values.
+        experiment_file:   Filename where the experiment is saved to.
+        run_callbacks:     A list of functions that are run at the lowest level.
+        start_callbacks,
+        inter_callbacks,
+        end_callbacks:     Dicts of levels mapped to lists of callbacks to be run at the start, between, and after
+                           sections of the experiment.
+
+    Decorator methods:
+        run:               Run the decorated function at the lowest level of the experiment (e.g., each trial).
+        start:             Run the decorated function at the beginning of each section as a specific level. Input the
+                           level name to the decorator.
+        inter:             Run the decorated function at between each section as a specific level. Input the level name
+                           to the decorator.
+        end:               Run the decorated function after each section as a specific level. Input the level name to
+                           the decorator.
 
     """
-    def __init__(self, settings_by_level,
+    def __init__(self, config_file=None,
+                 settings_by_level=None,
                  levels=('participant', 'session', 'block', 'trial'),
                  experiment_file=None,
                  ):
@@ -271,6 +296,8 @@ class Experiment(metaclass=collections.abc.ABCMeta):
         Initialize an Experiment instance.
 
         Args:
+            config_file:          Config filename or ConfigParser object which sets levels and settings_by_level. See
+                                  function parse_config for a description of the syntax.
             settings_by_level:    A mapping of level names to dicts with settings for each level, each mappings with the
                                   following keys:
                                   ivs:  A mapping of independent variables names to possible values, for the IVs that
@@ -282,9 +309,10 @@ class Experiment(metaclass=collections.abc.ABCMeta):
                                   The experiment's hierarchy of sections.
             experiment_file=None: A filename where the experiment instance will be pickled, in order to run some
                                   sections in a later Python session.
-            output_names=None:    A list naming each DV (outputs of the run_trial method). Will be column labels on the
-                                  data DataFrame.
         """
+        if config_file:
+            levels, settings_by_level = parse_config(config_file)
+
         for level in settings_by_level:
             if level not in levels:
                 raise KeyError('Unknown level {}.'.format(level))
@@ -297,20 +325,27 @@ class Experiment(metaclass=collections.abc.ABCMeta):
         self.root = ExperimentSection(
             collections.ChainMap(), actual_levels, self.settings_by_level)
 
-        if experiment_file:
-            self.save(experiment_file)
-        else:
-            logging.warning('No experiment_file provided, not saving Experiment instance.')
+        self.run_callbacks = []
+        self.start_callbacks = {level: [] for level in actual_levels}
+        self.inter_callbacks = {level: [] for level in actual_levels}
+        self.end_callbacks = {level: [] for level in actual_levels}
+
+        self.experiment_file = experiment_file
+        self.save()
 
     @property
     def data(self):
         data = pd.DataFrame(self.root.generate_data()).set_index(list(self.levels))
         return data
 
-    def save(self, filename):
-        logging.debug('Saving Experiment instance to {}.'.format(filename))
-        with open(filename, 'wb') as f:
-            pickle.dump(self, f)
+    def save(self):
+        if self.experiment_file:
+            logging.debug('Saving Experiment instance to {}.'.format(self.experiment_file))
+            with open(self.experiment_file, 'wb') as f:
+                pickle.dump(self, f)
+
+        else:
+            logging.warning('Cannot save experiment: No filename provided.')
 
     def export_data(self, filename):
         with open(filename, 'w') as f:
@@ -382,7 +417,7 @@ class Experiment(metaclass=collections.abc.ABCMeta):
                 find_section_kwargs[k] = kwargs.pop(k)
         self.find_section(**find_section_kwargs).add_child_ad_hoc(**kwargs)
 
-    def run(self, section, demo=False):
+    def run_section(self, section, demo=False):
         """
         Run an experiment section.
 
@@ -395,43 +430,69 @@ class Experiment(metaclass=collections.abc.ABCMeta):
             demo=False: If demo, don't save data.
         """
         logging.debug('Running {} with context {}.'.format(section.level, section.context))
+
         if not demo:
             section.has_started = True
 
         if section.is_bottom_level:
-            results = self.run_trial(**section.context)
+            results = {}
+            for func in self.run_callbacks:
+                results.update(func(**section.context))
             logging.debug('Results: {}.'.format(results))
+
             if not demo:
                 section.add_data(**results)
                 logging.debug('New context: {}.'.format(section.context))
 
         else:
-            self.start(section.level, **section.context)
+            for func in self.start_callbacks[section.level]:
+                func(**section.context)
+
             for i, next_section in enumerate(section.children):
-                if i:
-                    self.inter(next_section.level, **next_section.context)
-                self.run(next_section)
-            self.end(section.level, **section.context)
+                if i:  # don't run inter on first section of level
+                    for func in self.inter_callbacks[section.next_level]:
+                        func(**next_section.context)
+
+                self.run_section(next_section)
+
+            for func in self.end_callbacks[section.level]:
+                func(**section.context)
+
         if not demo:
             section.has_finished = True
 
-    @staticmethod
-    def load_experiment(experiment_file):
+    # Decorators
+    def run(self, func):
         """
-        Loads an experiment file. Returns the experiment instance.
+        Decorate a function with this to run that function at each trial.
         """
-        with open(experiment_file, 'rb') as f:
-            return pickle.load(f)
+        self.run_callbacks.append(func)
+        self.save()
 
-    def start(self, level, **kwargs):
-        pass
+    def start(self, level):
+        """
+        Decorate a function with this to run it at the start of a section. Pass the level name as an input to the
+        decorator.
+        """
+        def start_decorator(func):
+            self.start_callbacks[level].append(func)
+            self.save()
+        return start_decorator
 
-    def end(self, level, **kwargs):
-        pass
+    def inter(self, level):
+        """
+        Decorate a function with this to run it at between sections. Pass the level name as an input to the decorator.
+        """
+        def inter_decorator(func):
+            self.inter_callbacks[level].append(func)
+            self.save()
+        return inter_decorator
 
-    def inter(self, level, **kwargs):
-        pass
-
-    @collections.abc.abstractmethod
-    def run_trial(self, **kwargs):
-        return {}
+    def end(self, level):
+        """
+        Decorate a function with this to run it at after each section. Pass the level name as an input to the decorator.
+        """
+        def end_decorator(func):
+            self.end_callbacks[level].append(func)
+            self.save()
+        return end_decorator

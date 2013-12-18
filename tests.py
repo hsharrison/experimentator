@@ -36,20 +36,23 @@ def check_n_children(node):
     assert len(node.children) == n_children[node.level]
 
 
-class SampleExperiment(exp.Experiment):
-    def run_trial(self, **iv):
-        branch = iv['a'] + iv['b']
-        if iv['e']:
-            stem = iv['c'] + str(iv['d'])
-        else:
-            stem = str(iv['d']) + iv['c']
-        leaf = iv['f'] * 2
-        return {'branch_results': branch,
-                'stem_results': stem,
-                'leaf_results': leaf}
+sample_experiment = exp.Experiment(settings_by_level=settings,
+                                   levels=levels)
 
-sample_experiment = SampleExperiment(settings, levels=levels)
-sample_experiment.run(sample_experiment.root)
+
+@sample_experiment.run
+def run_trial(**iv):
+    branch = iv['a'] + iv['b']
+    if iv['e']:
+        stem = iv['c'] + str(iv['d'])
+    else:
+        stem = str(iv['d']) + iv['c']
+    leaf = iv['f'] * 2
+    return {'branch_results': branch,
+            'stem_results': stem,
+            'leaf_results': leaf}
+
+sample_experiment.run_section(sample_experiment.root)
 sample_data = sample_experiment.data
 
 
