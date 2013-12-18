@@ -326,9 +326,9 @@ class Experiment():
             collections.ChainMap(), actual_levels, self.settings_by_level)
 
         self.run_callbacks = []
-        self.start_callbacks = {level: [] for level in levels}
-        self.inter_callbacks = {level: [] for level in levels}
-        self.end_callbacks = {level: [] for level in levels}
+        self.start_callbacks = {level: [] for level in actual_levels}
+        self.inter_callbacks = {level: [] for level in actual_levels}
+        self.end_callbacks = {level: [] for level in actual_levels}
 
         self.experiment_file = experiment_file
         self.save()
