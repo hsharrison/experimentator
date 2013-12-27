@@ -3,7 +3,7 @@
 from distutils.core import setup
 
 setup(name='experimentator',
-      version='0.1',
+      version='0.2',
       author='Henry S. Harrison',
       author_email='henry.schafer.harrison@gmail.com',
       url='https://bitbucket.org/hharrison/experimentator',
