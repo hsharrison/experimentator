@@ -182,21 +182,25 @@ class ExperimentSection():
             self.next_level_inputs = (levels[1:], settings_by_level)
 
             # Create the section tree. Creating any section also creates the sections below it
-            for i, section_context in enumerate(self.get_child_contexts()):
-                child_context = self.context.new_child()
-                child_context.update(section_context)
+            for i, child_context in enumerate(self.get_child_contexts(self.context)):
                 child_context[self.next_level] = i+1
                 logging.debug('Generating {} with context {}.'.format(self.next_level, child_context))
                 self.children.append(ExperimentSection(child_context, *self.next_level_inputs))
 
-    def get_child_contexts(self):
+    def get_child_contexts(self, parent_context):
         """
         Crosses the section's independent variables, and sorts and repeats the unique combinations to yield the
         context for the section's children.
         """
         ivs = self.next_settings.get('ivs', dict())
         iv_combinations = itertools.product(*[v for v in ivs.values()])
-        unique_contexts = [{k: v for k, v in zip(ivs, condition)} for condition in iv_combinations]
+
+        unique_contexts = []
+        for iv_values in iv_combinations:
+            new_context = parent_context.new_child()
+            new_context.update(dict(zip(ivs, iv_values)))
+            unique_contexts.append(new_context)
+
         logging.debug('Sorting {} with unique contexts {}.'.format(self.next_level, unique_contexts))
         yield from self.sort_and_repeat(unique_contexts)
 
