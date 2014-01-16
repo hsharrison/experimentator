@@ -60,6 +60,7 @@ sample_data = sample_experiment.data
 def test_experiment_data():
     assert len(sample_data) == total_leafs
     assert all(sample_data['leaf_results'] == 2*sample_data['f'])
+    assert all(sample_data['branch_results'] == sample_data['a'] + sample_data['b'])
     assert all(sample_data['a'] + sample_data['b'] == sample_data['branch_results'])
     for i in range(3):
-        assert(sum(sample_data['b'] == i) == 2 * total_leafs//6)
+        assert sum(sample_data['b'] == i) == 2 * total_leafs//6
