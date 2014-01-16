@@ -134,7 +134,7 @@ Dependencies
 ------------
 
   * Python 3.3
-  * Pandas 0.13 (still in development as of 12/17/2013)
+  * Pandas 0.13
 
 License
 -------
