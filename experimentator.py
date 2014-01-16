@@ -7,13 +7,14 @@ experimental sessions in which inputs to your trial function are systematically 
 
 
 """
-
 import re
 import itertools
 import collections
 import logging
 import pickle
 import random
+import os
+from datetime import datetime
 from configparser import ConfigParser
 
 import pandas as pd
@@ -115,6 +116,9 @@ def run_experiment_section(experiment, demo=False, section=None, **kwargs):
         exp.run_section(section, demo=demo)
     except QuitSession as e:
         logging.warning('Quit event detected: {}.'.format(str(e)))
+        # Backup experiment file.
+        os.rename(experiment.experiment_file,
+                  experiment.experiment_file + datetime.now().strftime('.%m-%d-%H-%M-backup'))
     finally:
         if loaded_from_file:
             exp.save()
