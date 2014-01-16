@@ -7,7 +7,6 @@ experimental sessions in which inputs to your trial function are systematically 
 
 
 """
-import re
 import itertools
 import collections
 import logging
@@ -41,16 +40,16 @@ def parse_config(config_file):
 
     [Experiment]
     levels = comma-separated list
-    sort methods = list, separated by commas or semicolons (for use when one or more sort method includes a comma)
+    sort methods = list, separated by commas
     number = comma-separated list of integers
 
     [Independent Variables]
-    variable name = level, comma- or semicolon-separated list of values
+    variable = level, comma- or semicolon-separated list of values
 
     That is, each entry name in the Independent Variables section is interpreted as a variable name. The entry string is
-    interpreted as a comma- or semicolon-separated. The first element should match one of the levels specified in the
-    Experiment section. The other elements are the possible values (levels) of the IV. These values are interpreted by
-    the Python interpreter, so proper syntax should be used for values that aren't simple strings or numbers.
+    interpreted as a comma- or semicolon-separated list. The first element should match one of the levels specified in
+    the Experiment section. The other elements are the possible values (levels) of the IV. These values are interpreted
+    by the Python interpreter, so proper syntax should be used for values that aren't simple strings or numbers.
     """
     if isinstance(config_file, ConfigParser):
         config = config_file
@@ -61,12 +60,6 @@ def parse_config(config_file):
     levels = config['Experiment']['levels'].split(',')
     sort_methods = config['Experiment']['sort methods'].split(',')
     number = config['Experiment']['number'].split(',')
-
-    # Allow for use of ';' in sort, so sequences can be input
-    if len(sort_methods) != len(levels):
-        sort_methods = config['Experiment']['sort methods'].split(';')
-    # Allow for non-string sort methods, check by looking for non-alphanumeric characters
-    sort_methods = [sort if re.match('\w+$', sort) else eval(sort) for sort in sort_methods]
 
     settings_by_level = {level: dict(sort=sort, number=int(n), ivs={})
                          for level, sort, n in zip(levels, sort_methods, number)}
@@ -163,7 +156,7 @@ class ExperimentSection():
                                 levels[1:] the names of its descendants.
             settings_by_level:  A mapping from the elements of levels to dicts with keys:
                                 ivs:   independent variables, as mapping from names to possible values
-                                sort:  sort method, string (e.g., 'random'), sequence of indices, or None
+                                sort:  string (e.g., 'random') or None
                                 n:     number of repeats of each unique combination of ivs
         """
         self.has_started = False
@@ -217,18 +210,15 @@ class ExperimentSection():
         """
         method = self.next_settings.get('sort', None)
         n = self.next_settings.get('n', 1)
-        if method == 'random':
+        if not method:
+            yield from n * unique_contexts
+        elif method == 'random':
             new_seq = n * unique_contexts
             random.shuffle(new_seq)
             yield from new_seq
         #TODO: More sorts (e.g. counterbalance)
-        elif isinstance(method, str):
-            raise TypeError('Unrecognized sort method {}.'.format(method))
-        elif not method:
-            yield from n * unique_contexts
         else:
-            # Try to index as the last resort
-            yield from n * list(unique_contexts[idx] for idx in method)
+            raise ValueError('Unrecognized sort method {}.'.format(method))
 
     def add_child_ad_hoc(self, **kwargs):
         """
