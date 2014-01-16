@@ -7,13 +7,13 @@ experimental sessions in which inputs to your trial function are systematically 
 
 
 """
-
-import re
 import itertools
 import collections
 import logging
 import pickle
 import random
+import os
+from datetime import datetime
 from configparser import ConfigParser
 
 import pandas as pd
@@ -40,16 +40,16 @@ def parse_config(config_file):
 
     [Experiment]
     levels = comma-separated list
-    sort methods = list, separated by commas or semicolons (for use when one or more sort method includes a comma)
+    sort methods = list, separated by commas
     number = comma-separated list of integers
 
     [Independent Variables]
-    variable name = level, comma- or semicolon-separated list of values
+    variable = level, comma- or semicolon-separated list of values
 
     That is, each entry name in the Independent Variables section is interpreted as a variable name. The entry string is
-    interpreted as a comma- or semicolon-separated. The first element should match one of the levels specified in the
-    Experiment section. The other elements are the possible values (levels) of the IV. These values are interpreted by
-    the Python interpreter, so proper syntax should be used for values that aren't simple strings or numbers.
+    interpreted as a comma- or semicolon-separated list. The first element should match one of the levels specified in
+    the Experiment section. The other elements are the possible values (levels) of the IV. These values are interpreted
+    by the Python interpreter, so proper syntax should be used for values that aren't simple strings or numbers.
     """
     if isinstance(config_file, ConfigParser):
         config = config_file
@@ -60,12 +60,6 @@ def parse_config(config_file):
     levels = config['Experiment']['levels'].split(',')
     sort_methods = config['Experiment']['sort methods'].split(',')
     number = config['Experiment']['number'].split(',')
-
-    # Allow for use of ';' in sort, so sequences can be input
-    if len(sort_methods) != len(levels):
-        sort_methods = config['Experiment']['sort methods'].split(';')
-    # Allow for non-string sort methods, check by looking for non-alphanumeric characters
-    sort_methods = [sort if re.match('\w+$', sort) else eval(sort) for sort in sort_methods]
 
     settings_by_level = {level: dict(sort=sort, number=int(n), ivs={})
                          for level, sort, n in zip(levels, sort_methods, number)}
@@ -115,6 +109,9 @@ def run_experiment_section(experiment, demo=False, section=None, **kwargs):
         exp.run_section(section, demo=demo)
     except QuitSession as e:
         logging.warning('Quit event detected: {}.'.format(str(e)))
+        # Backup experiment file.
+        os.rename(experiment.experiment_file,
+                  experiment.experiment_file + datetime.now().strftime('.%m-%d-%H-%M-backup'))
     finally:
         if loaded_from_file:
             exp.save()
@@ -159,7 +156,7 @@ class ExperimentSection():
                                 levels[1:] the names of its descendants.
             settings_by_level:  A mapping from the elements of levels to dicts with keys:
                                 ivs:   independent variables, as mapping from names to possible values
-                                sort:  sort method, string (e.g., 'random'), sequence of indices, or None
+                                sort:  string (e.g., 'random') or None
                                 n:     number of repeats of each unique combination of ivs
         """
         self.has_started = False
@@ -178,21 +175,25 @@ class ExperimentSection():
             self.next_level_inputs = (levels[1:], settings_by_level)
 
             # Create the section tree. Creating any section also creates the sections below it
-            for i, section_context in enumerate(self.get_child_contexts()):
-                child_context = self.context.new_child()
-                child_context.update(section_context)
+            for i, child_context in enumerate(self.get_child_contexts(self.context)):
                 child_context[self.next_level] = i+1
                 logging.debug('Generating {} with context {}.'.format(self.next_level, child_context))
                 self.children.append(ExperimentSection(child_context, *self.next_level_inputs))
 
-    def get_child_contexts(self):
+    def get_child_contexts(self, parent_context):
         """
         Crosses the section's independent variables, and sorts and repeats the unique combinations to yield the
         context for the section's children.
         """
         ivs = self.next_settings.get('ivs', dict())
         iv_combinations = itertools.product(*[v for v in ivs.values()])
-        unique_contexts = [{k: v for k, v in zip(ivs, condition)} for condition in iv_combinations]
+
+        unique_contexts = []
+        for iv_values in iv_combinations:
+            new_context = parent_context.new_child()
+            new_context.update(dict(zip(ivs, iv_values)))
+            unique_contexts.append(new_context)
+
         logging.debug('Sorting {} with unique contexts {}.'.format(self.next_level, unique_contexts))
         yield from self.sort_and_repeat(unique_contexts)
 
@@ -209,18 +210,25 @@ class ExperimentSection():
         """
         method = self.next_settings.get('sort', None)
         n = self.next_settings.get('n', 1)
-        if method == 'random':
+        if not method:
+            yield from n * unique_contexts
+        elif method == 'random':
             new_seq = n * unique_contexts
             random.shuffle(new_seq)
             yield from new_seq
-        #TODO: More sorts (e.g. counterbalance)
-        elif isinstance(method, str):
-            raise TypeError('Unrecognized sort method {}.'.format(method))
-        elif not method:
-            yield from n * unique_contexts
+        elif method == 'counterbalance':
+            #TODO: Implement me
+            pass
+        elif method == 'ordered':
+            for context in unique_contexts:
+                if 'order' not in context.maps[1] or context.maps[1]['order'] not in ('ascending', 'descending'):
+                    raise ValueError("No independent variable 'order' with value 'ascending' or 'descending' " +
+                                     "one level above level with sort method 'ordered'")
+                if len(context.maps[0]) != 1:
+                    raise ValueError("More than one independent variable in level with sort method 'ordered'")
+            #TODO: Implement me
         else:
-            # Try to index as the last resort
-            yield from n * list(unique_contexts[idx] for idx in method)
+            raise ValueError('Unrecognized sort method {}.'.format(method))
 
     def add_child_ad_hoc(self, **kwargs):
         """

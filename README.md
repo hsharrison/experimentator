@@ -19,13 +19,13 @@ If you would like some variables to have other behavior, for example to vary ran
 
 Usage
 -----
-First, create an `Experiment` instance objects, as so:
+First, create an `Experiment` instance, as so:
 
-    my_experiment = Experiment(settings_by_level,
+    my_experiment = Experiment(settings_by_level=complicated_dict_with_lots_of_settings,
                     levels=('participant', 'session', 'block', 'trial'),
                     experiment_file='experiment.dat')
 
-The positional argument is a mapping keyed on values of `levels`. The values are mappings keyed on `'ivs'`, `'sort'` and `'n'`. `ivs` is a mapping from independent variable names to a sequence of the possible values it can take. `sort` is a string (`random` currently the only option), or list of indices. `n` is the number of times each unique combination of IV values should appear at the associated level. These dictionaries aren't required to have an entry for each level. If there isn't an entry for any given level, that level will take the default behavior, which is no variables, `n = 1`, and no sort.
+`settings_by_level` is a mapping keyed on values of `levels` (alternatively, use a config file; see below). The values are mappings keyed on `'ivs'`, `'sort'` and `'n'`. `ivs` is a mapping from independent variable names to a sequence of the possible values it can take. `sort` is a string (`random` currently the only option), or None/False/empty if you don't care about the order here. `n` is the number of times each unique combination of IV values should appear at the associated level. These dictionaries aren't required to have an entry for each level. If there isn't an entry for any given level, that level will take the default behavior, which is no variables, `n = 1`, and no sort.
 
 Finally, `experiment_file` is a location to save the experiment instance (so that additional sessions can be run after closing the Python interpreter).
 
@@ -122,19 +122,19 @@ Config file format
 -------
     [Experiment]
     levels = comma-separated list
-    sort methods = list, separated by commas or semicolons (for use when one or more sort method includes a comma)
+    sort methods = list, separated by commas
     number = comma-separated list of integers
 
     [Independent Variables]
     variable name = level, comma- or semicolon-separated list of values
 
-That is, each entry name in the Independent Variables section is interpreted as a variable name. The entry string is interpreted as a comma- or semicolon-separated. The first element should match one of the levels specified in the Experiment section. The other elements are the possible values (levels) of the IV. These values are interpreted by the Python interpreter, so proper syntax should be used for values that aren't simple strings or numbers.
+That is, each entry name in the Independent Variables section is interpreted as a variable name. The entry string is interpreted as a comma- or semicolon-separated list. The first element should match one of the levels specified in the Experiment section. The other elements are the possible values (levels) of the IV. These values are interpreted by the Python interpreter, so proper syntax should be used for values that aren't simple strings or numbers.
 
 Dependencies
 ------------
 
   * Python 3.3
-  * Pandas 0.13 (still in development as of 12/17/2013)
+  * Pandas 0.13
 
 License
 -------
