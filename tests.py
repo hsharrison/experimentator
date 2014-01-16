@@ -12,7 +12,7 @@ settings = {'trunk': dict(),
                          sort='random',
                          n=1),
             'leaf': dict(ivs={'f': range(6)},
-                         sort=list(reversed(range(6))),
+                         sort='random',
                          n=2)}
 
 n_children = dict(trunk=2*3, branch=3*4*2, stem=6*2, leaf=0)
@@ -59,8 +59,7 @@ sample_data = sample_experiment.data
 #noinspection PyTypeChecker
 def test_experiment_data():
     assert len(sample_data) == total_leafs
-    assert all(sample_data['f'] == pd.Series([5, 4, 3, 2, 1, 0] * 2 * total_stems))
-    assert all(sample_data['leaf_results'] == pd.Series([10, 8, 6, 4, 2, 0] * 2 * total_stems))
+    assert all(sample_data['leaf_results'] == 2*sample_data['f'])
     assert all(sample_data['a'] + sample_data['b'] == sample_data['branch_results'])
     for i in range(3):
         assert(sum(sample_data['b'] == i) == 2 * total_leafs//6)
