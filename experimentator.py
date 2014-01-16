@@ -216,7 +216,17 @@ class ExperimentSection():
             new_seq = n * unique_contexts
             random.shuffle(new_seq)
             yield from new_seq
-        #TODO: More sorts (e.g. counterbalance)
+        elif method == 'counterbalance':
+            #TODO: Implement me
+            pass
+        elif method == 'ordered':
+            for context in unique_contexts:
+                if 'order' not in context.maps[1] or context.maps[1]['order'] not in ('ascending', 'descending'):
+                    raise ValueError("No independent variable 'order' with value 'ascending' or 'descending' " +
+                                     "one level above level with sort method 'ordered'")
+                if len(context.maps[0]) != 1:
+                    raise ValueError("More than one independent variable in level with sort method 'ordered'")
+            #TODO: Implement me
         else:
             raise ValueError('Unrecognized sort method {}.'.format(method))
 
