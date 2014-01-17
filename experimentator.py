@@ -224,16 +224,16 @@ class ExperimentSection():
             pass
 
         elif method == 'ordered':
-            if 'order' not in unique_contexts[0].maps[1] \
-                    or unique_contexts[0].maps[1]['order'] not in ('ascending', 'descending'):
+            if 'order' not in self.context or self.context['order'] not in ('ascending', 'descending'):
                 raise ValueError("No independent variable 'order' with value 'ascending' or 'descending' " +
                                  "one level above level with sort method 'ordered'")
             if len(unique_contexts[0].maps[0]) != 1:
                 raise ValueError("More than one independent variable in level with sort method 'ordered'")
             if n != 1:
                 raise ValueError("n != 1 with sort method 'ordered'")
-            reverse = unique_contexts[0].maps[1]['order'] == 'descending'
-            yield from sorted(unique_contexts, key=lambda c: list(c.maps[0].values())[0], reverse=reverse)
+            yield from sorted(unique_contexts,
+                              key=lambda c: list(c.maps[0].values())[0],
+                              reverse=self.context['order'] == 'descending')
 
         else:
             raise ValueError('Unrecognized sort method {}.'.format(method))
