@@ -185,12 +185,12 @@ class ExperimentSection():
         """
         Crosses the section's independent variables, and yields the unique combinations.
         """
-        ivs = self.next_settings.get('ivs', dict())
+        ivs = self.next_settings.get('ivs', {})
         iv_combinations = itertools.product(*ivs.values())
 
         for iv_values in iv_combinations:
             new_context = parent_context.new_child()
-            new_context.update(dict(zip(ivs, iv_values)))
+            new_context.update(zip(ivs, iv_values))
             yield new_context
 
     def sort_and_repeat(self, unique_contexts):
