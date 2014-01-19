@@ -252,7 +252,7 @@ class ExperimentSection():
                 reverse_sort = False
             else:
                 reverse_sort = self.context['order'] == 'descending'
-            yield from sorted(unique_contexts, key=lambda c: list(c.maps[0].values())[0], reverse=reverse_sort)
+            yield from sorted(unique_contexts, key=lambda c: list(c.values())[0], reverse=reverse_sort)
 
         else:
             raise ValueError('Unrecognized sort method {}.'.format(method))
