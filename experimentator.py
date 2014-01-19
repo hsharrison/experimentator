@@ -247,7 +247,7 @@ class ExperimentSection():
             yield from self.context['order']
 
         elif method == 'ordered':
-            if len(unique_contexts[0].maps[0]) != 1:
+            if len(unique_contexts[0]) != 1:
                 raise ValueError("More than one independent variable at level with sort method 'ordered'")
             if 'order' not in self.context or self.context['order'] not in ('ascending', 'descending'):
                 logging.warning("Sort method 'ordered' used without specifying ascending or descending order. " +
