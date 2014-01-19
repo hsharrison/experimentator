@@ -124,6 +124,24 @@ def export_experiment_data(experiment_file, data_file):
     load_experiment(experiment_file).export_data(data_file)
 
 
+def _unique_child_contexts(ivs, parent_context):
+    """
+    Crosses the section's independent variables, and yields the unique combinations.
+    """
+    try:
+        iv_names, iv_values = zip(*ivs.items())
+    except ValueError:
+        # Workaround because zip doesn't want to return two elements if ivs is empty.
+        iv_names = ()
+        iv_values = ()
+    iv_combinations = itertools.product(*iv_values)
+
+    for iv_combination in iv_combinations:
+        new_context = parent_context.new_child()
+        new_context.update(zip(iv_names, iv_combination))
+        yield new_context
+
+
 class ExperimentSection():
     """
     A section of an experiment, e.g. session, block, trial.
@@ -175,29 +193,11 @@ class ExperimentSection():
             self.next_level_inputs = (levels[1:], settings_by_level)
 
             # Create the section tree. Creating any section also creates the sections below it
-            unique_contexts = list(self.get_unique_child_contexts(self.context))
+            unique_contexts = list(_unique_child_contexts(self.next_settings.get('ivs', {}), self.context))
             for i, child_context in enumerate(self.sort_and_repeat(unique_contexts)):
                 child_context[self.next_level] = i+1
                 logging.debug('Generating {} with context {}.'.format(self.next_level, child_context))
                 self.children.append(ExperimentSection(child_context, *self.next_level_inputs))
-
-    def get_unique_child_contexts(self, parent_context):
-        """
-        Crosses the section's independent variables, and yields the unique combinations.
-        """
-        ivs = self.next_settings.get('ivs', {})
-        try:
-            iv_names, iv_values = zip(*ivs.items())
-        except ValueError:
-            # Workaround because zip doesn't want to return two elements if ivs is empty.
-            iv_names = ()
-            iv_values = ()
-        iv_combinations = itertools.product(*iv_values)
-
-        for iv_combination in iv_combinations:
-            new_context = parent_context.new_child()
-            new_context.update(zip(iv_names, iv_combination))
-            yield new_context
 
     def sort_and_repeat(self, unique_contexts):
         """
