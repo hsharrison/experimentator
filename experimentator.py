@@ -142,7 +142,7 @@ def _unique_iv_combinations(ivs):
 
 def _non_atomic_orders(levels, settings_by_level):
     for level, next_level in zip(levels[:-1], levels[1:]):
-        sort = settings_by_level[next_level]['sort']
+        sort = settings_by_level[next_level].get('sort')
 
         if sort == 'complete-counterbalance':
             next_level_ivs = settings_by_level[next_level].get('ivs', {})
@@ -205,6 +205,9 @@ class ExperimentSection():
             self.next_settings = None
             self.next_level_inputs = None
         else:
+            # Handle non-atomic sorts
+            settings_by_level = _non_atomic_orders(levels, settings_by_level)
+
             self.next_level = levels[1]
             self.next_settings = settings_by_level.get(self.next_level, dict())
             self.next_level_inputs = (levels[1:], settings_by_level)
