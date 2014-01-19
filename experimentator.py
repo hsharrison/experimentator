@@ -186,11 +186,17 @@ class ExperimentSection():
         Crosses the section's independent variables, and yields the unique combinations.
         """
         ivs = self.next_settings.get('ivs', {})
-        iv_combinations = itertools.product(*ivs.values())
+        try:
+            iv_names, iv_values = zip(*ivs.items())
+        except ValueError:
+            # Workaround because zip doesn't want to return two elements if ivs is empty.
+            iv_names = ()
+            iv_values = ()
+        iv_combinations = itertools.product(*iv_values)
 
-        for iv_values in iv_combinations:
+        for iv_combination in iv_combinations:
             new_context = parent_context.new_child()
-            new_context.update(zip(ivs, iv_values))
+            new_context.update(zip(iv_names, iv_combination))
             yield new_context
 
     def sort_and_repeat(self, unique_contexts):
