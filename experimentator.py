@@ -140,10 +140,29 @@ def _unique_iv_combinations(ivs):
         yield dict(zip(iv_names, iv_combination))
 
 
+def _non_atomic_orders(levels, settings_by_level):
+    for level, next_level in zip(levels[:-1], levels[1:]):
+        sort = settings_by_level[next_level]['sort']
+
+        if sort == 'complete-counterbalance':
+            next_level_ivs = settings_by_level[next_level].get('ivs', {})
+            sections = settings_by_level[next_level].get('n', 1) * list(_unique_iv_combinations(next_level_ivs))
+            permutations = list(itertools.permutations(sections))
+            ivs = settings_by_level[level].get('ivs', {})
+            ivs.update(order=permutations)
+            settings_by_level[level].update(ivs)
+            settings_by_level[next_level].update(sort='non-atomic')
+
+        elif sort == 'latin-square':
+            # TODO: implement
+            pass
+
+    return settings_by_level
+
+
 class ExperimentSection():
     """
     A section of an experiment, e.g. session, block, trial.
-
     Each ExperimentSection is responsible for managing its children, sections immediately below it. For example, in the
     default hierarchy, a block manages trials. An ExperimentSection maintains a context, a ChainMap containing all the
     independent variable values that apply to all of its children.
@@ -221,9 +240,8 @@ class ExperimentSection():
             random.shuffle(new_seq)
             yield from new_seq
 
-        elif method == 'counterbalance':
-            #TODO: Implement me
-            pass
+        elif method == 'non-atomic':
+            yield from self.context['order']
 
         elif method == 'ordered':
             if len(unique_contexts[0].maps[0]) != 1:
