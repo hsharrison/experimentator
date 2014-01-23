@@ -1,7 +1,7 @@
 experimentator
 ==============
 
-`experimentator` is a small Python module designed for running experiments in Python. The basic use case is that you have already written code to run a single trial and would like to run a set of experimental sessions in which inputs to your trial function are systematically varied and repeated.
+`experimentator` is a Python package for designing, constructing, and running experiments in Python. Its original purpose was for Psychology experiments, in which participants  interact with the terminal or, more commonly, a graphical interface, but there is nothing domain-specific; `experimentator` will be useful for any kind of experiment run with the aid of a computer. The basic use case is that you have already written code to run a single trial and would like to run a set of experimental sessions in which inputs to your trial function are systematically varied and repeated.
 
 Overview
 -----
@@ -139,4 +139,4 @@ Dependencies
 License
 -------
 
-Copyright (c) 2013 Henry S. Harrison under the MIT license. See ``LICENSE.txt``.
+Copyright (c) 2013-2014 Henry S. Harrison under the MIT license. See ``LICENSE.txt``.

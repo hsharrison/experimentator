@@ -1,9 +1,9 @@
-# Copyright (c) 2013 Henry S. Harrison
+# Copyright (c) 2013-2014 Henry S. Harrison
+from collections import ChainMap
 
-import collections
-import pandas as pd
+from experimentator import Experiment
+from experimentator.section import ExperimentSection
 
-import experimentator.experimentator as exp
 
 levels = ('trunk', 'branch', 'stem', 'leaf')
 settings = {'trunk': dict(),
@@ -22,7 +22,7 @@ total_leafs = total_stems * n_children['stem']
 
 
 def test_tree():
-    root = exp.ExperimentSection(collections.ChainMap(), levels, settings)
+    root = ExperimentSection(ChainMap(), levels, settings)
     yield from check_descendants(check_n_children, root)
 
 
@@ -36,8 +36,8 @@ def check_n_children(node):
     assert len(node.children) == n_children[node.level]
 
 
-sample_experiment = exp.Experiment(settings_by_level=settings,
-                                   levels=levels)
+sample_experiment = Experiment(settings_by_level=settings,
+                               levels=levels)
 
 
 @sample_experiment.run
@@ -52,7 +52,7 @@ def run_trial(**iv):
             'stem_results': stem,
             'leaf_results': leaf}
 
-sample_experiment.run_section(sample_experiment.root)
+sample_experiment.run_section(sample_experiment.base_section)
 sample_data = sample_experiment.data
 
 

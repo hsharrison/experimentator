@@ -1,78 +1,13 @@
-# Copyright (c) 2013 Henry S. Harrison
-"""
-A module for running experiments.
-
-The basic use case is that you have already written code to run a single trial and would like to run a set of
-experimental sessions in which inputs to your trial function are systematically varied and repeated.
-
-
-"""
-import itertools
-import collections
+# Copyright (c) 2013-2014 Henry S. Harrison
+import os
 import logging
 import pickle
-import random
-import os
 from datetime import datetime
-from configparser import ConfigParser
+from pandas import DataFrame
+from collections import ChainMap
 
-import pandas as pd
-
-
-class QuitSession(BaseException):
-    """
-    Raised to exit the experimental session.
-
-    Raise this exception from inside a trial when the entire session should be exited, for example if the user presses
-    a 'quit' key.
-
-    """
-    def __init__(self, message):
-        self.message = message
-
-    def __str__(self):
-        return str(self.message)
-
-
-def parse_config(config_file):
-    """
-    Parse config file(s) for experiment information.
-
-    [Experiment]
-    levels = comma-separated list
-    sort methods = list, separated by commas
-    number = comma-separated list of integers
-
-    [Independent Variables]
-    variable = level, comma- or semicolon-separated list of values
-
-    That is, each entry name in the Independent Variables section is interpreted as a variable name. The entry string is
-    interpreted as a comma- or semicolon-separated list. The first element should match one of the levels specified in
-    the Experiment section. The other elements are the possible values (levels) of the IV. These values are interpreted
-    by the Python interpreter, so proper syntax should be used for values that aren't simple strings or numbers.
-    """
-    if isinstance(config_file, ConfigParser):
-        config = config_file
-    else:
-        config = ConfigParser()
-        config.read_file(config_file)
-
-    levels = config['Experiment']['levels'].split(',')
-    sort_methods = config['Experiment']['sort methods'].split(',')
-    number = config['Experiment']['number'].split(',')
-
-    settings_by_level = {level: dict(sort=sort, number=int(n), ivs={})
-                         for level, sort, n in zip(levels, sort_methods, number)}
-
-    for name, entry in config['Independent Variables'].items():
-        entry_split = entry.split(',')
-        # Allow for ; in variable lists
-        if entry_split[0] not in levels:
-            entry_split = entry.split(';')
-
-        settings_by_level[entry_split[0]]['ivs'][name] = list(eval(entry) for entry in entry_split[1:])
-
-    return levels, settings_by_level
+from experimentator.utility import parse_config, QuitSession
+from experimentator.section import ExperimentSection
 
 
 def load_experiment(experiment_file):
@@ -124,171 +59,6 @@ def export_experiment_data(experiment_file, data_file):
     load_experiment(experiment_file).export_data(data_file)
 
 
-def _unique_iv_combinations(ivs):
-    """
-    Crosses the section's independent variables, and yields the unique combinations.
-    """
-    try:
-        iv_names, iv_values = zip(*ivs.items())
-    except ValueError:
-        # Workaround because zip doesn't want to return two elements if ivs is empty.
-        iv_names = ()
-        iv_values = ()
-    iv_combinations = itertools.product(*iv_values)
-
-    for iv_combination in iv_combinations:
-        yield dict(zip(iv_names, iv_combination))
-
-
-def _non_atomic_orders(levels, settings_by_level):
-    for level, next_level in zip(levels[:-1], levels[1:]):
-        sort = settings_by_level[next_level].get('sort')
-
-        if sort == 'complete-counterbalance':
-            next_level_ivs = settings_by_level[next_level].get('ivs', {})
-            sections = settings_by_level[next_level].get('n', 1) * list(_unique_iv_combinations(next_level_ivs))
-            permutations = list(itertools.permutations(sections))
-            ivs = settings_by_level[level].get('ivs', {})
-            ivs.update(order=permutations)
-            settings_by_level[level].update(ivs)
-            settings_by_level[next_level].update(sort='non-atomic')
-
-        elif sort == 'latin-square':
-            # TODO: implement
-            pass
-
-    return settings_by_level
-
-
-class ExperimentSection():
-    """
-    A section of an experiment, e.g. session, block, trial.
-    Each ExperimentSection is responsible for managing its children, sections immediately below it. For example, in the
-    default hierarchy, a block manages trials. An ExperimentSection maintains a context, a ChainMap containing all the
-    independent variable values that apply to all of its children.
-
-    Attributes:
-        children:          A list of ExperimentSection instances.
-        context:           A ChainMap of IV name: value mappings that apply to all of the section's children. Contains
-                           results as well, if the section is at the lowest level.
-        level:             The current level.
-        is_bottom_level:   True if this section is at the lowest level of the tree (a trial in the default hierarchy).
-        next_level:        The next level.
-        next_settings:     The next settings, a dict with keys 'ivs', 'sort', and 'n'.
-        next_level_inputs: the inputs to be passed when constructing children.
-        has_children:      True if the section has started to be run.
-        has_finished:      True if the section has finished running.
-
-    """
-    def __init__(self, context, levels, settings_by_level):
-        """
-        Initialize an ExperimentSection. Creating an ExperimentSection also creates all its descendant sections.
-
-        Args:
-            context:            A ChainMap containing all the IV name: value mapping that apply to this section and all
-                                its children. Set by the parent section.
-            levels:             A list of names in the hierarchy, with levels[0] being the name of this section, and the
-                                levels[1:] the names of its descendants.
-            settings_by_level:  A mapping from the elements of levels to dicts with keys:
-                                ivs:   independent variables, as mapping from names to possible values
-                                sort:  string (e.g., 'random') or None
-                                n:     number of repeats of each unique combination of ivs
-        """
-        self.has_started = False
-        self.has_finished = False
-        self.children = []
-        self.context = context
-        self.level = levels[0]
-        self.is_bottom_level = self.level == levels[-1]
-        if self.is_bottom_level:
-            self.next_level = None
-            self.next_settings = None
-            self.next_level_inputs = None
-        else:
-            # Handle non-atomic sorts
-            settings_by_level = _non_atomic_orders(levels, settings_by_level)
-
-            self.next_level = levels[1]
-            self.next_settings = settings_by_level.get(self.next_level, dict())
-            self.next_level_inputs = (levels[1:], settings_by_level)
-
-            # Create the section tree. Creating any section also creates the sections below it
-            unique_contexts = list(_unique_iv_combinations(self.next_settings.get('ivs', {})))
-            for i, new_context in enumerate(self.sort_and_repeat(unique_contexts)):
-                child_context = self.context.new_child()
-                child_context.update(new_context)
-                child_context[self.next_level] = i+1
-                logging.debug('Generating {} with context {}.'.format(self.next_level, child_context))
-                self.children.append(ExperimentSection(child_context, *self.next_level_inputs))
-
-    def sort_and_repeat(self, unique_contexts):
-        """
-        Sorts and repeats the unique contexts for children of the section.
-
-        Args:
-            unique_contexts: A sequence of unique ChainMaps describing the possible combinations of the independent
-                             variables at the section's level.
-
-        Yields the sorted and repeated contexts, according to the section's sort and n entries in its next_level_dict
-        attribute.
-        """
-        method = self.next_settings.get('sort', None)
-        n = self.next_settings.get('n', 1)
-
-        if not method:
-            yield from n * unique_contexts
-
-        elif method == 'random':
-            new_seq = n * unique_contexts
-            random.shuffle(new_seq)
-            yield from new_seq
-
-        elif method == 'non-atomic':
-            yield from self.context['order']
-
-        elif method == 'ordered':
-            if len(unique_contexts[0]) != 1:
-                raise ValueError("More than one independent variable at level with sort method 'ordered'")
-            if 'order' not in self.context or self.context['order'] not in ('ascending', 'descending'):
-                logging.warning("Sort method 'ordered' used without specifying ascending or descending order. " +
-                                "Defaulting to ascending.")
-                reverse_sort = False
-            else:
-                reverse_sort = self.context['order'] == 'descending'
-            yield from sorted(unique_contexts, key=lambda c: list(c.values())[0], reverse=reverse_sort)
-
-        else:
-            raise ValueError('Unrecognized sort method {}.'.format(method))
-
-    def add_child_ad_hoc(self, **kwargs):
-        """
-        Add an extra child to the section.
-
-        Args:
-            **kwargs: IV name=value assignments to determine the child's context. Any IV name not specified here will
-                      be chosen randomly from the IV's possible values.
-        """
-        child_context = self.context.new_child()
-        child_context[self.next_level] = self.children[-1][self.next_level] + 1
-        child_context.update({k: random.choice(v) for k, v in self.next_settings.get('ivs', dict()).items()})
-        child_context.update(kwargs)
-        self.children.append(ExperimentSection(child_context, *self.next_level_inputs))
-
-    def add_data(self, **kwargs):
-        """
-        Add data to all trials in a section. For example, add participant information to all entries under that
-        participant.
-        """
-        self.context.update(kwargs)
-
-    def generate_data(self):
-        for child in self.children:
-            if child.is_bottom_level:
-                yield child.context
-            else:
-                yield from child.generate_data()
-
-
 class Experiment():
     """
     Abstract base class for Experiments.
@@ -305,7 +75,7 @@ class Experiment():
                            n:    The number of times each unique combination of variables should appear at the
                                  associated level.
         levels:            A list of level names describing the experiment hierarchy.
-        root:              An ExperimentSection instance from which all experiment sections descend.
+        base_section:              An ExperimentSection instance from which all experiment sections descend.
         data:              A pandas DataFrame. Before any sections are run, contains only the IV values of each trial.
                            Afterwards, contains both IV and DV values.
         experiment_file:   Filename where the experiment is saved to.
@@ -358,10 +128,10 @@ class Experiment():
         self.levels = levels
         self.settings_by_level = settings_by_level
 
-        actual_levels = ['root']
+        actual_levels = ['base_section']
         actual_levels.extend(self.levels)
-        self.root = ExperimentSection(
-            collections.ChainMap(), actual_levels, self.settings_by_level)
+        self.base_section = ExperimentSection(
+            ChainMap(), actual_levels, self.settings_by_level)
 
         self.run_callbacks = []
         self.start_callbacks = {level: [] for level in actual_levels}
@@ -373,7 +143,7 @@ class Experiment():
 
     @property
     def data(self):
-        data = pd.DataFrame(self.root.generate_data()).set_index(list(self.levels))
+        data = DataFrame(self.base_section.generate_data()).set_index(list(self.levels))
         return data
 
     def save(self):
@@ -402,7 +172,7 @@ class Experiment():
         Returns an ExperimentSection object at the first level where no input kwarg describes how to descend the
         hierarchy.
         """
-        node = self.root
+        node = self.base_section
         for level in self.levels:
             if level in kwargs:
                 logging.debug('Found specified {}.'.format(level))
@@ -420,7 +190,7 @@ class Experiment():
         finished.
         """
         attribute = {True: 'has_started', False: 'has_finished'}[by_started]
-        node = self.root
+        node = self.base_section
         section = {}
         for level in self.levels:
             logging.debug('Checking all {}s...'.format(level))
