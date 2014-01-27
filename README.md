@@ -9,9 +9,11 @@ In `experimentator`, an `Experiment` is defined as a set of experimental section
 
  An independent variable (IV) is associated with a `kwarg` input of the function(s) that define a trial. If your `run_trial` function is declared as:
 
-    def run_trial(self, target='center', congruent=True)
+    def run_trial(userdata, target='center', congruent=True)
 
 then your experiment has two IVs, one named `target` and the other named `congruent`. Of course, if you don't need to vary a `kwarg` input, you should rely on its default in the method declaration.
+
+Side note: All callbacks in `experimentator` receive a dict `userdata` as the first argument. This is an empty dict at the beginning of every experimental session, but within an experimental session it is persistent. Use it to store experimental state, e.g., from trial-to-trial.
 
 Traditionally, independent variables are categorized as varying over participants (in a _between-subjects_ design) or over trials (in a _within-subjects_ design). In reality however, a variable can be associated with any level. One variable may change every  trial, another may take on a new value only when the participant comes back for a second session.
 
@@ -39,7 +41,7 @@ See the section "Config file format" below for details.
 Once you create your experiment, use it `run` method to decorate the function(s) that define your trial.
 
     @my_experiment.run
-    def run_trial(self, target='center', congruent=True, **_):
+    def run_trial(userdata, target='center', congruent=True, **_):
         ...
         return {'reaction_time': rt, 'choice': response}
 
@@ -48,7 +50,7 @@ Any function(s) you decorate with `run` should return its results in the form of
 You can also define functions to run before, between, and after sections of your experiment, using the `start`, `inter`, and `end` methods as decorators. The only difference from the `run` method is that these decorators require a level name.
 
     @my_experiment.inter('trial')
-    def short_pause(**_):
+    def short_pause(_, **_):
         time.sleep(1)
 
 These functions will also be passed all IVs defined at their level or above (`inter` functions are passed the variables for the _next_ section), so the kwarg wildcard should be used here as well.
@@ -70,7 +72,7 @@ Example
                                experiment_file='my_experiment.dat')
 
     @my_experiment.run
-    def run_trial(self, target='center', congruent=True, dual_task=False, **_):
+    def run_trial(userdata, target='center', congruent=True, dual_task=False, **_):
         ...
         return dict(correct=correct, rt=rt)
 
@@ -79,11 +81,11 @@ Example
         ...
 
     @my_experiment.end('session')
-    def close_display(**_):
+    def close_display(userdata, **_):
         ...
 
     @my_experiment.inter('block')
-    def offer_break(**_):
+    def offer_break(userdata, **_):
         ...
 
 This experiment has a mixed design, with one between-subjects IV, `dual_task`, and two within-subjects IVs, `target` and `congruent`. Each session will have 150 trials, organized into 3 blocks. The `'session'` and `'block'` levels in this experiment are only organizational (as they have no associated variables) and facilitate calls to `initialize_display`, `close_display`, and `offer_break`.

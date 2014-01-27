@@ -84,6 +84,8 @@ class Experiment():
         inter_callbacks,
         end_callbacks:     Dicts of levels mapped to lists of callbacks to be run at the start, between, and after
                            sections of the experiment.
+        userdata:          Dict for storing persistent data within an experimental session. Passed to every callback as
+                           the first argument. Emptied upon saving the experiment instance.
 
     Decorator methods:
         run:               Run the decorated function at the lowest level of the experiment (e.g., each trial).
@@ -137,6 +139,7 @@ class Experiment():
         self.start_callbacks = {level: [] for level in actual_levels}
         self.inter_callbacks = {level: [] for level in actual_levels}
         self.end_callbacks = {level: [] for level in actual_levels}
+        self.userdata = {}
 
         self.experiment_file = experiment_file
         self.save()
@@ -245,7 +248,7 @@ class Experiment():
         if section.is_bottom_level:
             results = {}
             for func in self.run_callbacks:
-                results.update(func(**section.context))
+                results.update(func(self.userdata, **section.context))
             logging.debug('Results: {}.'.format(results))
 
             if not demo:
@@ -254,17 +257,17 @@ class Experiment():
 
         else:
             for func in self.start_callbacks[section.level]:
-                func(**section.context)
+                func(self.userdata, **section.context)
 
             for i, next_section in enumerate(section.children):
                 if i:  # don't run inter on first section of level
                     for func in self.inter_callbacks[section.next_level]:
-                        func(**next_section.context)
+                        func(self.userdata, **next_section.context)
 
                 self.run_section(next_section)
 
             for func in self.end_callbacks[section.level]:
-                func(**section.context)
+                func(self.userdata, **section.context)
 
         if not demo:
             section.has_finished = True
@@ -304,3 +307,9 @@ class Experiment():
             self.end_callbacks[level].append(func)
             self.save()
         return end_decorator
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        #  Clear userdata before pickling
+        state['userdata'] = {}
+        return state
