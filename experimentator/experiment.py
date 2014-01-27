@@ -2,6 +2,8 @@
 import os
 import logging
 import pickle
+import functools
+from contextlib import contextmanager
 from datetime import datetime
 from pandas import DataFrame
 from collections import ChainMap
@@ -57,6 +59,11 @@ def export_experiment_data(experiment_file, data_file):
     Reads a pickled experiment instance from experiment_file and saves its data in csv format to data_file.
     """
     load_experiment(experiment_file).export_data(data_file)
+
+
+@contextmanager
+def dummy_context():
+    yield
 
 
 class Experiment():
@@ -139,7 +146,9 @@ class Experiment():
         self.start_callbacks = {level: [] for level in actual_levels}
         self.inter_callbacks = {level: [] for level in actual_levels}
         self.end_callbacks = {level: [] for level in actual_levels}
-        self.userdata = {}
+
+        self.userdata = {'as': {}}
+        self.with_functions = {level: dummy_context for level in actual_levels}
 
         self.experiment_file = experiment_file
         self.save()
@@ -242,35 +251,47 @@ class Experiment():
         """
         logging.debug('Running {} with context {}.'.format(section.level, section.context))
 
-        if not demo:
-            section.has_started = True
-
-        if section.is_bottom_level:
-            results = {}
-            for func in self.run_callbacks:
-                results.update(func(self.userdata, **section.context))
-            logging.debug('Results: {}.'.format(results))
+        with self.with_functions[section.level]() as with_output:
+            self.userdata['as'][section.level] = with_output
 
             if not demo:
-                section.add_data(**results)
-                logging.debug('New context: {}.'.format(section.context))
+                section.has_started = True
 
-        else:
-            for func in self.start_callbacks[section.level]:
-                func(self.userdata, **section.context)
+            if section.is_bottom_level:
+                results = {}
+                for func in self.run_callbacks:
+                    results.update(func(self.userdata, **section.context))
+                logging.debug('Results: {}.'.format(results))
 
-            for i, next_section in enumerate(section.children):
-                if i:  # don't run inter on first section of level
-                    for func in self.inter_callbacks[section.next_level]:
-                        func(self.userdata, **next_section.context)
+                if not demo:
+                    section.add_data(**results)
+                    logging.debug('New context: {}.'.format(section.context))
 
-                self.run_section(next_section)
+            else:
+                for func in self.start_callbacks[section.level]:
+                    func(self.userdata, **section.context)
 
-            for func in self.end_callbacks[section.level]:
-                func(self.userdata, **section.context)
+                for i, next_section in enumerate(section.children):
+                    if i:  # don't run inter on first section of level
+                        for func in self.inter_callbacks[section.next_level]:
+                            func(self.userdata, **next_section.context)
+
+                    self.run_section(next_section)
+
+                for func in self.end_callbacks[section.level]:
+                    func(self.userdata, **section.context)
 
         if not demo:
             section.has_finished = True
+
+    def set_with_function(self, level, func, *args, **kwargs):
+        self.with_functions[level] = functools.partial(func, *args, **kwargs)
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        #  Clear userdata before pickling
+        state['userdata'] = {'as': {}}
+        return state
 
     # Decorators
     def run(self, func):
@@ -308,8 +329,3 @@ class Experiment():
             self.save()
         return end_decorator
 
-    def __getstate__(self):
-        state = self.__dict__.copy()
-        #  Clear userdata before pickling
-        state['userdata'] = {}
-        return state
