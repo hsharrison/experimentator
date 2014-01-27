@@ -251,8 +251,7 @@ class Experiment():
         """
         logging.debug('Running {} with context {}.'.format(section.level, section.context))
 
-        with self.with_functions[section.level]() as with_output:
-            self.userdata['as'][section.level] = with_output
+        with self.with_functions[section.level]() as self.userdata['as'][section.level]:
 
             if not demo:
                 section.has_started = True
