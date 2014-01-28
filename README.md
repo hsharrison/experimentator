@@ -13,7 +13,7 @@ In `experimentator`, an `Experiment` is defined as a set of experimental section
 
 then your experiment has two IVs, one named `target` and the other named `congruent`. Of course, if you don't need to vary a `kwarg` input, you should rely on its default in the method declaration.
 
-Side note: All callbacks in `experimentator` receive dicts `session_data` and `persistent_data` as positional arguments. `session_data` is an empty dict every time you load the epxeriment from disk, but within an experimental session it is persistent. Use it to store experimental state, for example, a session score that persists from trial-to-trial. 'session' in `session_data` does not refer to the experiment section 'session', but rather a session of the Python interpreter. `persistent_data` is a place to store data that will persist over the course of the entire experiment. Use it to store, for example, values that you read in from a config file on experiment creation.
+Side note: All callbacks in `experimentator` receive dicts `session_data` and `persistent_data` as positional arguments. `session_data` is an empty dict every time you load the epxeriment from disk, but within an experimental session it is persistent. Use it to store experimental state, for example, a session score that persists from trial-to-trial. 'session' in `session_data` does not refer to the experiment section 'session', but rather a session of the Python interpreter. `persistent_data` is a place to store data that will persist over the course of the entire experiment. This is used, for example, to store data from the experiment's config file, if there is one (see section on config files below).
 
 Traditionally, independent variables are categorized as varying over participants (in a _between-subjects_ design) or over trials (in a _within-subjects_ design). In reality however, a variable can be associated with any level. One variable may change every  trial, another may take on a new value only when the participant comes back for a second session.
 
@@ -131,6 +131,31 @@ Config file format
     variable name = level, comma- or semicolon-separated list of values
 
 That is, each entry name in the Independent Variables section is interpreted as a variable name. The entry string is interpreted as a comma- or semicolon-separated list. The first element should match one of the levels specified in the Experiment section. The other elements are the possible values (levels) of the IV. These values are interpreted by the Python interpreter, so proper syntax should be used for values that aren't simple strings or numbers.
+
+Other sections of the config file are saved as dicts in the experiment's `persistent_data` attribute. Fonts and colors are parsed according to the formats below, and are identified as either appearing in their own sections 'Fonts' and 'Colors' are on their own line with the label 'font' or 'color'.
+
+Colors are three integers separated by commas, and fonts are a string and then an integer. For example:
+
+    [Colors]
+    white = 255, 255, 255
+    black = 0, 0, 0
+
+    [Fonts]
+    title = Times, 48
+    text = Monaco, 12
+
+    [Score]
+    color = 255, 0, 255
+    font = Garamond, 24
+
+This example will produce the following `persistent data`:
+
+    {'colors': {'white': (255, 255, 255), 'black': 0, 0, 0},
+     'fonts': {'title': ('Times', 48), 'text': ('Monaco', 12)},
+     'score': {'color': (255, 0, 255), 'font': ('Garamond', 24)},
+    }
+
+Note that all section names are transformed to lowercase.
 
 Dependencies
 ------------

@@ -128,7 +128,9 @@ class Experiment():
                                   sections in a later Python session.
         """
         if config_file:
-            levels, settings_by_level = parse_config(config_file)
+            levels, settings_by_level, config_data = parse_config(config_file)
+        else:
+            config_data = {}
 
         for level in settings_by_level:
             if level not in levels:
@@ -148,7 +150,7 @@ class Experiment():
         self.end_callbacks = {level: [] for level in actual_levels}
 
         self.session_data = {'as': {}}
-        self.persistent_data = {}
+        self.persistent_data = config_data
         self.with_functions = {level: dummy_context for level in actual_levels}
 
         self.experiment_file = experiment_file
