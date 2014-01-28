@@ -9,11 +9,11 @@ In `experimentator`, an `Experiment` is defined as a set of experimental section
 
  An independent variable (IV) is associated with a `kwarg` input of the function(s) that define a trial. If your `run_trial` function is declared as:
 
-    def run_trial(userdata, target='center', congruent=True)
+    def run_trial(session_data, persistent_data, target='center', congruent=True)
 
 then your experiment has two IVs, one named `target` and the other named `congruent`. Of course, if you don't need to vary a `kwarg` input, you should rely on its default in the method declaration.
 
-Side note: All callbacks in `experimentator` receive a dict `userdata` as the first argument. This is an empty dict at the beginning of every experimental session, but within an experimental session it is persistent. Use it to store experimental state, e.g., from trial-to-trial.
+Side note: All callbacks in `experimentator` receive dicts `session_data` and `persistent_data` as positional arguments. `session_data` is an empty dict every time you load the epxeriment from disk, but within an experimental session it is persistent. Use it to store experimental state, for example, a session score that persists from trial-to-trial. 'session' in `session_data` does not refer to the experiment section 'session', but rather a session of the Python interpreter. `persistent_data` is a place to store data that will persist over the course of the entire experiment. Use it to store, for example, values that you read in from a config file on experiment creation.
 
 Traditionally, independent variables are categorized as varying over participants (in a _between-subjects_ design) or over trials (in a _within-subjects_ design). In reality however, a variable can be associated with any level. One variable may change every  trial, another may take on a new value only when the participant comes back for a second session.
 
@@ -41,7 +41,7 @@ See the section "Config file format" below for details.
 Once you create your experiment, use it `run` method to decorate the function(s) that define your trial.
 
     @my_experiment.run
-    def run_trial(userdata, target='center', congruent=True, **_):
+    def run_trial(session_data, target='center', congruent=True, **_):
         ...
         return {'reaction_time': rt, 'choice': response}
 
@@ -72,7 +72,7 @@ Example
                                experiment_file='my_experiment.dat')
 
     @my_experiment.run
-    def run_trial(userdata, target='center', congruent=True, dual_task=False, **_):
+    def run_trial(session_data, target='center', congruent=True, dual_task=False, **_):
         ...
         return dict(correct=correct, rt=rt)
 
@@ -81,11 +81,11 @@ Example
         ...
 
     @my_experiment.end('session')
-    def close_display(userdata, **_):
+    def close_display(session_data, **_):
         ...
 
     @my_experiment.inter('block')
-    def offer_break(userdata, **_):
+    def offer_break(session_data, **_):
         ...
 
 This experiment has a mixed design, with one between-subjects IV, `dual_task`, and two within-subjects IVs, `target` and `congruent`. Each session will have 150 trials, organized into 3 blocks. The `'session'` and `'block'` levels in this experiment are only organizational (as they have no associated variables) and facilitate calls to `initialize_display`, `close_display`, and `offer_break`.

@@ -147,7 +147,8 @@ class Experiment():
         self.inter_callbacks = {level: [] for level in actual_levels}
         self.end_callbacks = {level: [] for level in actual_levels}
 
-        self.userdata = {'as': {}}
+        self.session_data = {'as': {}}
+        self.persistent_data = {}
         self.with_functions = {level: dummy_context for level in actual_levels}
 
         self.experiment_file = experiment_file
@@ -251,7 +252,7 @@ class Experiment():
         """
         logging.debug('Running {} with context {}.'.format(section.level, section.context))
 
-        with self.with_functions[section.level]() as self.userdata['as'][section.level]:
+        with self.with_functions[section.level]() as self.session_data['as'][section.level]:
 
             if not demo:
                 section.has_started = True
@@ -259,7 +260,7 @@ class Experiment():
             if section.is_bottom_level:
                 results = {}
                 for func in self.run_callbacks:
-                    results.update(func(self.userdata, **section.context))
+                    results.update(func(self.session_data, **section.context))
                 logging.debug('Results: {}.'.format(results))
 
                 if not demo:
@@ -268,17 +269,17 @@ class Experiment():
 
             else:
                 for func in self.start_callbacks[section.level]:
-                    func(self.userdata, **section.context)
+                    func(self.session_data, **section.context)
 
                 for i, next_section in enumerate(section.children):
                     if i:  # don't run inter on first section of level
                         for func in self.inter_callbacks[section.next_level]:
-                            func(self.userdata, **next_section.context)
+                            func(self.session_data, **next_section.context)
 
                     self.run_section(next_section)
 
                 for func in self.end_callbacks[section.level]:
-                    func(self.userdata, **section.context)
+                    func(self.session_data, **section.context)
 
         if not demo:
             section.has_finished = True
