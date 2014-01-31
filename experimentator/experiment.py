@@ -302,6 +302,7 @@ class Experiment():
         """
         self.run_callbacks.append(func)
         self.save()
+        return func
 
     def start(self, level):
         """
@@ -311,6 +312,7 @@ class Experiment():
         def start_decorator(func):
             self.start_callbacks[level].append(func)
             self.save()
+            return func
         return start_decorator
 
     def inter(self, level):
@@ -320,6 +322,7 @@ class Experiment():
         def inter_decorator(func):
             self.inter_callbacks[level].append(func)
             self.save()
+            return func
         return inter_decorator
 
     def end(self, level):
@@ -329,5 +332,6 @@ class Experiment():
         def end_decorator(func):
             self.end_callbacks[level].append(func)
             self.save()
+            return func
         return end_decorator
 
