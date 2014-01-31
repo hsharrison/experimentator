@@ -154,7 +154,6 @@ class Experiment():
         self.with_functions = {level: dummy_context for level in actual_levels}
 
         self.experiment_file = experiment_file
-        self.save()
 
     @property
     def data(self):
