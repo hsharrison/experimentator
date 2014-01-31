@@ -41,7 +41,7 @@ sample_experiment = Experiment(settings_by_level=settings,
 
 
 @sample_experiment.run
-def run_trial(_, **iv):
+def run_trial(_, __, **iv):
     branch = iv['a'] + iv['b']
     if iv['e']:
         stem = iv['c'] + str(iv['d'])
