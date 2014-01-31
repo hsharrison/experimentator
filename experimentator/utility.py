@@ -76,7 +76,7 @@ def parse_config(config_file):
         if entry_split[0] not in levels:
             entry_split = list(map(str.strip, entry.split(';')))
 
-        settings_by_level[entry_split[0]]['ivs'][name] = map(eval, entry_split[1:])
+        settings_by_level[entry_split[0]]['ivs'][name] = list(map(eval, entry_split[1:]))
 
     # Parse remaining sections.
     config_data = {}
