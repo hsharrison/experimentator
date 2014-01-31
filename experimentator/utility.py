@@ -62,21 +62,21 @@ def parse_config(config_file):
         config.read(config_file)
 
     # Parse [Experiment].
-    levels = config.get('Experiment', 'levels').split(',')
-    sort_methods = config.get('Experiment', 'sort methods').split(',')
-    number = config.get('Experiment', 'number').split(',')
+    levels = list(map(str.strip, config.get('Experiment', 'levels').split(',')))
+    sort_methods = map(str.strip, config.get('Experiment', 'sort methods').split(','))
+    number = map(int, config.get('Experiment', 'number').split(','))
 
     # Parse [Independent Variables].
-    settings_by_level = {level: dict(sort=sort, number=int(n), ivs={})
+    settings_by_level = {level: dict(sort=sort, number=n, ivs={})
                          for level, sort, n in zip(levels, sort_methods, number)}
 
     for name, entry in config['Independent Variables'].items():
-        entry_split = entry.split(',')
+        entry_split = list(map(str.strip, entry.split(',')))
         # Allow for ; in variable lists
         if entry_split[0] not in levels:
-            entry_split = entry.split(';')
+            entry_split = list(map(str.strip, entry.split(';')))
 
-        settings_by_level[entry_split[0]]['ivs'][name] = list(eval(entry) for entry in entry_split[1:])
+        settings_by_level[entry_split[0]]['ivs'][name] = map(eval, entry_split[1:])
 
     # Parse remaining sections.
     config_data = {}
@@ -89,16 +89,17 @@ def parse_config(config_file):
                 item_label: parse_color(item_string) for item_label, item_string in section.items()}
         elif section_label not in ('DEFAULT', 'Experiment', 'Independent Variables'):
             config_data[section_label.lower()] = dict(section)
-            if 'font' in config_data[section_label]:
-                config_data[section_label]['font'] = parse_font(config_data[section_label]['font'])
-            if 'color' in config_data[section_label]:
-                config_data[section_label]['color'] = parse_font(config_data[section_label]['color'])
+            config_data_section = config_data[section_label.lower()]
+            if 'font' in config_data_section:
+                config_data_section['font'] = parse_font(config_data_section['font'])
+            if 'color' in config_data_section:
+                config_data_section['color'] = parse_color(config_data_section['color'])
 
     return levels, settings_by_level, config_data
 
 
 def parse_font(config_string):
-    split_string = config_string(',')
+    split_string = config_string.split(',')
     if len(split_string) != 2:
         raise ValueError('Cannot parse font config string {}.'.format(config_string))
     return dict(name=split_string[0], size=int(split_string[1]))
@@ -108,4 +109,4 @@ def parse_color(config_string):
     split_string = config_string.split(',')
     if len(split_string) != 3:
         raise ValueError('Cannot parse color string {}'.format(config_string))
-    return tuple(int(i) for i in split_string)
+    return tuple(map(int, split_string))
