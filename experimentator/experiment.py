@@ -1,7 +1,7 @@
 # Copyright (c) 2013-2014 Henry S. Harrison
 import os
 import logging
-import pickle
+import dill as pickle
 import functools
 from contextlib import contextmanager
 from datetime import datetime
