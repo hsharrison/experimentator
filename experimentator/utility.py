@@ -59,7 +59,7 @@ def parse_config(config_file):
         config = config_file
     else:
         config = ConfigParser()
-        config.read_file(config_file)
+        config.read(config_file)
 
     # Parse [Experiment].
     levels = config.get('Experiment', 'levels').split(',')
