@@ -1,7 +1,7 @@
 # Copyright (c) 2013-2014 Henry S. Harrison
 import os
 import logging
-import dill as pickle
+import pickle
 import functools
 from contextlib import contextmanager
 from datetime import datetime
@@ -301,7 +301,6 @@ class Experiment():
         Decorate a function with this to run that function at each trial.
         """
         self.run_callbacks.append(func)
-        self.save()
         return func
 
     def start(self, level):
@@ -311,7 +310,6 @@ class Experiment():
         """
         def start_decorator(func):
             self.start_callbacks[level].append(func)
-            self.save()
             return func
         return start_decorator
 
@@ -321,7 +319,6 @@ class Experiment():
         """
         def inter_decorator(func):
             self.inter_callbacks[level].append(func)
-            self.save()
             return func
         return inter_decorator
 
@@ -331,7 +328,6 @@ class Experiment():
         """
         def end_decorator(func):
             self.end_callbacks[level].append(func)
-            self.save()
             return func
         return end_decorator
 
