@@ -262,7 +262,7 @@ class Experiment():
             if section.is_bottom_level:
                 results = {}
                 for func in self.run_callbacks:
-                    results.update(func(self.session_data, **section.context))
+                    results.update(func(self.session_data, self.persistent_data, **section.context))
                 logging.debug('Results: {}.'.format(results))
 
                 if not demo:
@@ -271,17 +271,17 @@ class Experiment():
 
             else:
                 for func in self.start_callbacks[section.level]:
-                    func(self.session_data, **section.context)
+                    func(self.session_data, self.persistent_data, **section.context)
 
                 for i, next_section in enumerate(section.children):
                     if i:  # don't run inter on first section of level
                         for func in self.inter_callbacks[section.next_level]:
-                            func(self.session_data, **next_section.context)
+                            func(self.session_data, self.persistent_data, **next_section.context)
 
                     self.run_section(next_section)
 
                 for func in self.end_callbacks[section.level]:
-                    func(self.session_data, **section.context)
+                    func(self.session_data, self.persistent_data, **section.context)
 
         if not demo:
             section.has_finished = True
