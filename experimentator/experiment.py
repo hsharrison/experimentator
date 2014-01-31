@@ -1,8 +1,10 @@
 # Copyright (c) 2013-2014 Henry S. Harrison
 import os
+import sys
 import logging
 import pickle
 import functools
+from importlib import import_module
 from contextlib import contextmanager
 from datetime import datetime
 from pandas import DataFrame
@@ -154,6 +156,7 @@ class Experiment():
         self.with_functions = {level: dummy_context for level in actual_levels}
 
         self.experiment_file = experiment_file
+        self.original_module = sys.argv[0][:-3]
 
     @property
     def data(self):
@@ -290,9 +293,22 @@ class Experiment():
 
     def __getstate__(self):
         state = self.__dict__.copy()
-        #  Clear session_data before pickling
+        #  Clear session_data before pickling.
         state['session_data'] = {'as': {}}
+        # Save only function names.
+        state['run_callbacks'] = _dereference_functions(state['run_callbacks'])
+        for level in state['levels']:
+            for callback in ('start_callbacks', 'inter_callbacks', 'end_callbacks'):
+                state[callback][level] = _dereference_functions(state[callback][level])
         return state
+
+    def __setstate__(self, state):
+        original_module = import_module(state['original_module'])
+        state['run_callbacks'] = _rereference_functions(original_module, state['run_callbacks'])
+        for level in state['levels']:
+            for callback in ('start_callbacks', 'inter_callbacks', 'end_callbacks'):
+                state[callback][level] = _rereference_functions(original_module, state[callback][level])
+        self.__dict__.update(state)
 
     # Decorators
     def run(self, func):
@@ -330,3 +346,10 @@ class Experiment():
             return func
         return end_decorator
 
+
+def _dereference_functions(funcs):
+    return [func.__name__ for func in funcs]
+
+
+def _rereference_functions(module, func_names):
+    return [module.__dict__[func] for func in func_names]
