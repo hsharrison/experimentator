@@ -291,8 +291,8 @@ class Experiment():
 
     def __getstate__(self):
         state = self.__dict__.copy()
-        #  Clear userdata before pickling
-        state['userdata'] = {'as': {}}
+        #  Clear session_data before pickling
+        state['session_data'] = {'as': {}}
         return state
 
     # Decorators
