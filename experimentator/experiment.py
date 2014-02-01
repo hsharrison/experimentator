@@ -278,10 +278,10 @@ class Experiment():
         #  Clear session_data before pickling.
         state['session_data'] = {'as': {}}
         # Save only function names.
-        state['run_callbacks'] = _dereference_functions(state['run_callbacks'])
+        state['run_callbacks'] = state['run_callbacks'].__name__
         for level in state['levels']:
             for callback in ('start_callbacks', 'inter_callbacks', 'end_callbacks'):
-                state[callback][level] = _dereference_functions(state[callback][level])
+                state[callback][level] = state[callback][level].__name__
         return state
 
     def __setstate__(self, state):
@@ -292,10 +292,10 @@ class Experiment():
             logging.warning("The original script that created this experiment doesn't seem to be in this directory.")
             raise
         # Replace references to callbacks functions.
-        state['run_callbacks'] = _rereference_functions(original_module, state['run_callbacks'])
+        state['run_callback'] = getattr(original_module, state['run_callback'])
         for level in state['levels']:
             for callback in ('start_callbacks', 'inter_callbacks', 'end_callbacks'):
-                state[callback][level] = _rereference_functions(original_module, state[callback][level])
+                state[callback][level] = getattr(original_module, state[callback][level])
         self.__dict__.update(state)
 
     def set_run_callback(self, func):
@@ -309,14 +309,6 @@ class Experiment():
 
     def set_end_callback(self, level, func):
         self.end_callbacks[level] = func
-
-
-def _dereference_functions(funcs):
-    return [func.__name__ for func in funcs]
-
-
-def _rereference_functions(module, func_names):
-    return [getattr(module, func) for func in func_names]
 
 
 @contextmanager
