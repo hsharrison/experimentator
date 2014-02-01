@@ -40,7 +40,6 @@ sample_experiment = Experiment(settings_by_level=settings,
                                levels=levels)
 
 
-@sample_experiment.run
 def run_trial(_, __, **iv):
     branch = iv['a'] + iv['b']
     if iv['e']:
@@ -52,6 +51,8 @@ def run_trial(_, __, **iv):
             'stem_results': stem,
             'leaf_results': leaf}
 
+
+sample_experiment.run_callback = run_trial
 sample_experiment.run_section(sample_experiment.base_section)
 sample_data = sample_experiment.data
 

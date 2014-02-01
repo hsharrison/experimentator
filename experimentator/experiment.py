@@ -60,11 +60,6 @@ def export_experiment_data(experiment_file, data_file):
     load_experiment(experiment_file).export_data(data_file)
 
 
-@contextmanager
-def dummy_context():
-    yield
-
-
 class Experiment():
     """
     Abstract base class for Experiments.
@@ -81,26 +76,19 @@ class Experiment():
                            n:    The number of times each unique combination of variables should appear at the
                                  associated level.
         levels:            A list of level names describing the experiment hierarchy.
-        base_section:              An ExperimentSection instance from which all experiment sections descend.
+        base_section:      An ExperimentSection instance from which all experiment sections descend.
         data:              A pandas DataFrame. Before any sections are run, contains only the IV values of each trial.
                            Afterwards, contains both IV and DV values.
         experiment_file:   Filename where the experiment is saved to.
-        run_callbacks:     A list of functions that are run at the lowest level.
+        run_callback:      A function to be run at the lowest level.
         start_callbacks,
         inter_callbacks,
-        end_callbacks:     Dicts of levels mapped to lists of callbacks to be run at the start, between, and after
-                           sections of the experiment.
-        userdata:          Dict for storing persistent data within an experimental session. Passed to every callback as
-                           the first argument. Emptied upon saving the experiment instance.
-
-    Decorator methods:
-        run:               Run the decorated function at the lowest level of the experiment (e.g., each trial).
-        start:             Run the decorated function at the beginning of each section as a specific level. Input the
-                           level name to the decorator.
-        inter:             Run the decorated function at between each section as a specific level. Input the level name
-                           to the decorator.
-        end:               Run the decorated function after each section as a specific level. Input the level name to
-                           the decorator.
+        end_callbacks:     Dicts of levels mapped to callbacks to be run at the start, between, and after sections of
+                           the experiment.
+        session_data:      Dict for storing data that persists within an experimental session. Passed to every callback
+                           as the first argument. Emptied upon saving the experiment instance.
+        persistent_data:   Dict for storing data that persists throughout ane experiment. Passed to every callback as
+                           the second argument. Must be picklable.
 
     """
     def __init__(self, config_file=None,
@@ -143,14 +131,14 @@ class Experiment():
         self.base_section = ExperimentSection(
             ChainMap(), actual_levels, self.settings_by_level)
 
-        self.run_callbacks = []
-        self.start_callbacks = {level: [] for level in actual_levels}
-        self.inter_callbacks = {level: [] for level in actual_levels}
-        self.end_callbacks = {level: [] for level in actual_levels}
+        self.run_callback = _dummy_callback
+        self.start_callbacks = {level: _dummy_callback for level in actual_levels}
+        self.inter_callbacks = {level: _dummy_callback for level in actual_levels}
+        self.end_callbacks = {level: _dummy_callback for level in actual_levels}
 
         self.session_data = {'as': {}}
         self.persistent_data = config_data
-        self.with_functions = {level: dummy_context for level in actual_levels}
+        self.contextmanagers = {level: _dummy_context for level in actual_levels}
 
         self.experiment_file = experiment_file
         self.original_module = sys.argv[0][:-3]
@@ -253,40 +241,37 @@ class Experiment():
         """
         logging.debug('Running {} with context {}.'.format(section.level, section.context))
 
-        with self.with_functions[section.level]() as self.session_data['as'][section.level]:
+        # Enter context.
+        with self.contextmanagers[section.level]() as self.session_data['as'][section.level]:
 
             if not demo:
                 section.has_started = True
 
             if section.is_bottom_level:
-                results = {}
-                for func in self.run_callbacks:
-                    results.update(func(self.session_data, self.persistent_data, **section.context))
+                # Run a trial (or whatever the lowest level is.
+                results = self.run_callback(self.session_data, self.persistent_data, **section.context)
                 logging.debug('Results: {}.'.format(results))
 
                 if not demo:
+                    # Save the data
                     section.add_data(**results)
                     logging.debug('New context: {}.'.format(section.context))
 
             else:
-                for func in self.start_callbacks[section.level]:
-                    func(self.session_data, self.persistent_data, **section.context)
+                self.start_callbacks[section.level](self.session_data, self.persistent_data, **section.context)
 
                 for i, next_section in enumerate(section.children):
                     if i:  # don't run inter on first section of level
-                        for func in self.inter_callbacks[section.next_level]:
-                            func(self.session_data, self.persistent_data, **next_section.context)
-
+                        self.inter_callbacks[section.level](self.session_data, self.persistent_data, **section.context)
                     self.run_section(next_section)
 
-                for func in self.end_callbacks[section.level]:
-                    func(self.session_data, self.persistent_data, **section.context)
+                self.end_callbacks[section.level](self.session_data, self.persistent_data, **section.context)
 
         if not demo:
             section.has_finished = True
 
-    def set_with_function(self, level, func, *args, **kwargs):
-        self.with_functions[level] = functools.partial(func, *args, **kwargs)
+    def set_contextmanager(self, level, func, *args, **kwargs):
+        self.contextmanagers[level] = functools.partial(func, *args, **kwargs)
 
     def __getstate__(self):
         state = self.__dict__.copy()
@@ -313,41 +298,17 @@ class Experiment():
                 state[callback][level] = _rereference_functions(original_module, state[callback][level])
         self.__dict__.update(state)
 
-    # Decorators
-    def run(self, func):
-        """
-        Decorate a function with this to run that function at each trial.
-        """
-        self.run_callbacks.append(func)
-        return func
+    def set_run_callback(self, func):
+        self.run_callback = func
 
-    def start(self, level):
-        """
-        Decorate a function with this to run it at the start of a section. Pass the level name as an input to the
-        decorator.
-        """
-        def start_decorator(func):
-            self.start_callbacks[level].append(func)
-            return func
-        return start_decorator
+    def set_start_callback(self, level, func):
+        self.start_callbacks[level] = func
 
-    def inter(self, level):
-        """
-        Decorate a function with this to run it at between sections. Pass the level name as an input to the decorator.
-        """
-        def inter_decorator(func):
-            self.inter_callbacks[level].append(func)
-            return func
-        return inter_decorator
+    def set_inter_callback(self, level, func):
+        self.inter_callbacks[level] = func
 
-    def end(self, level):
-        """
-        Decorate a function with this to run it at after each section. Pass the level name as an input to the decorator.
-        """
-        def end_decorator(func):
-            self.end_callbacks[level].append(func)
-            return func
-        return end_decorator
+    def set_end_callback(self, level, func):
+        self.end_callbacks[level] = func
 
 
 def _dereference_functions(funcs):
@@ -356,3 +317,12 @@ def _dereference_functions(funcs):
 
 def _rereference_functions(module, func_names):
     return [getattr(module, func) for func in func_names]
+
+
+@contextmanager
+def _dummy_context():
+    yield
+
+
+def _dummy_callback(*args, **kwargs):
+    return {}
