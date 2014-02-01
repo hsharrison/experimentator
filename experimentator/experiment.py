@@ -303,7 +303,13 @@ class Experiment():
         return state
 
     def __setstate__(self, state):
-        original_module = import_module(state['original_module'])
+        # Import original module.
+        try:
+            original_module = import_module(state['original_module'])
+        except ImportError:
+            logging.warning("The original script that created this experiment doesn't seem to be in this directory.")
+            raise
+        # Replace references to callbacks functions.
         state['run_callbacks'] = _rereference_functions(original_module, state['run_callbacks'])
         for level in state['levels']:
             for callback in ('start_callbacks', 'inter_callbacks', 'end_callbacks'):
