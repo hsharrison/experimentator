@@ -1,5 +1,4 @@
-This project is hosted on both [bitbucket](https://bitbucket.org/hharrison/experimentator) and [github](https://github.com/hsharrison/experimentator). The bitbucket repository is considered canonical; however the github repository is almost always up-to-date. Issues can be tracked on either website, but github is preferred.
-
+<sub>_This project is hosted on both [bitbucket](https://bitbucket.org/hharrison/experimentator) and [github](https://github.com/hsharrison/experimentator). The bitbucket repository is considered canonical; however the github repository is almost always up-to-date. Issues can be tracked on either website, but github is preferred._</sub>
 experimentator
 ==============
 
