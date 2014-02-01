@@ -34,10 +34,8 @@ def run_experiment_section(experiment, demo=False, section=None, **kwargs):
       **kwargs:   If section not specified, find section matching kwargs.
     """
     if isinstance(experiment, Experiment):
-        loaded_from_file = False
         exp = experiment
     else:
-        loaded_from_file = True
         exp = load_experiment(experiment)
         exp.experiment_file = experiment
 
@@ -52,8 +50,7 @@ def run_experiment_section(experiment, demo=False, section=None, **kwargs):
         os.rename(experiment.experiment_file,
                   experiment.experiment_file + datetime.now().strftime('.%m-%d-%H-%M-backup'))
     finally:
-        if loaded_from_file:
-            exp.save()
+        exp.save()
 
 
 def export_experiment_data(experiment_file, data_file):
