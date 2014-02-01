@@ -183,7 +183,7 @@ The `experimentator` module has a clean command-line interface for running secti
       --version          Print the installed version number of experimentator.
 
 
-To continue the example above, you could run an experiment by calling `python -m experimentator run dual_task.dat --next participant`. Or, if something goes wrong and you want to re-run a particular participant, you could run `python -m experimentator rn dual_task.dat participant 1`.
+To continue the example above, you could run an experiment by calling `python -m experimentator run dual_task.dat --next participant`. Or, if something goes wrong and you want to re-run a particular participant, you could run `python -m experimentator run dual_task.dat participant 1`.
 
 Note that you must execute these commands from a directory containing _both_ the data file (`dual_task.dat` in this example) _and_ the original script (`dual_task.py`).
 
