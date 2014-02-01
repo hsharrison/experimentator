@@ -7,7 +7,6 @@ import functools
 from importlib import import_module
 from contextlib import contextmanager
 from datetime import datetime
-from pandas import DataFrame
 from collections import ChainMap
 
 from experimentator.utility import parse_config, QuitSession
@@ -145,6 +144,7 @@ class Experiment():
 
     @property
     def data(self):
+        from pandas import DataFrame
         data = DataFrame(self.base_section.generate_data()).set_index(list(self.levels))
         return data
 
