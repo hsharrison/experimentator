@@ -352,4 +352,4 @@ def _dereference_functions(funcs):
 
 
 def _rereference_functions(module, func_names):
-    return [module.__dict__[func] for func in func_names]
+    return [getattr(module, func) for func in func_names]
