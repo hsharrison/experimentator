@@ -39,7 +39,7 @@ def run_experiment_section(experiment, demo=False, section=None, **kwargs):
         exp.experiment_file = experiment
 
     if not section:
-        section = exp.find_section(**kwargs)
+        section = exp.section(**kwargs)
 
     try:
         exp.run_section(section, demo=demo)
@@ -161,15 +161,15 @@ class Experiment():
         with open(filename, 'w') as f:
             self.data.to_csv(f)
 
-    def find_section(self, **kwargs):
+    def section(self, **kwargs):
         """
-        Find the experiment section.
+        Return an experiment section.
 
         Args:
             kwargs: level=n describing how to descend the hierarchy (uses one-based indexing).
 
         For example:
-            >> first_session = experiment_instance.find_section(participant=1, session=1)
+            >> first_session = experiment_instance.section(participant=1, session=1)
 
         Returns an ExperimentSection object at the first level where no input kwarg describes how to descend the
         hierarchy.
@@ -208,7 +208,7 @@ class Experiment():
                 break
 
         if found:
-            return self.find_section(**section)
+            return self.section(**section)
         else:
             logging.warning('Could not find a {} not run.'.format(at_level))
             return None
@@ -218,14 +218,14 @@ class Experiment():
         Add section to experiment.
 
         Args:
-            kwargs: Same as the input to find_section, describing which section is the parent of the added section.
+            kwargs: Same as the input to section, describing which section is the parent of the added section.
                     Any other kwargs are passed onto add_child_ad_hoc as section settings.
         """
         find_section_kwargs = {}
         for k in kwargs:
             if k in self.levels:
                 find_section_kwargs[k] = kwargs.pop(k)
-        self.find_section(**find_section_kwargs).add_child_ad_hoc(**kwargs)
+        self.section(**find_section_kwargs).add_child_ad_hoc(**kwargs)
 
     def run_section(self, section, demo=False):
         """
