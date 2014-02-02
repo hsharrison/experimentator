@@ -1,6 +1,8 @@
 # Copyright (c) 2014 Henry S. Harrison
 from configparser import ConfigParser
 
+import experimentator.orderings
+
 
 class QuitSession(BaseException):
     """
@@ -22,21 +24,28 @@ def parse_config(config_file):
     Parse config file(s) for experiment information.
 
     [Experiment]
-    levels = comma-separated list
-    sort methods = list, separated by commas
-    number = comma-separated list of integers
+    levels = semicolon-separated list
+    orderings = names of ordering methods, separated by semicolons
 
     [Independent Variables]
-    variable = level, comma- or semicolon-separated list of values
+    variable name = level; semicolon-separated list of values
 
-    That is, each entry name in the Independent Variables section is interpreted as a variable name. The entry string is
-    interpreted as a comma- or semicolon-separated list. The first element should match one of the levels specified in
-    the Experiment section. The other elements are the possible values (levels) of the IV. These values are interpreted
-    by the Python interpreter, so proper syntax should be used for values that aren't simple strings or numbers.
+    In the `Experiment` section, all three lines should have the same number of items, separated by commas. The `levels`
+    setting names the levels, and the `orderings` setting defines how they are ordered (and possibly repeated; more on
+    ordering methods below).
 
-    Other sections of the config file are saved as dicts in the config_data output. Fonts and colors are parsed
-    according to the formats below, and are identified as either appearing in their own sections 'Fonts' and 'Colors'
-    are on their own line with the label 'font' or 'color'.
+    Each setting in the `Independent Variables` section (that is, the name on the right of the `=`) is interpreted as a
+    variable name. The entry string (to the left of the `=` is interpreted as a comma- or semicolon-separated list. The
+    first element should match one of the levels specified in the Experiment section. This is the level to associate
+    this variable with. The other elements are the possible values of the IV. These values are interpreted by the Python
+    interpreter, so proper syntax should be used for values that aren't simple numbers (this allows your IVs to take on
+    values of dicts or lists, for example). This means that values that are strings should be enclosed in quotes.
+
+    Other sections of the config file are saved as dicts in the experiment's `persistent_data` attribute. Fonts and
+    colors are parsed according to the formats below, and are identified as either appearing in their own sections
+    'Fonts' and 'Colors' are on their own line with the label 'font' or 'color'. Everything else will be parsed as
+    strings, so it is up to you to change types on elements of `persistent_data` after your experiment instance is
+    created.
 
     Colors are three integers separated by commas, and fonts are a string and then an integer. For example:
 
@@ -51,6 +60,14 @@ def parse_config(config_file):
     [Score]
     color = 255, 0, 255
     font = Garamond, 24
+    points_to_win = 100
+
+    This example will produce the following `persistent data`:
+
+    {'colors': {'white': (255, 255, 255), 'black': 0, 0, 0},
+     'fonts': {'title': ('Times', 48), 'text': ('Monaco', 12)},
+     'score': {'color': (255, 0, 255), 'font': ('Garamond', 24), 'points_to_win': '100'},
+    }
 
     Note that all section names are transformed to lowercase.
 
@@ -62,20 +79,15 @@ def parse_config(config_file):
         config.read(config_file)
 
     # Parse [Experiment].
-    levels = list(map(str.strip, config.get('Experiment', 'levels').split(',')))
-    sort_methods = map(str.strip, config.get('Experiment', 'sort methods').split(','))
-    number = map(int, config.get('Experiment', 'number').split(','))
+    levels = list(map(str.strip, config.get('Experiment', 'levels').split(';')))
+    orderings = (parse_ordering(str.strip(s)) for s in config.get('Experiment', 'orders').split(';'))
 
     # Parse [Independent Variables].
-    settings_by_level = {level: dict(sort=sort, number=n, ivs={})
-                         for level, sort, n in zip(levels, sort_methods, number)}
+    settings_by_level = {level: dict(sort=sort, ivs={})
+                         for level, sort in zip(levels, orderings)}
 
     for name, entry in config['Independent Variables'].items():
-        entry_split = list(map(str.strip, entry.split(',')))
-        # Allow for ; in variable lists
-        if entry_split[0] not in levels:
-            entry_split = list(map(str.strip, entry.split(';')))
-
+        entry_split = list(map(str.strip, entry.split(';')))
         settings_by_level[entry_split[0]]['ivs'][name] = list(map(eval, entry_split[1:]))
 
     # Parse remaining sections.
@@ -110,3 +122,10 @@ def parse_color(config_string):
     if len(split_string) != 3:
         raise ValueError('Cannot parse color string {}'.format(config_string))
     return tuple(map(int, split_string))
+
+
+def parse_ordering(ordering_string):
+    # TODO: Allow for custom orderings by external reference.
+    if '(' not in ordering_string:
+        ordering_string.append('()')
+    return exec('experimentator.orderings.' + ordering_string)
