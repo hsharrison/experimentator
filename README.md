@@ -66,14 +66,13 @@ These functions will also be passed all IVs defined at their level or above (`in
 Config file format
 -------
     [Experiment]
-    levels = comma-separated list
-    sort methods = names of sort methods, separated by commas
-    number = comma-separated list of integers
+    levels = semicolon-separated list
+    orderings = names of ordering methods, separated by semicolons
 
     [Independent Variables]
-    variable name = level, comma- or semicolon-separated list of values
+    variable name = level; semicolon-separated list of values
 
-In the `Experiment` section, all three lines should have the same number of items, separated by commas. The `levels` setting names the levels, the `sort methods` setting defines them (more on sort methods below), and the `number` setting specifies how many sections at this level to repeat, _per unique combination of IVs_. That is, in a 2x2 design with both IVs varying at the trials level, setting number to 10 for trials will generate an experiment with 40 trials per section.
+In the `Experiment` section, all three lines should have the same number of items, separated by commas. The `levels` setting names the levels, and the `orderings` setting defines how they are ordered (and possibly repeated; more on ordering methods below).
 
 Each setting in the `Independent Variables` section (that is, the name on the right of the `=`) is interpreted as a variable name. The entry string (to the left of the `=` is interpreted as a comma- or semicolon-separated list. The first element should match one of the levels specified in the Experiment section. This is the level to associate this variable with. The other elements are the possible values of the IV. These values are interpreted by the Python interpreter, so proper syntax should be used for values that aren't simple numbers (this allows your IVs to take on values of dicts or lists, for example). This means that values that are strings should be enclosed in quotes.
 
@@ -110,14 +109,13 @@ A more complete example
 `config.ini`:
 
     [Experiment]
-    levels = participant, block, trial
-    sort methods = random, random, random
-    number = 12, 3, 50
+    levels = participant; block; trial
+    orderings = Shuffle(6); Shuffle(3); Shuffle(50)
 
     [Independent Variables]
-    target = trial, 'left', 'center', 'right'
-    congruent = trial, False, True
-    dual_task = participant, False, True
+    target = trial; 'left'; 'center'; 'right'
+    congruent = trial; False; True
+    dual_task = participant; False; True
 
 
 `dual_task.py`:
@@ -147,7 +145,7 @@ A more complete example
         dual_task_experiment.set_end_callback('participant', close_display)
         dual_task_experiment.save()
 
-This experiment has a mixed design, with one between-subjects IV, `dual_task`, and two within-subjects IVs, `target` and `congruent`. Each session will have 150 trials, organized into 3 blocks. The `'block'` level in this experiment is only organizational (as it has no associated IVs) and merely facilitate calls to `offer_break`.
+This experiment has a mixed design, with one between-subjects IV, `dual_task`, and two within-subjects IVs, `target` and `congruent`. Each session will have 150 trials, organized into 3 blocks, with 12 participants. The `'block'` level in this experiment is only organizational (as it has no associated IVs) and merely facilitate calls to `offer_break`.
 
 The technique of only creating the experiment instance in the `if __name__ == '__main__'` block is important, because later when you run a participant, `experimentator` will import `dual_task_experiment.py` to reload the callback functions. If `my_experiment.save()` is called during this reloading, it risks overwriting the original data file. Only calling `python dual_task.py` will create an experiment file (`dual_task.dat` in this case--but note that the file extension is irrelevant).
 
@@ -188,10 +186,85 @@ To continue the example above, you could run an experiment by calling `python -m
 Note that you must execute these commands from a directory containing _both_ the data file (`dual_task.dat` in this example) _and_ the original script (`dual_task.py`).
 
 
-Sort methods
+Ordering methods
 -----
 
-Coming soon!
+Ordering methods are defined in `experimentator.orderings` as classes. Orderings handle the combination of IV values to form unique conditions, the ordering of the unique conditions, and the duplication of unique conditions if specified with the `number` parameter. The following classes are available:
+
+    Ordering(number=1)
+The base class. Using this will create every section with the same order. The order is non-deterministic--it is usually predictable based on he order the IVs were defined but it is not guaranteed to stable across Python versions or implementations. The `number` parameter duplicates the entire order (as opposed to each condition separately). For example, with two IVs taking levels of `iv1 = ('A', 'B')` and `iv2 = ('a', 'b')`, `Ordering(2)` will probably produce the order `('Aa', 'Ab', 'Ba', 'Bb', 'Aa', 'Ab', 'Ba', 'Bb')`.
+
+    Shuffle(number=1, avoid_repeats=False)
+This ordering method randomly shuffles the sections, _after_ duplicating the unique sections. If `avoid_repeats==True`, there will be no identical conditions back-to-back.
+
+#### Non-atomic orderings
+
+Non-atomic orderings are orderings that are not independent between sections. For example, to counterbalance blocks within participants, you want to make sure that the possible block orders are evenly distributed within participants. That means that each participant section can't decide how to order the blocks independently.
+
+Non-atomic orderings work by creating a new independent variable `'order'` one level up. In the above example, when a participant section orders its blocks, it consults its IV `order`. The order, among participants, in which the various block orders appear depends on the ordering method at the participant level. Note that this happens automatically, so you should not define an IV called `order` or it will be overwritten.
+
+     CompleteCounterbalance(number=1)
+In a complete-counterbalance, every unique ordering of the conditions appears the same numbers. Be warned that the number of possible orderings can get very large very quickly. Therefore, this is only recommended with a small number of conditions.
+
+The number of unique orderings (and therefore, values of the IV `'order'` one level up) can be determined by `factorial(number * n_conditions) // factorial(number)**n_conditions`. For example, there are 120 possible orderings of 5 conditions. With 3 conditions and `number=2`, there are 90 unique orderings.
+
+The IV `'order'` created one level up takes integers as its value, with `CompleteCounterbalance` uses as keys to define the unique orders.
+
+    Sorted(number=1, order='both')
+This ordering method sorts the conditions based on the value of the IV defined at its level. To avoid ambiguity, it can only be used for levels with a single IV. The parameter `order` can be any of `('both', 'ascending', 'descending')`. For the latter two, there is no need to create the IV `order` on level up, because all sections are sorted the same way. However, for the default `order='both'`, an IV `'order'` is created one level up, with possible values `'ascending'` and `'descending'`. That is, half the sections will be created in ascending order, and half in descending order.
+
+#### Ordering methods in the config file
+
+In the config file, ordering methods appear in the `[Experiment]` section, as a semicolon-separated list. Each item should be interpretable as a call to define an instance of an Ordering method in `experimentator.orderings`. However, if you are not using any arguments in your call, you can leave off the parentheses. For example:
+
+    [Experiment]
+    levels = participant, block, trial
+    orderings = Shuffle(4), CompleteCounterbalance, Shuffle(3)
+
+
+A final note
+-----
+
+Until the API becomes more flexible, it's useful to know the `Experiment.add_section` method. For example, if you're unhappy about having to define the number of participants in advance, keep in mind that you can always add more later using this method. It works like this:
+
+    from experimentator import load_experiment
+    exp = load_experiment('my_experiment.dat')
+
+    exp.add_section(congruent=False)
+    exp.save()
+
+The keyword arguments to `add_section` define IV values. Any IV values you don't define will be chosen randomly. You can also specify sections, for example `add_section(participant=1, ...)` adds a block (or whatever is the next level below participant) to the first participant.
+
+You can also use the `ExperimentSection.children` attribute to inspect and rearrange sections. Use the `Experiment.section` method to get the `ExperimentSection` instance. Note that section numbers are indexed by 1. Also, you can get to the base section (the top of the tree) via the `Experiment.base_section` attribute. For example:
+
+    from experimentator import load_experiment
+    exp = load_experiment('my_experiment.dat')
+
+    for n in range(1,11):
+        participant = exp.section(participant=n)
+        # Add a block to the participant.
+        exp.add_section(participant=n)
+        # Move the last block of the participant to the beginning.
+        blocks = participant.children
+        participant.children = [blocks[-1], block[:-1]]
+        # Remove all but the first 5 trials.
+        participant.children[0].children[5:] = []
+
+    exp.save()
+
+This code creates a practice block for each participant, with only 5 trials. Eventually, I hope to make this unnecessary by improving the experiment creation API. If you have any suggestions as to the API you would prefer for this sort of thing, let me know.
+
+
+TODOs
+------
+
+* Ordering methods: latin square, partial counterbalance
+* Support for importing custom Ordering subclasses.
+* Designs: fractional factorial, unbalanced designs
+* Different settings by section (e.g., a block for practice trials)
+* Design matrices
+* Clean integration with `statsmodels` (once they implement repeated measures and mixed ANOVAs)
+* A GUI!
 
 
 License
