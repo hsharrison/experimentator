@@ -4,7 +4,7 @@ from distutils.core import setup
 
 setup(name='experimentator',
       packages=['experimentator'],
-      py_modules=['experimentator', 'experimentator.section'],
+      py_modules=['experimentator', 'experimentator.section', 'experimentator.orderings'],
       version='0.2.0.dev',
       author='Henry S. Harrison',
       author_email='henry.schafer.harrison@gmail.com',
