@@ -11,6 +11,7 @@ from collections import ChainMap
 
 from experimentator.utility import parse_config, QuitSession
 from experimentator.section import ExperimentSection
+from experimentator.orderings import Ordering
 
 
 def load_experiment(experiment_file):
@@ -71,9 +72,8 @@ class Experiment():
         following keys:
                            ivs:  A mapping of independent variables names to possible values, for the IVs that vary at
                                  the associated level.
-                           sort: The sort method for the level: 'random', indices, or None.
-                           n:    The number of times each unique combination of variables should appear at the
-                                 associated level.
+                           ordering: Ordering subclass instance.
+
         levels:            A list of level names describing the experiment hierarchy.
         base_section:      An ExperimentSection instance from which all experiment sections descend.
         data:              A pandas DataFrame. Before any sections are run, contains only the IV values of each trial.
@@ -105,9 +105,8 @@ class Experiment():
                                   following keys:
                                   ivs:  A mapping of independent variables names to possible values, for the IVs that
                                         vary at the associated level.
-                                  sort: The sort method for the level: 'random', indices, or None.
-                                  n:    The number of times each unique combination of variables should appear at the
-                                        associated level.
+                                  ordering: Ordering subclass instance.
+
             levels=('participant', 'session', 'block', 'trial'):
                                   The experiment's hierarchy of sections.
             experiment_file=None: A filename where the experiment instance will be pickled, in order to run some
@@ -121,6 +120,13 @@ class Experiment():
         for level in settings_by_level:
             if level not in levels:
                 raise KeyError('Unknown level {}.'.format(level))
+
+        # First pass of orderings; necessary for non-atomic orderings. Must be done in reverse order to avoid adding an
+        #   IV to a level that's already been processed.
+        for level, level_above in zip(reversed(levels[1:]), reversed(levels[:-1])):
+            settings = settings_by_level[level]
+            new_ivs = settings.get('ordering', Ordering()).first_pass(settings['ivs'])
+            settings_by_level[level_above]['ivs'].update(new_ivs)
 
         self.levels = levels
         self.settings_by_level = settings_by_level
