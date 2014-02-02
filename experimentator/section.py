@@ -1,43 +1,6 @@
 # Copyright (c) 2014 Henry S. Harrison
-import itertools
 import random
 import logging
-
-
-def _unique_iv_combinations(ivs):
-    """
-    Crosses the section's independent variables, and yields the unique combinations.
-    """
-    try:
-        iv_names, iv_values = zip(*ivs.items())
-    except ValueError:
-        # Workaround because zip doesn't want to return two elements if ivs is empty.
-        iv_names = ()
-        iv_values = ()
-    iv_combinations = itertools.product(*iv_values)
-
-    for iv_combination in iv_combinations:
-        yield dict(zip(iv_names, iv_combination))
-
-
-def _non_atomic_orders(levels, settings_by_level):
-    for level, next_level in zip(levels[:-1], levels[1:]):
-        sort = settings_by_level[next_level].get('sort')
-
-        if sort == 'complete-counterbalance':
-            next_level_ivs = settings_by_level[next_level].get('ivs', {})
-            sections = settings_by_level[next_level].get('n', 1) * list(_unique_iv_combinations(next_level_ivs))
-            permutations = list(itertools.permutations(sections))
-            ivs = settings_by_level[level].get('ivs', {})
-            ivs.update(order=permutations)
-            settings_by_level[level].update(ivs)
-            settings_by_level[next_level].update(sort='non-atomic')
-
-        elif sort == 'latin-square':
-            # TODO: implement
-            pass
-
-    return settings_by_level
 
 
 class ExperimentSection():
@@ -54,7 +17,7 @@ class ExperimentSection():
         level:             The current level.
         is_bottom_level:   True if this section is at the lowest level of the tree (a trial in the default hierarchy).
         next_level:        The next level.
-        next_settings:     The next settings, a dict with keys 'ivs', 'sort', and 'n'.
+        next_settings:     The next settings, a dict with keys 'ivs' and 'ordering'.
         next_level_inputs: the inputs to be passed when constructing children.
         has_children:      True if the section has started to be run.
         has_finished:      True if the section has finished running.
@@ -70,9 +33,9 @@ class ExperimentSection():
             levels:             A list of names in the hierarchy, with levels[0] being the name of this section, and the
                                 levels[1:] the names of its descendants.
             settings_by_level:  A mapping from the elements of levels to dicts with keys:
-                                ivs:   independent variables, as mapping from names to possible values
-                                sort:  string (e.g., 'random') or None
-                                n:     number of repeats of each unique combination of ivs
+                                ivs:   independent variables, as mapping from names to possible values.
+                                ordering:  Ordering subclass instance.
+
         """
         self.has_started = False
         self.has_finished = False
@@ -84,61 +47,19 @@ class ExperimentSection():
             self.next_level = None
             self.next_settings = None
             self.next_level_inputs = None
-        else:
-            # Handle non-atomic sorts
-            settings_by_level = _non_atomic_orders(levels, settings_by_level)
 
+        else:  # Not bottom level.
             self.next_level = levels[1]
-            self.next_settings = settings_by_level.get(self.next_level, dict())
+            self.next_settings = settings_by_level[self.next_level]
             self.next_level_inputs = (levels[1:], settings_by_level)
 
-            # Create the section tree. Creating any section also creates the sections below it
-            unique_contexts = list(_unique_iv_combinations(self.next_settings.get('ivs', {})))
-            for i, new_context in enumerate(self.sort_and_repeat(unique_contexts)):
+            # Create the section tree. Creating any section also creates the sections below it.
+            for i, new_context in enumerate(self.next_settings['ordering'].order(**self.context)):
                 child_context = self.context.new_child()
                 child_context.update(new_context)
                 child_context[self.next_level] = i+1
                 logging.debug('Generating {} with context {}.'.format(self.next_level, child_context))
                 self.children.append(ExperimentSection(child_context, *self.next_level_inputs))
-
-    def sort_and_repeat(self, unique_contexts):
-        """
-        Sorts and repeats the unique contexts for children of the section.
-
-        Args:
-            unique_contexts: A sequence of unique ChainMaps describing the possible combinations of the independent
-                             variables at the section's level.
-
-        Yields the sorted and repeated contexts, according to the section's sort and n entries in its next_level_dict
-        attribute.
-        """
-        method = self.next_settings.get('sort', None)
-        n = self.next_settings.get('n', 1)
-
-        if not method:
-            yield from n * unique_contexts
-
-        elif method == 'random':
-            new_seq = n * unique_contexts
-            random.shuffle(new_seq)
-            yield from new_seq
-
-        elif method == 'non-atomic':
-            yield from self.context['order']
-
-        elif method == 'ordered':
-            if len(unique_contexts[0]) != 1:
-                raise ValueError("More than one independent variable at level with sort method 'ordered'")
-            if 'order' not in self.context or self.context['order'] not in ('ascending', 'descending'):
-                logging.warning("Sort method 'ordered' used without specifying ascending or descending order. " +
-                                "Defaulting to ascending.")
-                reverse_sort = False
-            else:
-                reverse_sort = self.context['order'] == 'descending'
-            yield from sorted(unique_contexts, key=lambda c: list(c.values())[0], reverse=reverse_sort)
-
-        else:
-            raise ValueError('Unrecognized sort method {}.'.format(method))
 
     def add_child_ad_hoc(self, **kwargs):
         """
