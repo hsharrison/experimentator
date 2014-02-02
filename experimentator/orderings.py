@@ -9,14 +9,14 @@ from math import factorial
 class Ordering():
     def __init__(self, repeats=1, **_):
         self.repeats = repeats
-        self.all_elements = []
+        self.all_conditions = []
 
     def first_pass(self, ivs):
-        self.all_elements = self.repeats * list(self.conditions(ivs))
+        self.all_conditions = self.repeats * list(self.conditions(ivs))
         return {}
 
     def order(self, **_):
-        return self.all_elements
+        return self.all_conditions
 
     @staticmethod
     def conditions(ivs):
@@ -37,8 +37,8 @@ class Ordering():
 
 class Shuffle(Ordering):
     def order(self, **_):
-        random.shuffle(self.all_elements)
-        return self.all_elements
+        random.shuffle(self.all_conditions)
+        return self.all_conditions
 
 
 class NonAtomicOrdering(Ordering):
@@ -57,14 +57,14 @@ class NonAtomicOrdering(Ordering):
 class CompleteCounterbalance(NonAtomicOrdering):
     def first_pass(self, ivs):
         conditions = list(self.conditions(ivs))
-        self.all_elements = self.repeats * conditions
+        self.all_conditions = self.repeats * conditions
 
         # Warn because this might hang if this method is accidentally used with too many possible orders.
-        non_distinct_orders = factorial(len(self.all_elements))
+        non_distinct_orders = factorial(len(self.all_conditions))
         equivalent_orders = factorial(self.repeats)**len(conditions)
         logging.warning("Creating IV 'order' with {} levels.".format(non_distinct_orders//equivalent_orders))
 
-        self.order_ivs = dict(enumerate(self.possible_orders(self.all_elements)))
+        self.order_ivs = dict(enumerate(self.possible_orders(self.all_conditions)))
         return self.iv
 
 
@@ -77,9 +77,12 @@ class Sorted(NonAtomicOrdering):
         if len(ivs) > 1:
             raise ValueError("Ordering method 'Sorted' only works with one IV.")
 
-        self.all_elements = self.repeats * list(self.conditions(ivs))
-        self.order_ivs = {'ascending': sorted(self.all_elements, key=list(ivs.values())[0]),
-                          'descending': sorted(self.all_elements, key=list(ivs.values())[0], reverse=True)}
+        self.all_conditions = self.repeats * list(self.conditions(ivs))
+        self.order_ivs = {'ascending': sorted(self.all_conditions,
+                                              key=lambda condition: list(condition.values())[0]),
+                          'descending': sorted(self.all_conditions,
+                                               key=lambda condition: list(condition.values())[0],
+                                               reverse=True)}
 
         if self.order == 'both':
             logging.warning("Creating IV 'order' with levels 'ascending' and 'descending'.")
