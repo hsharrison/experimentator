@@ -7,12 +7,12 @@ from math import factorial
 
 
 class Ordering():
-    def __init__(self, repeats=1, **_):
-        self.repeats = repeats
+    def __init__(self, number=1, **_):
+        self.number = number
         self.all_conditions = []
 
     def first_pass(self, ivs):
-        self.all_conditions = self.repeats * list(self.conditions(ivs))
+        self.all_conditions = self.number * list(self.conditions(ivs))
         return {}
 
     def order(self, **_):
@@ -36,8 +36,16 @@ class Ordering():
 
 
 class Shuffle(Ordering):
+    def __init__(self, number=1, avoid_repeats=False, **kwargs):
+        super().__init__(number=number, **kwargs)
+        self.avoid_repeats = avoid_repeats
+
     def order(self, **_):
         random.shuffle(self.all_conditions)
+        if self.avoid_repeats:
+            while _has_repeats(self.all_conditions):
+                random.shuffle(self.all_conditions)
+
         return self.all_conditions
 
 
@@ -57,11 +65,11 @@ class NonAtomicOrdering(Ordering):
 class CompleteCounterbalance(NonAtomicOrdering):
     def first_pass(self, ivs):
         conditions = list(self.conditions(ivs))
-        self.all_conditions = self.repeats * conditions
+        self.all_conditions = self.number * conditions
 
         # Warn because this might hang if this method is accidentally used with too many possible orders.
         non_distinct_orders = factorial(len(self.all_conditions))
-        equivalent_orders = factorial(self.repeats)**len(conditions)
+        equivalent_orders = factorial(self.number)**len(conditions)
         logging.warning("Creating IV 'order' with {} levels.".format(non_distinct_orders//equivalent_orders))
 
         self.order_ivs = dict(enumerate(self.possible_orders(self.all_conditions)))
@@ -69,15 +77,15 @@ class CompleteCounterbalance(NonAtomicOrdering):
 
 
 class Sorted(NonAtomicOrdering):
-    def __init__(self, order='both', **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, number=1, order='both', **kwargs):
+        super().__init__(number=number, **kwargs)
         self.order = order
 
     def first_pass(self, ivs):
         if len(ivs) > 1:
             raise ValueError("Ordering method 'Sorted' only works with one IV.")
 
-        self.all_conditions = self.repeats * list(self.conditions(ivs))
+        self.all_conditions = self.number * list(self.conditions(ivs))
         self.order_ivs = {'ascending': sorted(self.all_conditions,
                                               key=lambda condition: list(condition.values())[0]),
                           'descending': sorted(self.all_conditions,
@@ -96,3 +104,7 @@ class Sorted(NonAtomicOrdering):
         else:
             order = self.order
         return self.order_ivs[order]
+
+
+def _has_repeats(seq):
+    return any(first == second for first, second in zip(seq[:-1], seq[1:]))
