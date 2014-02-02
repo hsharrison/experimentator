@@ -80,7 +80,7 @@ def parse_config(config_file):
 
     # Parse [Experiment].
     levels = list(map(str.strip, config.get('Experiment', 'levels').split(';')))
-    orderings = (parse_ordering(str.strip(s)) for s in config.get('Experiment', 'orders').split(';'))
+    orderings = (parse_ordering(str.strip(s)) for s in config.get('Experiment', 'orderings').split(';'))
 
     # Parse [Independent Variables].
     settings_by_level = {level: dict(sort=sort, ivs={})
