@@ -258,6 +258,7 @@ This code creates a practice block for each participant, with only 5 trials. Eve
 TODOs
 ------
 
+* *More and better tests*
 * Ordering methods: latin square, partial counterbalance
 * Support for importing custom Ordering subclasses.
 * Designs: fractional factorial, unbalanced designs
