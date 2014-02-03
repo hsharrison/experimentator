@@ -114,8 +114,15 @@ class Experiment():
         """
         if config_file:
             levels, settings_by_level, config_data = parse_config(config_file)
-        else:
+
+        else:  # No config data.
             config_data = {}
+            # Check for missing settings.
+            for settings in settings_by_level.values():
+                if 'ordering' not in settings:
+                    settings['ordering'] = Ordering()
+                if 'ivs' not in settings:
+                    settings['ivs'] = {}
 
         for level in settings_by_level:
             if level not in levels:
