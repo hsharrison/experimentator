@@ -51,7 +51,7 @@ Once you create your experiment, assign a function as its 'run' callbakc to defi
 
     my_experiment.set_run_callback(run_trial)
 
-The 'run' callback return its results in the form of a dict. Every IV in the tree will be passed to the decorated function(s) as kwargs, including those used only at a higher level. This includes section numbers (e.g., `participant=2, block=1, trial=12`). For this reason, all decorated functions should include a kwarg wildcard input (`**_` here).
+The 'run' callback return its results in the form of a dict. Every IV in the tree will be passed to the callback as kwargs, including those used only at a higher level. This includes section numbers (e.g., `participant=2, block=1, trial=12`). For this reason, all callbacks functions should include a kwarg wildcard input (`**_` here).
 
 You can also define functions to run before, between, and after sections of your experiment using the methods `set_start_callback`, `set_inter_callback`, and `set_end_callback`. The only difference from the `set_run_callback` method is that these methods also require the level name. For example:
 
