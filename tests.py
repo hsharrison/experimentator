@@ -3,17 +3,16 @@ from collections import ChainMap
 
 from experimentator import Experiment
 from experimentator.section import ExperimentSection
+from experimentator.orderings import Shuffle
 
 
 levels = ('trunk', 'branch', 'stem', 'leaf')
 settings = {'trunk': dict(),
             'branch': dict(ivs={'a': range(2), 'b': range(3)}),
             'stem': dict(ivs={'c': ['a', 'b', 'c'], 'd': [12, 17, 61, 2.61], 'e': [True, False]},
-                         sort='random',
-                         n=1),
+                         ordering=Shuffle()),
             'leaf': dict(ivs={'f': range(6)},
-                         sort='random',
-                         n=2)}
+                         ordering=Shuffle(2))}
 
 n_children = dict(trunk=2*3, branch=3*4*2, stem=6*2, leaf=0)
 total_branches = n_children['trunk']
@@ -40,7 +39,7 @@ sample_experiment = Experiment(settings_by_level=settings,
                                levels=levels)
 
 
-def run_trial(_, __, **iv):
+def run_trial(*_, **iv):
     branch = iv['a'] + iv['b']
     if iv['e']:
         stem = iv['c'] + str(iv['d'])
