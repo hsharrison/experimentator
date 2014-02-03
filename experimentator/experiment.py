@@ -132,8 +132,10 @@ class Experiment():
         #   IV to a level that's already been processed.
         for level, level_above in zip(reversed(levels[1:]), reversed(levels[:-1])):
             settings = settings_by_level[level]
-            new_ivs = settings.get('ordering', Ordering()).first_pass(settings['ivs'])
+            new_ivs = settings['ordering'].first_pass(settings['ivs'])
             settings_by_level[level_above]['ivs'].update(new_ivs)
+        # And call first pass of the top level.
+        settings_by_level[levels[0]]['ordering'].first_pass(settings_by_level[levels[0]]['ivs'])
 
         self.levels = levels
         self.settings_by_level = settings_by_level
