@@ -5,6 +5,8 @@ import random
 import logging
 from math import factorial
 
+from experimentator.utility import latin_square
+
 
 class Ordering():
     def __init__(self, number=1, **_):
@@ -104,6 +106,32 @@ class Sorted(NonAtomicOrdering):
         else:
             order = self.order
         return self.order_ivs[order]
+
+
+class LatinSquare(NonAtomicOrdering):
+    def __init__(self, number=1, uniform=True, **kwargs):
+        super().__init__(number=number, **kwargs)
+        self.uniform = uniform
+        self.square = []
+
+    def first_pass(self, ivs):
+        self.all_conditions = list(self.conditions(ivs))
+        order = len(self.all_conditions)
+
+        if self.uniform:
+            uniform_string = ''
+        else:
+            uniform_string = 'non-'
+        logging.warning('Construcing latin square of order {} from a {}uniform distribution...'.format(
+            order, uniform_string))
+
+        self.square = latin_square(order, uniform=self.uniform, reduced=not self.uniform, shuffle=not self.uniform)
+        logging.warning('Latin square construction complete.')
+
+        self.order_ivs = [self.number * [self.all_conditions[i] for i in row] for row in self.square]
+
+        logging.warning("Creating IV 'order' with {} levels.".format(order))
+        return self.iv
 
 
 def _has_repeats(seq):
