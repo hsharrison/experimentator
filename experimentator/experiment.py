@@ -9,7 +9,8 @@ from contextlib import contextmanager
 from datetime import datetime
 from collections import ChainMap
 
-from experimentator.utility import parse_config, QuitSession
+from experimentator.config import parse_config
+from experimentator.common import QuitSession
 from experimentator.section import ExperimentSection
 from experimentator.orderings import Ordering
 

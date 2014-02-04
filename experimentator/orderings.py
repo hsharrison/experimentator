@@ -5,7 +5,7 @@ import random
 import logging
 from math import factorial
 
-from experimentator.utility import latin_square
+from experimentator.common import latin_square
 
 
 class Ordering():
