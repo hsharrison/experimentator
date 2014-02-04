@@ -192,7 +192,7 @@ Ordering methods
 Ordering methods are defined in `experimentator.orderings` as classes. Orderings handle the combination of IV values to form unique conditions, the ordering of the unique conditions, and the duplication of unique conditions if specified with the `number` parameter. The following classes are available:
 
     Ordering(number=1)
-The base class. Using this will create every section with the same order. The order is non-deterministic--it is usually predictable based on he order the IVs were defined but it is not guaranteed to stable across Python versions or implementations. The `number` parameter duplicates the entire order (as opposed to each condition separately). For example, with two IVs taking levels of `iv1 = ('A', 'B')` and `iv2 = ('a', 'b')`, `Ordering(2)` will probably produce the order `('Aa', 'Ab', 'Ba', 'Bb', 'Aa', 'Ab', 'Ba', 'Bb')`.
+The base class. Using this will create every section with the same order. The `number` parameter duplicates the entire order (as opposed to each condition separately). For example, with two IVs taking levels of `iv1 = ('A', 'B')` and `iv2 = ('a', 'b')`, `Ordering(2)` will probably produce the order `('Aa', 'Ab', 'Ba', 'Bb', 'Aa', 'Ab', 'Ba', 'Bb')`. The order is non-deterministic--it is usually predictable based on the order the IVs were defined but it is not guaranteed to be stable across Python versions or implementations.
 
     Shuffle(number=1, avoid_repeats=False)
 This ordering method randomly shuffles the sections, _after_ duplicating the unique sections. If `avoid_repeats==True`, there will be no identical conditions back-to-back.
