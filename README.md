@@ -68,7 +68,7 @@ You can also use Python's context manager objects instead of or in addition to s
 
 Context managers have two advantages over start and end callbacks. First, they can return values (in a `with` statement, the return variable is set using the `as` keyword) which in `experimentator` are stored in the `Experiment.session_data` dictionary. Second, you can use a [`try` statement](http://docs.python.org/3.3/reference/compound_stmts.html#try) in your context manager to ensure that your cleanup (the code that would otherwise be in your end callback) executes even if an error is encountered while running the section.
 
-The easiest way to create a context manager is with the [`contextlib.contextmanager`] decorator. In the context of `experimentator`, use it like this:
+The easiest way to create a context manager is with the [`contextlib.contextmanager`](http://docs.python.org/3.3/library/contextlib.html#contextlib.contextmanager) decorator. In the context of `experimentator`, use it like this:
 
     from contextlib import contextmanager
 
