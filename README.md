@@ -62,6 +62,39 @@ You can also define functions to run before, between, and after sections of your
 
 These functions will also be passed all IVs defined at their level or above (`inter` functions are passed the variables for the _next_ section), so keyword expansion should be used here as well.
 
+#### Context managers: An alternative to start and end callbacks
+
+You can also use Python's context manager objects instead of or in addition to start and end callbacks, to define behavior that occurs at the beginning and end of every section at a particular level. You may be familiar with context managers as functions that are typically used in [Python's `with` statement](http://docs.python.org/3.3/reference/compound_stmts.html#with).
+
+Context managers have two advantages over start and end callbacks. First, they can return values (in a `with` statement, the return variable is set using the `as` keyword) which in `experimentator` are stored in the `Experiment.session_data` dictionary. Second, you can use a [`try` statement](http://docs.python.org/3.3/reference/compound_stmts.html#try) in your context manager to ensure that your cleanup (the code that would otherwise be in your end callback) executes even if an error is encountered while running the section.
+
+The easiest way to create a context manager is with the [`contextlib.contextmanager`] decorator. In the context of `experimentator`, use it like this:
+
+    from contextlib import contextmanager
+
+    @contextmanager
+    def session_context():
+        window = open_window()  # A made-up example function.
+
+        try:
+            yield window
+
+        finally:
+            window.close()
+
+
+    my_experiment.set_contextmanager('session', session_context)
+    my_experiment.save()
+
+
+To explain:
+* Any code before the `yield` statement is executed before the section is run. This is the equivalent of a start callback.
+* The `yield` statement marks where the section will be run. It is not necessary to yield any variables, but if you do, they are available to other functions as `my_experiment.session_data['as'][level]`. In this example, the variable `window` can be accessed during the session by `my_experiment.session_data['as']['session']`.
+* Any code after the `yield` statement is executed after the section is run, the equivalent of an end callback.
+* Use a `try`/`finally` statement to ensure code will be run in the case of an error occurring. Any code in a `finally` block is executed after the section ends, _or_ in case any error occurs during the `try` block. However, this isn't always necessary: if you don't have any code to run unconditionally, you can write a context manager without a `try`/`finally` statement.
+
+For more on context managers, including other ways to create them, see [the documentation for `contextlib` in the standard library](http://docs.python.org/3.3/library/contextlib.html).
+
 
 Config file format
 -------
