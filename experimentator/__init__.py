@@ -2,3 +2,4 @@
 from experimentator.config import parse_config
 from experimentator.common import QuitSession
 from experimentator.experiment import Experiment, load_experiment, run_experiment_section, export_experiment_data
+from experimentator.__version__ import __version__

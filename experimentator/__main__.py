@@ -25,13 +25,12 @@ Options:
   --version          Print the installed version number of experimentator.
 """
 
-import pkg_resources
 import logging
 from docopt import docopt
 
-from experimentator import load_experiment, run_experiment_section, export_experiment_data
+from experimentator import load_experiment, run_experiment_section, export_experiment_data, __version__
 
-options = docopt(__doc__, version=pkg_resources.require('experimentator')[0].version)
+options = docopt(__doc__, version=__version__)
 
 if options['--debug']:
     logging.basicConfig(level=logging.DEBUG)

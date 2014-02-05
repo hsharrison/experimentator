@@ -2,10 +2,13 @@
 
 from distutils.core import setup
 
+with open('experimentator/__version__.py') as f:
+    exec(f.read())
+
 setup(name='experimentator',
       packages=['experimentator'],
       py_modules=['experimentator', 'experimentator.section', 'experimentator.orderings'],
-      version='0.2.0.dev',
+      version=__version__,
       author='Henry S. Harrison',
       author_email='henry.schafer.harrison@gmail.com',
       url='https://bitbucket.org/hharrison/experimentator',
@@ -32,5 +35,4 @@ Currently, experimentator requires Python 3.3 or later.
           'Topic :: Software Development :: Libraries :: Python Modules',
           'Topic :: Utilities',
       ],
-
-      )
+    )
