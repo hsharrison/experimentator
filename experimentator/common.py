@@ -1,5 +1,6 @@
 # Copyright (c) 2014 Henry S. Harrison
 import random
+from collections import deque
 
 
 class QuitSession(BaseException):
@@ -43,14 +44,47 @@ def latin_square(order, reduced=False, uniform=True, shuffle=False):
                         square[-1] = _new_row(order)
 
     if shuffle:
-        # Randomly permute rows.
+        _shuffle_latin_square(square)
+
+    return square
+
+
+def balanced_latin_square(order):
+    if order % 2:
+        raise ValueError('Cannot compute a balanced Latin square with an odd order')
+
+    original_numbers = range(order)
+    column_starts = [0, 1]
+    for first, last in zip(original_numbers[2:], reversed(original_numbers[2:])):
+        column_starts.append(last)
+        column_starts.append(first)
+        if len(column_starts) == order:
+            break
+
+    square = []
+    for start in column_starts:
+        column = deque(original_numbers)
+        column.rotate(-start)
+        square.append(list(column))
+    square = list(zip(*square))
+    square = [list(row) for row in square]
+
+    return _shuffle_latin_square(square, shuffle_columns=False)
+
+
+def _shuffle_latin_square(square, shuffle_columns=True, shuffle_rows=True, shuffle_items=True):
+    order = len(square)
+
+    if shuffle_rows:
         random.shuffle(square)
-        # Randomly permute columns.
+
+    if shuffle_columns:
         square = list(zip(*square))
         random.shuffle(square)
         square = list(zip(*square))
         square = [list(row) for row in square]
-        # Randomly assign factors.
+
+    if shuffle_items:
         new_factors = list(range(order))
         random.shuffle(new_factors)
         new_square = []
@@ -59,8 +93,9 @@ def latin_square(order, reduced=False, uniform=True, shuffle=False):
             for original_factor, new_factor in zip(range(order), new_factors):
                 new_row[row.index(original_factor)] = new_factor
             new_square.append(new_row)
+        square = new_square
 
-        assert(_is_latin_rect(square))
+    assert(_is_latin_rect(square))
 
     return square
 

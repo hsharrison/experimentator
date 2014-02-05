@@ -248,10 +248,12 @@ The IV `'order'` created one level up takes integers as its value, which `Comple
     Sorted(number=1, order='both')
 This ordering method sorts the conditions based on the value of the IV defined at its level. To avoid ambiguity, it can only be used for levels with a single IV. The parameter `order` can be any of `('both', 'ascending', 'descending')`. For the final two, there is no need to create the IV `order` on level up, because all sections are sorted the same way. However, for the default `order='both'`, an IV `'order'` is created one level up, with possible values `'ascending'` and `'descending'`. That is, half the sections will be created in ascending order, and half in descending order.
 
-    LatinSquare(number=1, uniform=True)
+    LatinSquare(number=1, balanced=True, uniform=False)
 This orders your sections according to a [Latin square](http://en.wikipedia.org/wiki/Latin_square) with order equal to the number of unique conditions at the level. The values of the `'order'` IV one level up will be equal to the order of the Latin square. If `number > 1`, each ordering is duplicated _after_ computing the Latin square. For example, with `number=2` and 2x2 IVs (4 total conditions), then 4 unique orderings will be generated, each consisting of a 4-condition sequence repeated twice.
 
-Note that the algorithm for computing Latin squares is not very efficient. Setting the keyword argument `uniform=False` will relax the requirement that the Latin square be sampled from a uniform distribution of Latin squares, allowing the algorithm to run faster. On the test PC, with `uniform=True` the computation time jumps from seconds to minutes between orders 5 and 6; with `uniform=False` the algorithm can generate a latin square up to about an order of 10 before jumping from seconds to minutes. Higher than that, computation time will increase rapidly.
+If `balanced==True`, then each condition will appear immediately before and after each other condition an equal number of times. Balanced Latin squares can only be constructed with an even number of conditions. If `uniform==True`, care will be taken to sample a Latin square randomly from a uniform distribution of Latin squares. This option can only be used for unbalanced Latin squares.
+
+Note that the algorithm for computing unbalanced Latin squares is not very efficient. On the test PC, with `uniform=True` the computation time jumps from seconds to minutes between orders 5 and 6; with `uniform=False` the algorithm can generate a latin square up to about an order of 10 before jumping from seconds to minutes. Higher than that, computation time will increase rapidly. With `balanced=True`, Latin squares of arbitrarily high order can be created very quickly, because the algorithm does not randomly sample from balanced Latin squares; instead, it constructs a canonical balanced Latin square and shuffles it.
 
 #### Ordering methods in the config file
 

@@ -5,7 +5,7 @@ import random
 import logging
 from math import factorial
 
-from experimentator.common import latin_square
+from experimentator.common import latin_square, balanced_latin_square
 
 
 class Ordering():
@@ -109,26 +109,32 @@ class Sorted(NonAtomicOrdering):
 
 
 class LatinSquare(NonAtomicOrdering):
-    def __init__(self, number=1, uniform=True, **kwargs):
+    def __init__(self, number=1, balanced=True, uniform=False, **kwargs):
+        if balanced and uniform:
+            raise ValueError('Cannot create a balanced, uniform Latin square')
         super().__init__(number=number, **kwargs)
+        self.balanced = balanced
         self.uniform = uniform
-        self.square = []
 
     def first_pass(self, ivs):
         self.all_conditions = list(self.conditions(ivs))
         order = len(self.all_conditions)
 
-        if self.uniform:
-            uniform_string = ''
+        if self.balanced:
+            square = balanced_latin_square(order)
+
         else:
-            uniform_string = 'non-'
-        logging.warning('Construcing latin square of order {} from a {}uniform distribution...'.format(
-            order, uniform_string))
+            if self.uniform:
+                uniform_string = ''
+            else:
+                uniform_string = 'non-'
+            logging.warning('Constructing Latin square of order {} from a {}uniform distribution...'.format(
+                order, uniform_string))
 
-        self.square = latin_square(order, uniform=self.uniform, reduced=not self.uniform, shuffle=not self.uniform)
-        logging.warning('Latin square construction complete.')
+            square = latin_square(order, uniform=self.uniform, reduced=not self.uniform, shuffle=not self.uniform)
+            logging.warning('Latin square construction complete.')
 
-        self.order_ivs = [self.number * [self.all_conditions[i] for i in row] for row in self.square]
+        self.order_ivs = [self.number * [self.all_conditions[i] for i in row] for row in square]
 
         logging.warning("Creating IV 'order' with {} levels.".format(order))
         return self.iv
