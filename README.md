@@ -239,7 +239,7 @@ Non-atomic orderings are orderings that are not independent between sections. Fo
 Non-atomic orderings work by creating a new independent variable `'order'` one level up. In the above example, when a participant section orders its blocks, it consults its IV `order`. The order, among participants, in which the various block orders appear depends on the ordering method at the participant level. Note that this happens automatically, so you should not define an IV called `order` or it will be overwritten.
 
      CompleteCounterbalance(number=1)
-In a complete-counterbalance, every unique ordering of the conditions appears the same numbers of time. Be warned that the number of possible orderings can get very large very quickly. Therefore, this is only recommended with a small number of conditions.
+In a complete-counterbalance, every unique ordering of the conditions appears the same numbers of times. Be warned that the number of possible orderings can get very large very quickly. Therefore, this is only recommended with a small number of conditions.
 
 The number of unique orderings (and therefore, values of the IV `'order'` one level up) can be determined by `factorial(number * n_conditions) // factorial(number)**n_conditions`. For example, there are 120 possible orderings of 5 conditions. With 3 conditions and `number=2`, there are 90 unique orderings.
 
@@ -273,7 +273,7 @@ Until the API becomes more flexible, it's useful to know the `Experiment.add_sec
     exp.add_section()
     exp.save()
 
-Any keyword arguments to `add_section` define IV values. Any IV values (at the leve of the section you're adding) you don't define will be chosen randomly. You can also specify sections, for example `add_section(participant=1, ...)` adds a block (or whatever is the next level below participant) to the first participant.
+Any keyword arguments to `add_section` define IV values. Any IV values (at the level of the section you're adding) you don't define will be chosen randomly. You can also specify sections, for example `add_section(participant=1, ...)` adds a block (or whatever is the next level below participant) to the first participant.
 
 You can also use the `ExperimentSection.children` attribute to inspect and rearrange sections. Use the `Experiment.section` method to get the `ExperimentSection` instance, and then the `ExperimentSection.children` attribute is a list of `ExperimentSection` instances one level donw. Note that section numbers are indexed by 1. Also, you can get to the base section (the root of the tree) via the `Experiment.base_section` attribute. For example:
 
