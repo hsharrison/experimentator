@@ -33,15 +33,8 @@ class ExperimentSection():
                     self.children.append(ExperimentSection(child_context, *self.next_level_inputs))
 
     def add_child_ad_hoc(self, **kwargs):
-        """
-        Add an extra child to the section.
-
-        Args:
-            **kwargs: IV name=value assignments to determine the child's context. Any IV name not specified here will
-                      be chosen randomly from the IV's possible values.
-        """
         child_context = self.context.new_child()
-        child_context[self.next_level] = self.children[-1][self.next_level] + 1
+        child_context[self.next_level] = self.children[-1].context[self.next_level] + 1
         child_context.update(random.choice(random.choice(self.next_designs).all_conditions))
         child_context.update(kwargs)
         self.children.append(ExperimentSection(child_context, *self.next_level_inputs))
