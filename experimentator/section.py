@@ -4,10 +4,10 @@ import logging
 
 
 class ExperimentSection():
-    def __init__(self, context, levels, design_by_level):
+    def __init__(self, context, levels, designs_by_level):
         self.context = context
         self.level = levels[0]
-        self.design = design_by_level[self.level]
+        self.designs = designs_by_level[self.level]
         self.is_bottom_level = self.level == levels[-1]
 
         self.children = []
@@ -20,16 +20,17 @@ class ExperimentSection():
 
         else:  # Not bottom level.
             self.next_level = levels[1]
-            self.next_design = design_by_level[self.next_level]
-            self.next_level_inputs = (levels[1:], design_by_level)
+            self.next_designs = designs_by_level[self.next_level]
+            self.next_level_inputs = (levels[1:], designs_by_level)
 
             # Create the section tree. Creating any section also creates the sections below it.
-            for i, new_context in enumerate(self.next_design.order(**self.context)):
-                child_context = self.context.new_child()
-                child_context.update(new_context)
-                child_context[self.next_level] = i+1
-                logging.debug('Generating {} with context {}.'.format(self.next_level, child_context))
-                self.children.append(ExperimentSection(child_context, *self.next_level_inputs))
+            for design in self.next_designs:
+                for i, new_context in enumerate(design.order(**self.context)):
+                    child_context = self.context.new_child()
+                    child_context.update(new_context)
+                    child_context[self.next_level] = i+1
+                    logging.debug('Generating {} with context {}.'.format(self.next_level, child_context))
+                    self.children.append(ExperimentSection(child_context, *self.next_level_inputs))
 
     def add_child_ad_hoc(self, **kwargs):
         """
@@ -41,7 +42,7 @@ class ExperimentSection():
         """
         child_context = self.context.new_child()
         child_context[self.next_level] = self.children[-1][self.next_level] + 1
-        child_context.update(random.choice(self.next_design.all_conditions))
+        child_context.update(random.choice(random.choice(self.next_designs).all_conditions))
         child_context.update(kwargs)
         self.children.append(ExperimentSection(child_context, *self.next_level_inputs))
 
