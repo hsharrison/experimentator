@@ -6,8 +6,9 @@ from experimentator.orderings import Shuffle
 
 
 class Design():
-    def __init__(self, ivs, design_matrix=None, ordering=None):
+    def __init__(self, ivs, design_matrix=None, ordering=None, **extra_context):
         self.ivs = ivs
+        self.extra_context = extra_context
         if ordering:
             self.ordering = ordering
         else:
@@ -47,7 +48,7 @@ class Design():
 
         conditions = []
         for row in design_matrix:
-            condition = {}
+            condition = self.extra_context.copy()
             for iv, factor_values, design_matrix_value in zip(self.ivs, values_per_factor, row):
                 if iv[1]:
                     condition.update({iv[0]: np.array(iv[1])[factor_values == design_matrix_value][0]})
