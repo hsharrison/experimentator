@@ -13,24 +13,12 @@ class Ordering():
         self.number = number
         self.all_conditions = []
 
-    def first_pass(self, ivs):
-        self.all_conditions = self.number * list(self.conditions(ivs))
+    def first_pass(self, conditions):
+        self.all_conditions = self.number * list(conditions)
         return {}
 
     def order(self, **_):
         return self.all_conditions
-
-    @staticmethod
-    def conditions(ivs):
-        try:
-            iv_names, iv_values = zip(*ivs.items())
-        except ValueError:
-            # Workaround because zip doesn't want to return two elements if ivs is empty.
-            iv_names = ()
-            iv_values = ()
-        iv_combinations = itertools.product(*iv_values)
-
-        yield from (dict(zip(iv_names, iv_combination)) for iv_combination in iv_combinations)
 
     @staticmethod
     def possible_orders(combinations):
@@ -65,9 +53,8 @@ class NonAtomicOrdering(Ordering):
 
 
 class CompleteCounterbalance(NonAtomicOrdering):
-    def first_pass(self, ivs):
-        conditions = list(self.conditions(ivs))
-        self.all_conditions = self.number * conditions
+    def first_pass(self, conditions):
+        self.all_conditions = self.number * list(conditions)
 
         # Warn because this might hang if this method is accidentally used with too many possible orders.
         non_distinct_orders = factorial(len(self.all_conditions))
@@ -83,11 +70,11 @@ class Sorted(NonAtomicOrdering):
         super().__init__(number=number, **kwargs)
         self.order = order
 
-    def first_pass(self, ivs):
-        if len(ivs) > 1:
+    def first_pass(self, conditions):
+        if len(conditions[0]) > 1:
             raise ValueError("Ordering method 'Sorted' only works with one IV.")
 
-        self.all_conditions = self.number * list(self.conditions(ivs))
+        self.all_conditions = self.number * list(conditions)
         self.order_ivs = {'ascending': sorted(self.all_conditions,
                                               key=lambda condition: list(condition.values())[0]),
                           'descending': sorted(self.all_conditions,
@@ -116,8 +103,8 @@ class LatinSquare(NonAtomicOrdering):
         self.balanced = balanced
         self.uniform = uniform
 
-    def first_pass(self, ivs):
-        self.all_conditions = list(self.conditions(ivs))
+    def first_pass(self, conditions):
+        self.all_conditions = list(conditions)
         order = len(self.all_conditions)
 
         if self.balanced:
