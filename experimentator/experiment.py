@@ -153,7 +153,7 @@ class Experiment():
 
         self.session_data = {'as': {}}
         self.persistent_data = config_data
-        self.contextmanagers = {level: _dummy_context for level in actual_levels}
+        self.context_managers = {level: _dummy_context for level in actual_levels}
 
         self.experiment_file = experiment_file
         self.original_module = sys.argv[0][:-3]
@@ -258,7 +258,7 @@ class Experiment():
         logging.debug('Running {} with context {}.'.format(section.level, section.context))
 
         # Enter context.
-        with self.contextmanagers[section.level]() as self.session_data['as'][section.level]:
+        with self.context_managers[section.level]() as self.session_data['as'][section.level]:
 
             if not demo:
                 section.has_started = True
@@ -287,7 +287,7 @@ class Experiment():
             section.has_finished = True
 
     def set_contextmanager(self, level, func, *args, **kwargs):
-        self.contextmanagers[level] = functools.partial(func, *args, **kwargs)
+        self.context_managers[level] = functools.partial(func, *args, **kwargs)
 
     def __getstate__(self):
         state = self.__dict__.copy()
