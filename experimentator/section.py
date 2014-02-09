@@ -25,18 +25,17 @@ class ExperimentSection():
 
             # Create the section tree. Creating any section also creates the sections below it.
             for design in self.next_designs:
-                for i, new_context in enumerate(design.order(**self.context)):
-                    child_context = self.context.new_child()
-                    child_context.update(new_context)
-                    child_context[self.next_level] = i+1
-                    logging.debug('Generating {} with context {}.'.format(self.next_level, child_context))
-                    self.children.append(ExperimentSection(child_context, *self.next_level_inputs))
+                self.append_design(design)
 
-    def add_child_ad_hoc(self, **kwargs):
+    def append_design(self, design):
+        for new_context in design.order(**self.context):
+            self.append_child(**new_context)
+
+    def append_child(self, **context):
         child_context = self.context.new_child()
-        child_context[self.next_level] = self.children[-1].context[self.next_level] + 1
-        child_context.update(random.choice(random.choice(self.next_designs).all_conditions))
-        child_context.update(kwargs)
+        child_context.update(context)
+        child_context[self.next_level] = len(self) + 1
+        logging.debug('Generating {} with context {}.'.format(self.next_level, child_context))
         self.children.append(ExperimentSection(child_context, *self.next_level_inputs))
 
     def add_data(self, **kwargs):
@@ -52,3 +51,9 @@ class ExperimentSection():
                 yield child.context
             else:
                 yield from child.generate_data()
+
+    def __len__(self):
+        return len(self.children)
+
+    def __getitem__(self, item):
+        return self.children[item]
