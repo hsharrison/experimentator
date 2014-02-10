@@ -8,23 +8,28 @@ from experimentator.orderings import Shuffle
 class Design():
     def __init__(self, ivs, design_matrix=None, ordering=None, **extra_context):
         self.ivs = ivs
+        self.design_matrix = design_matrix
         self.extra_context = extra_context
         if ordering:
             self.ordering = ordering
         else:
             self.ordering = Shuffle()
 
-        if not design_matrix and any(not iv_values for iv_values in self.ivs.values()):
+        if not self.design_matrix and any(not iv_values for iv_values in self.ivs.values()):
             raise TypeError('Must specify a design matrix if using continuous IVs (values=None)')
 
-        if design_matrix:
-            self.all_conditions = self._parse_design_matrix(design_matrix)
+        self.order = self.ordering.order
+
+    def first_pass(self):
+        if self.design_matrix:
+            all_conditions = self._parse_design_matrix(self.design_matrix)
+            for condition in all_conditions:
+                condition.update(self.extra_context)
 
         else:
-            self.all_conditions = self.full_cross(self.ivs)
+            all_conditions = self.full_cross(self.ivs)
 
-        self.first_pass = self.ordering.first_pass
-        self.order = self.ordering.order
+        self.ordering.first_pass(all_conditions)
 
     @staticmethod
     def full_cross(ivs):
