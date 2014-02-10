@@ -63,3 +63,24 @@ class Design():
             conditions.append(condition)
 
         return conditions
+
+
+class DesignTree():
+    def __init__(self, levels_and_designs):
+        for level, level_above in zip(reversed(levels_and_designs[1:]), reversed(levels_and_designs[:-1])):
+            new_ivs = level[1].first_pass()
+            level_above.update(new_ivs)
+            # And call first pass of the top level.
+        levels_and_designs[0][1].first_pass()
+        self.levels_and_designs = levels_and_designs
+
+    def __next__(self):
+        if len(self.levels_and_designs) == 1:
+            raise StopIteration
+        return DesignTree(self.levels_and_designs[1:])
+
+    def __len__(self):
+        return len(self.levels_and_designs)
+
+    def __getitem__(self, item):
+        return self.levels_and_designs[item]
