@@ -6,10 +6,15 @@ from experimentator.orderings import Shuffle
 
 
 class Design():
-    def __init__(self, ivs, design_matrix=None, ordering=None, **extra_context):
-        self.ivs = ivs
+    def __init__(self, ivs=None, design_matrix=None, ordering=None, **extra_context):
+        if ivs:
+            self.ivs = ivs
+        else:
+            self.ivs = {}
+
         self.design_matrix = design_matrix
         self.extra_context = extra_context
+
         if ordering:
             self.ordering = ordering
         else:
@@ -67,11 +72,13 @@ class Design():
 
 class DesignTree():
     def __init__(self, levels_and_designs):
+        # Make first pass of all designs.
         for level, level_above in zip(reversed(levels_and_designs[1:]), reversed(levels_and_designs[:-1])):
             new_ivs = level[1].first_pass()
             level_above.update(new_ivs)
             # And call first pass of the top level.
         levels_and_designs[0][1].first_pass()
+
         self.levels_and_designs = levels_and_designs
 
     def __next__(self):
@@ -84,3 +91,8 @@ class DesignTree():
 
     def __getitem__(self, item):
         return self.levels_and_designs[item]
+
+    def _add_base_level(self):
+        levels_and_designs = [('base', Design())]
+        levels_and_designs.extend(self.levels_and_designs)
+        self.levels_and_designs = levels_and_designs

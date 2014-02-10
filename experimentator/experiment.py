@@ -9,10 +9,8 @@ from contextlib import contextmanager
 from datetime import datetime
 from collections import ChainMap
 
-from experimentator.config import parse_config
 from experimentator.common import QuitSession
 from experimentator.section import ExperimentSection
-from experimentator.orderings import Ordering
 
 
 def load_experiment(experiment_file):
@@ -62,100 +60,26 @@ def export_experiment_data(experiment_file, data_file):
 
 
 class Experiment():
-    """
-    Abstract base class for Experiments.
+    def __init__(self, tree, experiment_file=None):
+        self.tree = tree
+        self.experiment_file = experiment_file
+        self.levels = list(zip(*self.tree.levels_and_designs))[0]
 
-    Subclass this to create experiments. Experiments should override the run_trial method at minimum and optionally the
-    start, end, and inter methods.
-
-    Attributes:
-        settings_by_level: A mapping of level names to dicts with settings for each level, each mappings with the
-        following keys:
-                           ivs:  A mapping of independent variables names to possible values, for the IVs that vary at
-                                 the associated level.
-                           ordering: Ordering subclass instance.
-
-        levels:            A list of level names describing the experiment hierarchy.
-        base_section:      An ExperimentSection instance from which all experiment sections descend.
-        data:              A pandas DataFrame. Before any sections are run, contains only the IV values of each trial.
-                           Afterwards, contains both IV and DV values.
-        experiment_file:   Filename where the experiment is saved to.
-        run_callback:      A function to be run at the lowest level.
-        start_callbacks,
-        inter_callbacks,
-        end_callbacks:     Dicts of levels mapped to callbacks to be run at the start, between, and after sections of
-                           the experiment.
-        session_data:      Dict for storing data that persists within an experimental session. Passed to every callback
-                           as the first argument. Emptied upon saving the experiment instance.
-        persistent_data:   Dict for storing data that persists throughout ane experiment. Passed to every callback as
-                           the second argument. Must be picklable.
-
-    """
-    def __init__(self, config_file=None,
-                 settings_by_level=None,
-                 levels=('participant', 'session', 'block', 'trial'),
-                 experiment_file=None,
-                 ):
-        """
-        Initialize an Experiment instance.
-
-        Args:
-            config_file:          Config filename or ConfigParser object which sets levels and settings_by_level. See
-                                  function parse_config for a description of the syntax.
-            settings_by_level:    A mapping of level names to dicts with settings for each level, each mappings with the
-                                  following keys:
-                                  ivs:  A mapping of independent variables names to possible values, for the IVs that
-                                        vary at the associated level.
-                                  ordering: Ordering subclass instance.
-
-            levels=('participant', 'session', 'block', 'trial'):
-                                  The experiment's hierarchy of sections.
-            experiment_file=None: A filename where the experiment instance will be pickled, in order to run some
-                                  sections in a later Python session.
-        """
-        if config_file:
-            levels, settings_by_level, config_data = parse_config(config_file)
-
-        else:  # No config data.
-            config_data = {}
-            # Check for missing settings.
-            for settings in settings_by_level.values():
-                if 'ordering' not in settings:
-                    settings['ordering'] = Ordering()
-                if 'ivs' not in settings:
-                    settings['ivs'] = {}
-
-        for level in settings_by_level:
-            if level not in levels:
-                raise KeyError('Unknown level {}.'.format(level))
-
-        # First pass of orderings; necessary for non-atomic orderings. Must be done in reverse order to avoid adding an
-        #   IV to a level that's already been processed.
-        for level, level_above in zip(reversed(levels[1:]), reversed(levels[:-1])):
-            settings = settings_by_level[level]
-            new_ivs = settings['ordering'].first_pass(settings['ivs'])
-            settings_by_level[level_above]['ivs'].update(new_ivs)
-        # And call first pass of the top level.
-        settings_by_level[levels[0]]['ordering'].first_pass(settings_by_level[levels[0]]['ivs'])
-
-        self.levels = levels
-        self.settings_by_level = settings_by_level
-
-        actual_levels = ['base_section']
-        actual_levels.extend(self.levels)
-        self.base_section = ExperimentSection(
-            ChainMap(), actual_levels, self.settings_by_level)
+        self.tree.add_base_level()
+        self.base_section = ExperimentSection(ChainMap(), self.tree)
 
         self.run_callback = _dummy_callback
-        self.start_callbacks = {level: _dummy_callback for level in actual_levels}
-        self.inter_callbacks = {level: _dummy_callback for level in actual_levels}
-        self.end_callbacks = {level: _dummy_callback for level in actual_levels}
+        callbacks = {level: _dummy_callback for level in self.levels}
+        callbacks.update({'base': _dummy_callback})
+        self.start_callbacks = callbacks.copy()
+        self.inter_callbacks = callbacks.copy()
+        self.end_callbacks = callbacks.copy()
 
         self.session_data = {'as': {}}
-        self.persistent_data = config_data
-        self.context_managers = {level: _dummy_context for level in actual_levels}
+        self.persistent_data = {}
+        self.context_managers = {level: _dummy_context for level in self.levels}
+        self.context_managers.update({'base': _dummy_context})
 
-        self.experiment_file = experiment_file
         self.original_module = sys.argv[0][:-3]
 
     @property
