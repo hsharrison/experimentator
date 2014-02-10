@@ -14,7 +14,7 @@ class Design():
         else:
             self.ordering = Shuffle()
 
-        if not design_matrix and any(not iv[1] for iv in self.ivs):
+        if not design_matrix and any(not iv_values for iv_values in self.ivs.values()):
             raise TypeError('Must specify a design matrix if using continuous IVs (values=None)')
 
         if design_matrix:
@@ -29,7 +29,7 @@ class Design():
     @staticmethod
     def full_cross(ivs):
         try:
-            iv_names, iv_values = zip(*ivs)
+            iv_names, iv_values = zip(*ivs.items())
         except ValueError:
             # Workaround because zip doesn't want to return two elements if ivs is empty.
             iv_names = ()
@@ -43,13 +43,14 @@ class Design():
             raise ValueError('Number of columns in design matrix not equal to number of IVs')
 
         values_per_factor = [np.unique(column) for column in np.transpose(design_matrix)]
-        if any(iv[1] and not len(iv[1]) == len(values) for iv, values in zip(self.ivs, values_per_factor)):
+        if any(iv_values and not len(iv_values) == len(values)
+               for iv_values, values in zip(self.ivs.values(), values_per_factor)):
             raise ValueError('Unique elements in design matrix do not match number of values in IV definition')
 
         conditions = []
         for row in design_matrix:
             condition = self.extra_context.copy()
-            for iv, factor_values, design_matrix_value in zip(self.ivs, values_per_factor, row):
+            for iv, factor_values, design_matrix_value in zip(self.ivs.items(), values_per_factor, row):
                 if iv[1]:
                     condition.update({iv[0]: np.array(iv[1])[factor_values == design_matrix_value][0]})
                 else:
