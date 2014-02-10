@@ -4,10 +4,11 @@ import collections
 
 
 class ExperimentSection():
-    def __init__(self, context, levels, designs_by_level):
+    def __init__(self, context, levels_and_designs):
+        levels, designs = zip(*levels_and_designs)
         self.context = context
         self.level = levels[0]
-        self.designs = designs_by_level[self.level]
+        self.designs = designs[0]
         self.is_bottom_level = self.level == levels[-1]
 
         self.children = collections.deque()
@@ -16,12 +17,12 @@ class ExperimentSection():
         if self.is_bottom_level:
             self.next_level = None
             self.next_design = None
-            self.next_level_inputs = None
+            self.next_levels_and_designs = None
 
         else:  # Not bottom level.
             self.next_level = levels[1]
-            self.next_designs = designs_by_level[self.next_level]
-            self.next_level_inputs = (levels[1:], designs_by_level)
+            self.next_designs = designs[1]
+            self.next_levels_and_designs = levels_and_designs[1:]
 
             # Create the section tree. Creating any section also creates the sections below it.
             for design in self.next_designs:
@@ -41,7 +42,7 @@ class ExperimentSection():
         child_context.update(context)
 
         logging.debug('Generating {} with context {}.'.format(self.next_level, child_context))
-        child = ExperimentSection(child_context, *self.next_level_inputs)
+        child = ExperimentSection(child_context, self.next_levels_and_designs)
         if to_start:
             self.children.appendleft(child)
         else:
