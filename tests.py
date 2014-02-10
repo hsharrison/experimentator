@@ -2,7 +2,7 @@ from collections import ChainMap
 
 from experimentator import Experiment
 from experimentator.section import ExperimentSection
-from experimentator.orderings import Shuffle
+from experimentator.order import Shuffle
 
 
 levels = ('trunk', 'branch', 'stem', 'leaf')

@@ -1,3 +1,9 @@
+"""Experiment module.
+
+This module contains the `Experiment` class and associated helper functions. This is a private module, its public
+objects are imported in `__init__.py`.
+
+"""
 import os
 import sys
 import logging
@@ -13,23 +19,42 @@ from experimentator.section import ExperimentSection
 
 
 def load_experiment(experiment_file):
-    """
-    Loads an experiment file. Returns the experiment instance.
+    """Load an experiment from disk.
+
+    Arguments
+    ---------
+    experiment_file : str
+        File location containing a pickled `Experiment` instance.
+
+    Returns
+    -------
+    Experiment
+        The pickled `Experiment`.
+
     """
     with open(experiment_file, 'rb') as f:
         return pickle.load(f)
 
 
-def run_experiment_section(experiment, demo=False, section=None, **kwargs):
-    """
-    Run an experiment instance from a file, and saves it. Monitors for QuitSession exceptions (If a QuitSession
-    exception is raised, still saves the data. Running the section again will overwrite it.).
+def run_experiment_section(experiment, demo=False, section=None, **section_numbers):
+    """Run an experiment section.
 
-    Args:
-      experiment: Filename where an Experiment instance is pickled, or an Experiment instance.
-      demo:       If True, don't save data.
-      section:    ExperimentSection to run.
-      **kwargs:   If section not specified, find section matching kwargs.
+    Runs an experiment instance from a file or an `Experiment` instance, and saves it. If a `QuitSession` exception is
+    encountered, the `Experiment` will be backed up and saved before exiting the session.
+
+    Arguments
+    ---------
+    experiment : str or Experiment
+        File location where an `Experiment` instance is pickled, or an Experiment instance.
+    demo : bool, optional
+        If True, data will not be saved and sections will not be marked as run.
+    section : ExperimentSection, optional
+        The section of the experiment to run. Alternatively, the section can be specified in the keyword arguments.
+    **section_numbers
+        Keyword arguments describing how to descend the experiment hierarchy to find a section to be run. For example,
+        `run_experiment_section(..., participant=3, session=1)` to run the third participant's first session (section
+        numbers are indexed by 1s).
+
     """
     if isinstance(experiment, Experiment):
         exp = experiment
@@ -38,7 +63,7 @@ def run_experiment_section(experiment, demo=False, section=None, **kwargs):
         exp.experiment_file = experiment
 
     if not section:
-        section = exp.section(**kwargs)
+        section = exp.section(**section_numbers)
 
     try:
         exp.run_section(section, demo=demo)
@@ -52,20 +77,80 @@ def run_experiment_section(experiment, demo=False, section=None, **kwargs):
 
 
 def export_experiment_data(experiment_file, data_file):
-    """
-    Reads a pickled experiment instance from experiment_file and saves its data in csv format to data_file.
+    """ Export data.
+
+    Reads a pickled experiment instance and saves its data in `.csv` format.
+
+    Arguments
+    ---------
+    experiment_file : str
+        The file location where an `Experiment` instance is pickled.
+    data_file : str
+        The file location where the data will be written.
+
+    Note
+    ----
+    This shortcut function is not recommended for experiments with compound data types, for example an experiment which
+    stores a time series for every trial. In those cases it is recommended to write a custom script that parses the
+    `Experiment.data` attribute as desired.
+
     """
     load_experiment(experiment_file).export_data(data_file)
 
 
 class Experiment():
+    """Experiment.
+
+    An `Experiment` instance handles all aspects of an experiment. It contains the entire experimental hierarchy and
+    stores the data. It is picklable, to facilitate running an experiment over multiple Python sessions.
+
+    Arguments
+    ---------
+    tree : DesignTree
+        A `DesignTree` instance defining the experiment hierarchy.
+    experiment_file : str, optional
+        A file location where the `Experiment` will be pickled.
+
+    Attributes
+    ----------
+    data
+    tree : DesignTree
+        The `DesignTree` instance defining the experiment's hierarchy.
+    experiment_file : str
+        The file location where the `Experiment` will be pickled.
+    levels : list of str
+        The levels of the experiment, as defined in `Experiment.tree`.
+    base_section : ExperimentSection
+        The root of the experiment hierarchy; an `ExperimentSection` instance from which all other `ExperimentSection`s
+        descend.
+    run_callback : func
+        The function to be run when the bottom of the tree is reached (i.e., the trial function).
+    start_callbacks, inter_callbacks, end_callbacks : dict
+        Dictionaries, with keys naming levels and values as functions to be run at the beginning, in-between, and after
+        running `ExperimentSection`s at the associated level.
+    context_managers : dict
+        A dictionary, with level names as keys and context manager functions as values. An alternative way to define
+        behavior to run at the start and end of `ExperimentSection`s.
+    session_data : dict
+        A dictionary where data can be stored that is persistent between `ExperimentSection`s run in the same Python
+        session. This is the first positional argument for every callback, and a good place to store external resources
+        that aren't picklable but can be loaded in a start callback. Anything yielded by a context manager will be saved
+        here, in `session_data['as'][level]`. Note that this dictionary is emptied before pickling the `Experiment`.
+    persistent_data : dict
+        A dictionary where data can be stored that is persistent across Python sessions. Everything here must be
+        picklable.
+    original_module : str
+        The filename which originally created this `Experiment`. This is where the `Experiment` will look for its
+        callbacks when it is loaded from disk.
+
+    """
     def __init__(self, tree, experiment_file=None):
         self.tree = tree
         self.experiment_file = experiment_file
         self.levels = list(zip(*self.tree.levels_and_designs))[0]
 
         self.tree.add_base_level()
-        self.base_section = ExperimentSection(ChainMap(), self.tree)
+        self.base_section = ExperimentSection(self.tree, ChainMap())
 
         self.run_callback = _dummy_callback
         callbacks = {level: _dummy_callback for level in self.levels}
@@ -74,20 +159,42 @@ class Experiment():
         self.inter_callbacks = callbacks.copy()
         self.end_callbacks = callbacks.copy()
 
+        args = {level: (None, None) for level in self.levels}
+        args.update({'base': (None, None)})
+        self._run_callback_args = (None, None)
+        self._start_callback_args = args.copy()
+        self._inter_callback_args = args.copy()
+        self._end_callback_args = args.copy()
+
         self.session_data = {'as': {}}
         self.persistent_data = {}
         self.context_managers = {level: _dummy_context for level in self.levels}
         self.context_managers.update({'base': _dummy_context})
+        self._context_manager_args = args.copy()
 
         self.original_module = sys.argv[0][:-3]
 
     @property
     def data(self):
+        """Data.
+
+        Returns
+        -------
+        pandas.DataFrame
+            A `DataFrame` containing all of the `Experiment`'s data. The `DataFrame` will be MultiIndexed, with section
+            numbers as indexes. Independent variables will also be included as columns.
+
+        """
         from pandas import DataFrame
-        data = DataFrame(self.base_section.generate_data()).set_index(list(self.levels))
+        data = DataFrame(self.base_section._generate_data()).set_index(list(self.levels))
         return data
 
     def save(self):
+        """Save experiment.
+
+        Pickles the `Experiment` to the location in `Experiment.experiment_file`.
+
+        """
         if self.experiment_file:
             logging.debug('Saving Experiment instance to {}.'.format(self.experiment_file))
             with open(self.experiment_file, 'wb') as f:
@@ -97,27 +204,49 @@ class Experiment():
             logging.warning('Cannot save experiment: No filename provided.')
 
     def export_data(self, filename):
+        """Export data.
+
+        Exports `Experiment.data` in `.csv` format.
+
+        Arguments
+        ---------
+        filename : str
+            A file location where the data should be saved.
+
+        Note
+        ----
+        This method is not recommended for experiments with compound data types, for example an experiment
+        which stores a time series for every trial. In those cases it is recommended to write a custom script that
+        parses the `Experiment.data` attribute as desired.
+
+        """
         with open(filename, 'w') as f:
             self.data.to_csv(f)
 
-    def section(self, **kwargs):
-        """
-        Return an experiment section.
+    def section(self, **section_numbers):
+        """Find section by number.
 
-        Args:
-            kwargs: level=n describing how to descend the hierarchy (uses one-based indexing).
+        Finds an `ExperimentSection` based on section numbers.
 
-        For example:
-            >> first_session = experiment_instance.section(participant=1, session=1)
+        Arguments
+        ---------
+        **section_numbers
+            Keyword arguments describing which section to find. For example,
+            `Experiment.section(participant=2, session=1, block=3)`. Must include every level higher than the desired
+            section. This method will descend the experimental hierarchy until it can no longer determine how to
+            proceed, at which point it returns the current `ExperimentSection`.
 
-        Returns an ExperimentSection object at the first level where no input kwarg describes how to descend the
-        hierarchy.
+        Returns
+        -------
+        ExperimentSection
+            The specified section.
+
         """
         node = self.base_section
         for level in self.levels:
-            if level in kwargs:
+            if level in section_numbers:
                 logging.debug('Found specified {}.'.format(level))
-                node = node.children[kwargs[level]-1]
+                node = node.children[section_numbers[level]-1]
             else:
                 logging.info('No {} specified, returning previous level.'.format(level))
                 break
@@ -125,10 +254,24 @@ class Experiment():
         return node
 
     def find_first_not_run(self, at_level, by_started=True):
-        """
-        Search through all sections at the specified level, and return the first not already run. If by_started=True, a
-        section is considered already run if it has started. Otherwise, it is considered already run only if it has
-        finished.
+        """Find the first section that has not been run.
+
+        Searches the experimental hierarchy, returning the first `ExperimentSection` at a given level that has not been
+        run.
+
+        Arguments
+        ---------
+        at_level : str
+            Which level to search.
+        by_started : bool, optional
+            If true (default), finds the first section that has not been started. Otherwise, finds the first section
+            that has not finished.
+
+        Returns
+        -------
+        ExperimentSection
+            The first `ExperimentSection` satisfying the specified criteria.
+
         """
         attribute = {True: 'has_started', False: 'has_finished'}[by_started]
         node = self.base_section
@@ -152,31 +295,19 @@ class Experiment():
             logging.warning('Could not find a {} not run.'.format(at_level))
             return None
 
-    def add_section(self, **kwargs):
-        """
-        Add section to experiment.
-
-        Args:
-            kwargs: Same as the input to section, describing which section is the parent of the added section.
-                    Any other kwargs are passed onto add_child_ad_hoc as section settings.
-        """
-        find_section_kwargs = {}
-        for k in kwargs:
-            if k in self.levels:
-                find_section_kwargs[k] = kwargs.pop(k)
-        self.section(**find_section_kwargs).add_child_ad_hoc(**kwargs)
-
     def run_section(self, section, demo=False):
-        """
-        Run an experiment section.
+        """Run a section.
 
         Runs a section by descending the hierarchy and running each child section. Also calls the start, end, and inter
-        methods where appropriate. Results are saved in the ExperimentSection instances at the lowest level (i.e.,
-        trials). Will overwrite any existing results.
+        callbacks where appropriate. Results are saved in each `ExperimentSection.context` attribute.
 
-        Args:
-            section:    An ExperimentSection instance to be run.
-            demo=False: If demo, don't save data.
+        Arguments
+        ---------
+        section : ExperimentSection
+            The `ExperimentSection` instance to be run.
+        demo : bool, optional
+            Data will only be saved if `demo` is False (the default).
+
         """
         logging.debug('Running {} with context {}.'.format(section.level, section.context))
 
@@ -209,17 +340,166 @@ class Experiment():
         if not demo:
             section.has_finished = True
 
-    def set_contextmanager(self, level, func, *args, **kwargs):
+    def set_context_manager(self, level, func, *args, **kwargs):
+        """Set a context manager to run at a certain level.
+
+        Defines a context manager to run at every section at a particular level. This is an alternative to start and end
+        callbacks, to define behavior to occur at the beginning and end of every section. See :mod:`contextlib` for
+        details on building context managers.
+
+        Arguments
+        ---------
+        level : str
+            Which level of the hierarchy to manage.
+        func : func
+            The context manager function.
+        *args
+            Any arbitrary positional arguments to be passed to `func`.
+        **kwargs
+            Any arbitrary keyword arguments to be passed to `func`.
+
+        Note
+        ----
+        In addition to the arguments you set in `*args` and `**kwargs`, two positional arguments will be passed to
+        `func`: `Experiment.session_data` and `Experiment.persistent_data`. Additionally, the items in the dictionary in
+        the section's `ExperimentSection.context` attribute will be passed as keyword arguments. So the context manager
+        should take the form of `(*args, session_data, persistent_data, **kwargs, **context)`, where `*args` and
+        `**kwargs` come from this function, `session_data` and `persistent_data` come from the `Experiment` instance,
+        and `context` comes from the `ExperimentSection` instance. Since the context can have many items, it is best
+        practice to use the keyword argument wildcard `**` in your definition of `func`.
+
+        """
         self.context_managers[level] = functools.partial(func, *args, **kwargs)
+        self._context_manager_args[level] = (args, kwargs)
+
+    def set_run_callback(self, func, *args, **kwargs):
+        """Set the run callback.
+
+        Define a function to run at the lowest level of the experiment (i.e., the trial function).
+
+        Arguments
+        ---------
+        func : func
+            The function to be set as the run callback.
+        *args
+            Any arbitrary positional arguments to be passed to `func`.
+        **kwargs
+            Any arbitrary keyword arguments to be passed to `func`.
+
+        Note
+        ----
+        In addition to the arguments you set in `*args` and `**kwargs`, two positional arguments will be passed to
+        `func`: `Experiment.session_data` and `Experiment.persistent_data`. Additionally, the items in the dictionary in
+        the section's `ExperimentSection.context` attribute will be passed as keyword arguments. So the run callback
+        should take the form of `(*args, session_data, persistent_data, **kwargs, **context)`, where `*args` and
+        `**kwargs` come from this function, `session_data` and `persistent_data` come from the `Experiment` instance,
+        and `context` comes from the `ExperimentSection` instance. Since the context can have many items, it is best
+        practice to use the keyword argument wildcard `**` in your definition of `func`.
+
+        """
+        self.run_callback = functools.partial(func, *args, **kwargs)
+        self._run_callback_args = (args, kwargs)
+
+    def set_start_callback(self, level, func, *args, **kwargs):
+        """Set a start callback.
+
+        Define a function to run at the at the beginning of every section at a particular level.
+
+        Arguments
+        ---------
+        level : str
+            The level of the hierarchy at which the callback should be set.
+        func : func
+            The function to be set as the callback.
+        *args
+            Any arbitrary positional arguments to be passed to `func`.
+        **kwargs
+            Any arbitrary keyword arguments to be passed to `func`.
+
+        Note
+        ----
+        In addition to the arguments you set in `*args` and `**kwargs`, two positional arguments will be passed to
+        `func`: `Experiment.session_data` and `Experiment.persistent_data`. Additionally, the items in the dictionary in
+        the section's `ExperimentSection.context` attribute will be passed as keyword arguments. So the start callback
+        should take the form of `(*args, session_data, persistent_data, **kwargs, **context)`, where `*args` and
+        `**kwargs` come from this function, `session_data` and `persistent_data` come from the `Experiment` instance,
+        and `context` comes from the `ExperimentSection` instance. Since the context can have many items, it is best
+        practice to use the keyword argument wildcard `**` in your definition of `func`.
+
+        """
+        self.start_callbacks[level] = functools.partial(func, *args, **kwargs)
+        self._start_callback_args[level] = (args, kwargs)
+
+    def set_inter_callback(self, level, func, *args, **kwargs):
+        """Set a start callback.
+
+        Define a function to run in-between sections at a particular level.
+
+        Arguments
+        ---------
+        level : str
+            The level of the hierarchy at which the callback should be set.
+        func : func
+            The function to be set as the callback.
+        *args
+            Any arbitrary positional arguments to be passed to `func`.
+        **kwargs
+            Any arbitrary keyword arguments to be passed to `func`.
+
+        Note
+        ----
+        In addition to the arguments you set in `*args` and `**kwargs`, two positional arguments will be passed to
+        `func`: `Experiment.session_data` and `Experiment.persistent_data`. Additionally, the items in the dictionary in
+        the section's `ExperimentSection.context` attribute will be passed as keyword arguments. So the inter callback
+        should take the form of `(*args, session_data, persistent_data, **kwargs, **context)`, where `*args` and
+        `**kwargs` come from this function, `session_data` and `persistent_data` come from the `Experiment` instance,
+        and `context` comes from the `ExperimentSection` instance. Since the context can have many items, it is best
+        practice to use the keyword argument wildcard `**` in your definition of `func`. Note that the context passed
+        to the inter callback is that of the next `ExperimentSection`.
+
+        """
+        self.inter_callbacks[level] = functools.partial(func, *args, **kwargs)
+        self._inter_callback_args[level] = (args, kwargs)
+
+    def set_end_callback(self, level, func, *args, **kwargs):
+        """Set an end callback.
+
+        Define a function to run at the at the end of every section at a particular level.
+
+        Arguments
+        ---------
+        level : str
+            The level of the hierarchy at which the callback should be set.
+        func : func
+            The function to be set as the callback.
+        *args
+            Any arbitrary positional arguments to be passed to `func`.
+        **kwargs
+            Any arbitrary keyword arguments to be passed to `func`.
+
+        Note
+        ----
+        In addition to the arguments you set in `*args` and `**kwargs`, two positional arguments will be passed to
+        `func`: `Experiment.session_data` and `Experiment.persistent_data`. Additionally, the items in the dictionary in
+        the section's `ExperimentSection.context` attribute will be passed as keyword arguments. So the end callback
+        should take the form of `(*args, session_data, persistent_data, **kwargs, **context)`, where `*args` and
+        `**kwargs` come from this function, `session_data` and `persistent_data` come from the `Experiment` instance,
+        and `context` comes from the `ExperimentSection` instance. Since the context can have many items, it is best
+        practice to use the keyword argument wildcard `**` in your definition of `func`.
+
+        """
+        self.end_callbacks[level] = functools.partial(func, *args, **kwargs)
+        self._end_callback_args[level] = (args, kwargs)
 
     def __getstate__(self):
         state = self.__dict__.copy()
         #  Clear session_data before pickling.
         state['session_data'] = {'as': {}}
+
         # Save only function names.
         state['run_callbacks'] = state['run_callbacks'].__name__
         for level in state['levels']:
-            for callback in ('start_callbacks', 'inter_callbacks', 'end_callbacks'):
+            for callback in ('start_callbacks', 'inter_callbacks', 'end_callbacks', 'context_managers'):
                 state[callback][level] = state[callback][level].__name__
         return state
 
@@ -230,24 +510,18 @@ class Experiment():
         except ImportError:
             logging.warning("The original script that created this experiment doesn't seem to be in this directory.")
             raise
+
         # Replace references to callbacks functions.
-        state['run_callback'] = getattr(original_module, state['run_callback'])
+        state['run_callback'] = functools.partial(getattr(original_module, state['run_callback']),
+                                                  *state['_run_callback_args'][0], **state['_run_callback_args'][1])
         for level in state['levels']:
-            for callback in ('start_callbacks', 'inter_callbacks', 'end_callbacks'):
-                state[callback][level] = getattr(original_module, state[callback][level])
+            for callback, args in (('start_callbacks', '_start_callback_args'),
+                                   ('inter_callbacks', '_inter_callback_args'),
+                                   ('end_callbacks', '_end_callback_args'),
+                                   ('context_managers', '_context_manager_args')):
+                state[callback][level] = functools.partial(getattr(original_module, state[callback][level]),
+                                                           *args[0], **args[1])
         self.__dict__.update(state)
-
-    def set_run_callback(self, func):
-        self.run_callback = func
-
-    def set_start_callback(self, level, func):
-        self.start_callbacks[level] = func
-
-    def set_inter_callback(self, level, func):
-        self.inter_callbacks[level] = func
-
-    def set_end_callback(self, level, func):
-        self.end_callbacks[level] = func
 
 
 @contextmanager

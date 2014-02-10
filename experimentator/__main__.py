@@ -1,5 +1,4 @@
-"""
-Usage:
+"""Usage:
   experimentator run <experiment_file> (--next <level>  [--not-finished] | (<level> <n>)...) [--demo] [--debug]
   experimentator  export <experiment_file> <data_file> [--debug]
   experimentator -h | --help
@@ -23,8 +22,8 @@ Options:
   --debug            Set logging level to DEBUG.
   -h, --help         Show this screen.
   --version          Print the installed version number of experimentator.
-"""
 
+"""
 import logging
 from docopt import docopt
 

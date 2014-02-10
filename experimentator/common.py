@@ -1,13 +1,23 @@
+"""This module contains objects with no clear home, that may be useful in mulitple places of `experimentator`.
+
+This module is not visible to the user and its objects should be imported in ``__init__.py``.
+
+"""
 import random
 from collections import deque
 
 
 class QuitSession(BaseException):
-    """
-    Raised to exit the experimental session.
+    """An Exception indicating a 'soft' exit from a running experimental session.
 
-    Raise this exception from inside a trial when the entire session should be exited, for example if the user presses
-    a 'quit' key.
+    Raise this exception from inside a trial when the Python session should be exited gracefully, for example if the
+    user presses a 'quit' key. The experiment file will be backed up, and any data recorded in the current session will
+    be saved.
+
+    Parameters
+    ----------
+    message : str
+              Message to display in the terminal.
 
     """
     def __init__(self, message):
@@ -18,6 +28,61 @@ class QuitSession(BaseException):
 
 
 def latin_square(order, reduced=False, uniform=True, shuffle=False):
+    """Latin square.
+
+    Constructs a Latin square of order `order`. Each row and column will contain every element of ``range(order)``
+    exactly once.
+
+    Arguments
+    ---------
+    order : int
+        Size of Latin square to construct.
+    reduced : bool, optional
+        If True, the first row and first column of the square will be the ``list(range(order))``, unless `shuffle` is
+        also True. The default is False.
+    uniform : bool, optional
+        If True (the default), the Latin square will be sampled from a uniform distribution of Latin squares. Set to
+        False to relax this constraint and allow for a faster run time.
+    shuffle : bool, optional
+        If True, after construction of the Latin square its rows will be shuffled randomly, then its columns, and then
+        the elements (the numbers in ``range(order)``) will be randomly rearranged. The default is False. Shuffling is
+        pointless when `uniform` is True. Otherwise, it will add some randomness, though the resulting latin square will
+        still be biased.
+
+    Returns
+    -------
+    array-like
+        A Latin square of size `order` x `order`.
+
+    See Also
+    --------
+    balanced_latin_square : Balanced Latin square.
+
+    Note
+    -----
+    This function uses a naive algorithm to construct latin squares, randomly generating elements and starting over
+    whenever a collision is encountered. It will take a long time to construct Latin squares of order 5, when sampling
+    from a uniform distribution. However, if a uniform distribution is not required, it is recommended to also set
+    `reduced` and `shuffle` to True for fastest run times. In this case, latin squares up to an order of about 10 can be
+    constructed in a reasonable amount of time.
+
+    Examples
+    --------
+    >>>latin_square(5)
+    [[4, 2, 0, 1, 3],
+     [0, 3, 1, 4, 2],
+     [3, 1, 2, 0, 4],
+     [2, 0, 4, 3, 1],
+     [1, 4, 3, 2, 0]]  #random
+
+     >>>latin_square(5, reduced=True, uniform=False)
+     [[0, 1, 2, 3, 4],
+      [1, 2, 4, 0, 3],
+      [2, 0, 3, 4, 1],
+      [3, 4, 1, 2, 0],
+      [4, 3, 0, 1, 2]]  #random
+
+    """
     numbers = list(range(order))
     square = []
     if reduced:
@@ -49,6 +114,45 @@ def latin_square(order, reduced=False, uniform=True, shuffle=False):
 
 
 def balanced_latin_square(order):
+    """Balanced Latin square.
+
+    Constructs a row-balanced latin square of order `order`. In a row-balanced Latin square, immediate order effects are
+    accounted for. Every two-element, back-to-back sequence occurs the same number of times. This is in addition to the
+    standard Latin square constraint of every row and column containing each element exactly once.
+
+    Arguments
+    ---------
+    order : int
+        Order of the Latin square to construct. Must be even.
+
+    Returns
+    -------
+    array-like
+        A balanced Latin square of size `order` x `order`.
+
+    See Also
+    --------
+    latin_square : Unbalanced latin square.
+
+
+    Notes
+    -----
+    The algorithm constructs a stereotypical balanced Latin square, then shuffles the rows and elements (but not the
+    columns). For this reason, this algorthim is much faster than the algorithm used by `latin_square`. However, it
+    cannot sample from a uniform distribution of balanced latin Squares and it cannot created Latin squares that are
+    both reduced and balanced.
+
+    Examples
+    --------
+    >>>balanced_latin_square(6)
+    [[0, 2, 1, 5, 4, 3],
+     [5, 3, 2, 4, 0, 1],
+     [1, 0, 4, 2, 3, 5],
+     [2, 5, 0, 3, 1, 4],
+     [4, 1, 3, 0, 5, 2],
+     [3, 4, 5, 1, 2, 0]]  #random
+
+    """
     if order % 2:
         raise ValueError('Cannot compute a balanced Latin square with an odd order')
 

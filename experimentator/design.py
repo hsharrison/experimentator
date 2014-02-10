@@ -1,15 +1,50 @@
+"""Design objects.
+
+This module contains objects related to experimental design abstractions. This module is not public; its public objects
+are imported in ``__init__.py``.
+
+"""
 import itertools
+from copy import copy
 import numpy as np
 
-from experimentator.orderings import Shuffle
+from experimentator.order import Shuffle
 
 
 class Design():
+    """Experimental design object.
+
+    An instance of this class organizes the experimental design at one level of the experimental hierarchy. It directs
+    the creation of `ExperimentSection` objects by parsing design matrices or crossing independent variables.
+
+    Arguments
+    ---------
+    ivs : list of tuple, optional
+        List of tuples describing independent variables (IVs). Each  tuple is of length 2, with the first element being
+        a string naming the IV, and the second a sequence containing the possible values of that IV. Alternatively, the
+        second lement can be None, which represents an IV that takes continuous values. In that case, the values for
+        that IV are taken from `design_matrix`. If `ivs` is omitted or empty, a `Design` with no IVs will be created.
+    design_matrix : array-like, optional
+        An experimental design matrix specifying how IV values should be grouped to form conditions. Each column
+        represents one IV, and each row represents one condition. Values in `design_matrix` do not have to conform to
+        IV values as passed in `ivs`; rather, the unique elements of each column are each associated with one value from
+        `ivs`. Design matrices produced by :mod:`pyDOE` are compatible as-is. If no `design_matrix` is given, the IV
+        values will be fully crossed.
+    ordering : Ordering instance, optional
+        An instance of an `experimentator.order.Ordering` subclass, defining the behavior for duplicating and ordering
+        the conditions of the `Design`. If no `ordering` is given, the default is `experimentator.order.Shuffle()`.
+    **extra_context
+        Arbitrary keyword arguments that will be included in the context of `ExperimentSection` instances created under
+        this `Design`. For example, if the keyword argument `practice=True`, any `ExperimentSection` objects resulting
+        from this `Design` will have `{'practice': True}` as an element of their `context` attribute.
+
+    """
     def __init__(self, ivs=None, design_matrix=None, ordering=None, **extra_context):
         if ivs:
-            self.ivs = ivs
+            self.iv_names, self.iv_values = zip(*ivs)
         else:
-            self.ivs = {}
+            self.iv_names = ()
+            self.iv_values = ()
 
         self.design_matrix = design_matrix
         self.extra_context = extra_context
@@ -19,57 +54,102 @@ class Design():
         else:
             self.ordering = Shuffle()
 
-        if not self.design_matrix and any(not iv_values for iv_values in self.ivs.values()):
+        if not self.design_matrix and any(not iv_values for iv_values in self.iv_values):
             raise TypeError('Must specify a design matrix if using continuous IVs (values=None)')
 
         self.order = self.ordering.order
 
     def first_pass(self):
+        """First pass of design.
+
+        Initialize the design by parsing the design matrix or otherwise crossing the IVs. If a non-atomic ordering is
+        used, an additional IV will be returned which should be incorporated into the design one level up in the
+        experimental hierarchy. For this reason, the `first_pass` methods in a hierarchy of `Design` instances should be
+        called in reverse order, from bottom up. The `DesignTree` class handles this.
+
+        Returns
+        -------
+        new_iv : list
+           If `Design.ordering` is non-atomic, a list will be returned, giving the values of a new IV to be created one
+           level up in the experimental hiearachy. Typically, each value corresponds to a unique ordering of the
+           conditions in this `Design`. If `Design.ordering` is non-atomic,
+
+        """
         if self.design_matrix:
             all_conditions = self._parse_design_matrix(self.design_matrix)
             for condition in all_conditions:
                 condition.update(self.extra_context)
 
         else:
-            all_conditions = self.full_cross(self.ivs)
+            all_conditions = self.full_cross(self.iv_names, self.iv_values)
 
-        self.ordering.first_pass(all_conditions)
+        return self.ordering.first_pass(all_conditions)
 
     @staticmethod
-    def full_cross(ivs):
-        try:
-            iv_names, iv_values = zip(*ivs.items())
-        except ValueError:
-            # Workaround because zip doesn't want to return two elements if ivs is empty.
-            iv_names = ()
-            iv_values = ()
+    def full_cross(iv_names, iv_values):
+        """Full factorial cross of IVs.
+
+        Arguments
+        ---------
+        iv_names : list of str
+            Names of IVs.
+        iv_values : list of list
+            Each element defines the possible values of an IV. Must be the same length as `iv_names`.
+
+        Yields
+        ------
+        condition : dict
+            A dictionary describing one condition, with keys of IV names and values of specific values of the IV. One
+            dictionary is yielded for every possible combination of IV values.
+
+        """
         iv_combinations = itertools.product(*iv_values)
 
         yield from (dict(zip(iv_names, iv_combination)) for iv_combination in iv_combinations)
 
     def _parse_design_matrix(self, design_matrix):
-        if not np.shape(design_matrix)[1] == len(self.ivs):
+        if not np.shape(design_matrix)[1] == len(self.iv_names):
             raise ValueError('Number of columns in design matrix not equal to number of IVs')
 
         values_per_factor = [np.unique(column) for column in np.transpose(design_matrix)]
         if any(iv_values and not len(iv_values) == len(values)
-               for iv_values, values in zip(self.ivs.values(), values_per_factor)):
+               for iv_values, values in zip(self.iv_values, values_per_factor)):
             raise ValueError('Unique elements in design matrix do not match number of values in IV definition')
 
         conditions = []
         for row in design_matrix:
             condition = self.extra_context.copy()
-            for iv, factor_values, design_matrix_value in zip(self.ivs.items(), values_per_factor, row):
-                if iv[1]:
-                    condition.update({iv[0]: np.array(iv[1])[factor_values == design_matrix_value][0]})
+            for iv_name, iv_values, factor_values, design_matrix_value in \
+                    zip(self.iv_names, self.iv_values, values_per_factor, row):
+                if iv_values:
+                    condition.update({iv_name: np.array(iv_values)[factor_values == design_matrix_value][0]})
                 else:
-                    condition.update({iv[0]: design_matrix_value})
+                    condition.update({iv_name: design_matrix_value})
             conditions.append(condition)
 
         return conditions
 
 
 class DesignTree():
+    """Hierarchy of experimental designs.
+
+    A container for `Design` instances, describing the entire hierarchy of a basic `Experiment`. `DesignTree` instances
+    are iterators; calling `next` on a `DesignTree` will return a `DesignTree` with the top level removed. In this way,
+    the entire experimental hierarchy can be created by recursively calling `DesignTree.__next__`.
+
+    Arguments
+    ---------
+    levels_and_design : list of tuple
+       A list of tuples, each with two elements. The first is a string naming the level, the second is a `Design`
+       object.
+
+    Note
+    ----
+    This class does not have much functionality. Its only purpose is to handle calling `Design.first_pass` for every
+    `Design` object, in the proper order. This streamlines customizing an experiment with different designs in different
+    places, and prevents errors such as calling `Design.first_pass` methods multiple times or in the wrong order.
+
+    """
     def __init__(self, levels_and_designs):
         # Make first pass of all designs.
         for level, level_above in zip(reversed(levels_and_designs[1:]), reversed(levels_and_designs[:-1])):
@@ -83,7 +163,9 @@ class DesignTree():
     def __next__(self):
         if len(self.levels_and_designs) == 1:
             raise StopIteration
-        return DesignTree(self.levels_and_designs[1:])
+        next_design = copy(self)
+        next_design.levels_and_designs = next_design.levels_and_designs[1:]
+        return next_design
 
     def __len__(self):
         return len(self.levels_and_designs)

@@ -13,7 +13,6 @@ class Ordering():
 
     def first_pass(self, conditions):
         self.all_conditions = self.number * list(conditions)
-        return {}
 
     def order(self, **_):
         return self.all_conditions
@@ -44,7 +43,7 @@ class NonAtomicOrdering(Ordering):
 
     @property
     def iv(self):
-        return {'order': list(self.order_ivs.keys())}
+        return list(self.order_ivs.keys())
 
     def order(self, *, order, **_):
         return self.order_ivs[order]

@@ -5,7 +5,7 @@ with open('experimentator/__version__.py') as f:
 
 setup(name='experimentator',
       packages=['experimentator'],
-      py_modules=['experimentator', 'experimentator.section', 'experimentator.orderings'],
+      py_modules=['experimentator', 'experimentator.orderings'],
       version=__version__,
       author='Henry S. Harrison',
       author_email='henry.schafer.harrison@gmail.com',
