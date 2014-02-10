@@ -1,4 +1,3 @@
-# Copyright (c) 2013-2014 Henry S. Harrison
 import os
 import sys
 import logging

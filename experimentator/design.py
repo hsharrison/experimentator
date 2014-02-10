@@ -1,4 +1,3 @@
-# Copyright (c) 2014 Henry S. Harrison
 import itertools
 import numpy as np
 

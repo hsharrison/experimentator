@@ -1,5 +1,3 @@
-# Copyright (c) 2013-2014 Henry S. Harrison
-
 from distutils.core import setup
 
 with open('experimentator/__version__.py') as f:
