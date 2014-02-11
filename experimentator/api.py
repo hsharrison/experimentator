@@ -41,9 +41,6 @@ def within_subjects_experiment(ivs, n_participants, design_matrix=None, ordering
 
     experiment = Experiment(DesignTree(levels_and_designs), experiment_file=experiment_file)
 
-    if experiment_file:
-        experiment.save()
-
     return experiment
 
 
@@ -105,9 +102,6 @@ def blocked_experiment(trial_ivs, n_participants,
 
     experiment = Experiment(DesignTree(levels_and_designs))
 
-    if experiment_file:
-        experiment.save()
-
     return experiment
 
 
@@ -155,8 +149,5 @@ def standard_experiment(levels, ivs_by_level,
                           for level in levels]
 
     experiment = Experiment(DesignTree(levels_and_designs), experiment_file=experiment_file)
-
-    if experiment_file:
-        experiment.save()
 
     return experiment
