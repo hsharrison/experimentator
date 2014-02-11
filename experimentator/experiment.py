@@ -127,12 +127,12 @@ class Experiment():
         The function to be run when the bottom of the tree is reached (i.e., the trial function).
     start_callbacks, inter_callbacks, end_callbacks : dict
         Dictionaries, with keys naming levels and values as functions to be run at the beginning, in-between, and after
-        running `ExperimentSection`s at the associated level.
+        running `ExperimentSection`\ s at the associated level.
     context_managers : dict
         A dictionary, with level names as keys and context manager functions as values. An alternative way to define
-        behavior to run at the start and end of `ExperimentSection`s.
+        behavior to run at the start and end of `ExperimentSection`\ s.
     session_data : dict
-        A dictionary where data can be stored that is persistent between `ExperimentSection`s run in the same Python
+        A dictionary where data can be stored that is persistent between `ExperimentSection`\ s run in the same Python
         session. This is the first positional argument for every callback, and a good place to store external resources
         that aren't picklable but can be loaded in a start callback. Anything yielded by a context manager will be saved
         here, in `session_data['as'][level]`. Note that this dictionary is emptied before pickling the `Experiment`.
