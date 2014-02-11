@@ -190,7 +190,7 @@ class DesignTree():
                 design.update(new_iv_names, new_iv_values)
 
         # And call first pass of the top level.
-        for design in levels_and_designs[0][0]:
+        for design in levels_and_designs[0][1]:
             design.first_pass()
 
         self.levels_and_designs = levels_and_designs
