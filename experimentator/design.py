@@ -8,7 +8,7 @@ import itertools
 from copy import copy
 import numpy as np
 
-from experimentator.order import Shuffle, NonAtomicOrdering
+from experimentator.order import Shuffle
 
 
 class Design():
