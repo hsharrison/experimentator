@@ -37,19 +37,26 @@ class Shuffle(Ordering):
 
 
 class NonAtomicOrdering(Ordering):
+    iv_name = '_order'
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.order_ivs = {}
 
     @property
     def iv(self):
-        return list(self.order_ivs.keys())
+        if self.order_ivs:
+            return {self.iv_name, list(self.order_ivs.keys())}
+        else:
+            return {}
 
     def order(self, *, order, **_):
         return self.order_ivs[order]
 
 
 class CompleteCounterbalance(NonAtomicOrdering):
+    iv_name = '_counterbalance_group'
+
     def first_pass(self, conditions):
         self.all_conditions = self.number * list(conditions)
 
@@ -63,6 +70,8 @@ class CompleteCounterbalance(NonAtomicOrdering):
 
 
 class Sorted(NonAtomicOrdering):
+    iv_name = '_sorted_order'
+
     def __init__(self, number=1, order='both', **kwargs):
         super().__init__(number=number, **kwargs)
         self.order = order
@@ -93,6 +102,8 @@ class Sorted(NonAtomicOrdering):
 
 
 class LatinSquare(NonAtomicOrdering):
+    iv_name = '_latin_square_row'
+
     def __init__(self, number=1, balanced=True, uniform=False, **kwargs):
         if balanced and uniform:
             raise ValueError('Cannot create a balanced, uniform Latin square')

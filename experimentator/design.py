@@ -8,7 +8,7 @@ import itertools
 from copy import copy
 import numpy as np
 
-from experimentator.order import Shuffle
+from experimentator.order import Shuffle, NonAtomicOrdering
 
 
 class Design():
@@ -41,10 +41,12 @@ class Design():
     """
     def __init__(self, ivs=None, design_matrix=None, ordering=None, **extra_context):
         if ivs:
-            self.iv_names, self.iv_values = zip(*ivs)
+            iv_names, iv_values = zip(*ivs)
+            self.iv_names = list(iv_names)
+            self.iv_values = list(iv_values)
         else:
-            self.iv_names = ()
-            self.iv_values = ()
+            self.iv_names = []
+            self.iv_values = []
 
         self.design_matrix = design_matrix
         self.extra_context = extra_context
@@ -71,7 +73,7 @@ class Design():
         -------
         new_iv : list
            If `Design.ordering` is non-atomic, a list will be returned, giving the values of a new IV to be created one
-           level up in the experimental hiearachy. Typically, each value corresponds to a unique ordering of the
+           level up in the experimental hierarchy. Typically, each value corresponds to a unique ordering of the
            conditions in this `Design`. If `Design.ordering` is non-atomic,
 
         """
@@ -84,6 +86,22 @@ class Design():
             all_conditions = self.full_cross(self.iv_names, self.iv_values)
 
         return self.ordering.first_pass(all_conditions)
+
+    def update(self, names, values):
+        """Add new IVs to design.
+
+        This method adds new IVs to the `Design`. It will have no effect after `Design.first_pass` has been called.
+
+        Arguments
+        ---------
+        names : list of str
+            Names of IVs to add.
+        values : list of list
+            For each IV, a list of possible values.
+
+        """
+        self.iv_names.extend(names)
+        self.iv_values.extend(values)
 
     @staticmethod
     def full_cross(iv_names, iv_values):
@@ -140,8 +158,8 @@ class DesignTree():
     Arguments
     ---------
     levels_and_design : list of tuple
-       A list of tuples, each with two elements. The first is a string naming the level, the second is a `Design`
-       object.
+       A list of tuples, each with two elements. The first is a string naming the level, the second is a list of
+       `Design` instances to occur at that level.
 
     Note
     ----
@@ -151,12 +169,23 @@ class DesignTree():
 
     """
     def __init__(self, levels_and_designs):
-        # Make first pass of all designs.
-        for level, level_above in zip(reversed(levels_and_designs[1:]), reversed(levels_and_designs[:-1])):
-            new_ivs = level[1].first_pass()
-            level_above.update(new_ivs)
-            # And call first pass of the top level.
-        levels_and_designs[0][1].first_pass()
+        # Make first pass of all designs, from bottom to top.
+        for (level, designs), (level_above, designs_above) in \
+                zip(reversed(levels_and_designs[1:]), reversed(levels_and_designs[:-1])):
+
+            # Call first_pass and add new IVs.
+            new_iv_names = []
+            new_iv_values = []
+            for design in designs:
+                new_ivs = design.first_pass()
+                new_iv_names.extend(list(new_ivs.keys()))
+                new_iv_values.extend(list(new_ivs.values()))
+            for design in designs_above:
+                design.update(new_iv_names, new_iv_values)
+
+        # And call first pass of the top level.
+        for design in levels_and_designs[0][0]:
+            design.first_pass()
 
         self.levels_and_designs = levels_and_designs
 

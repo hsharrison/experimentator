@@ -67,47 +67,56 @@ class ExperimentSection():
             self._next_designs = None
 
         else:  # Not bottom level.
-            self._next_level, self._next_designs = self.tree[1]
-
             # Create the section tree. Creating any section also creates the sections below it.
-            for design in self._next_designs:
-                self.append_design(design)
+            self.append_design_tree(next(self.tree))
 
-    def append_design(self, design, to_start=False):
+    def append_design_tree(self, tree, to_start=False):
         """Append sections to this section's children.
 
-        This method appends all sections associated with a `Design` instance to the `ExperimentSection.children`
-        attribute.
+        This method appends all sections associated with the top level of a `DesignTree` instance (and therefore also
+        creates descendant sections as well) to the `ExperimentSection.children` attribute.
 
         Arguments
         ---------
-        design : Design
-            The `Design` instance to append.
+        tree : DesignTree
+            The `DesignTree` instance to append.
         to_start : bool, optional
             If true, the sections will be appended to the beginning of `ExperimentSection.children`. If False (the
             default), they will be appended to the end.
 
         Note
         ----
-        After calling `ExperimentSection.append_design`, the section numbers in the context of the child sections will
-        be automatically replaced with the correct numbers.
+        After calling `ExperimentSection.append_design_tree`, the section numbers in the context of the child sections
+        will be automatically replaced with the correct numbers.
 
         """
+        level, designs = tree.levels_and_designs[0]
+
+        if self.level == level:
+            return ValueError('DesignTree to be appended is at the same level as the current section')
+
         if to_start:
-            for new_context in reversed(design.order(**self.context)):
-                self.append_child(to_start=True, **new_context)
+            for design in reversed(designs):
+                for new_context in reversed(design.order(**self.context)):
+                    self.append_child(tree=tree, to_start=True, **new_context)
 
         else:
-            for new_context in design.order(**self.context):
-                self.append_child(**new_context)
+            for design in designs:
+                for new_context in design.order(**self.context):
+                    self.append_child(tree=tree, **new_context)
 
-    def append_child(self, to_start=False, **context):
+    def append_child(self, tree=None, to_start=False, **context):
         """Append a single section to this section's children.
 
-        This method appends a single section to the `ExperimentSection.children` attribute.
+        This method appends a single section to the `ExperimentSection.children` attribute. In the process, its children
+        are created as well.
 
         Arguments
         ---------
+        tree : DesignTree, optional
+            If given, the section will be appended from the top level of `tree`. If not passed, the tree of the current
+            section will be used. Note that this does not affect IV values; IV values must be passed in `**context` a
+            keyword arguments.
         to_start : bool, optional
             If true, the section will be appended to the beginning of `ExperimentSection.children`. If False (the
             default), it will be appended to the end.
@@ -121,11 +130,14 @@ class ExperimentSection():
         be automatically replaced with the correct numbers.
 
         """
+        if not tree:
+            tree = next(self.tree)
+
         child_context = self.context.new_child()
         child_context.update(context)
 
         logging.debug('Generating {} with context {}.'.format(self._next_level, child_context))
-        child = ExperimentSection(next(self.tree), child_context)
+        child = ExperimentSection(tree, child_context)
         if to_start:
             self.children.appendleft(child)
         else:
