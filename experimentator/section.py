@@ -62,15 +62,12 @@ class ExperimentSection():
         self.has_started = False
         self.has_finished = False
 
-        if self.is_bottom_level:
-            self._next_level = None
-            self._next_designs = None
-
-        else:  # Not bottom level.
+        if not self.is_bottom_level:
             # Create the section tree. Creating any section also creates the sections below it.
-            self.append_design_tree(next(self.tree))
+            self.append_design_tree(next(self.tree), _renumber=False)
+            self._number_children()
 
-    def append_design_tree(self, tree, to_start=False):
+    def append_design_tree(self, tree, to_start=False, _renumber=True):
         """Append sections to this section's children.
 
         This method appends all sections associated with the top level of a `DesignTree` instance (and therefore also
@@ -98,14 +95,17 @@ class ExperimentSection():
         if to_start:
             for design in reversed(designs):
                 for new_context in reversed(design.get_order(**self.context)):
-                    self.append_child(tree=tree, to_start=True, **new_context)
+                    self.append_child(tree=tree, to_start=True, _renumber=False, **new_context)
 
         else:
             for design in designs:
                 for new_context in design.get_order(**self.context):
-                    self.append_child(tree=tree, **new_context)
+                    self.append_child(tree=tree, _renumber=False, **new_context)
 
-    def append_child(self, tree=None, to_start=False, **context):
+        if _renumber:
+            self._number_children()
+
+    def append_child(self, tree=None, to_start=False, _renumber=True, **context):
         """Append a single section to this section's children.
 
         This method appends a single section to the `ExperimentSection.children` attribute. In the process, its children
@@ -135,19 +135,23 @@ class ExperimentSection():
 
         child_context = self.context.new_child()
         child_context.update(context)
+        level = tree.levels_and_designs[0][0]
 
-        logging.debug('Generating {} with context {}.'.format(self._next_level, child_context))
+        logging.debug('Generating {} with context {}.'.format(level, child_context))
         child = ExperimentSection(tree, child_context)
         if to_start:
             self.children.appendleft(child)
         else:
             self.children.append(child)
 
-        self._number_children()
+        if _renumber:
+            self._number_children()
 
     def _number_children(self):
-        for i, child in enumerate(self.children):
-            child.context.update({self._next_level: i + 1})
+        levels = [child.level for child in self.children]
+        for level in levels:
+            for i, child in enumerate(filter(lambda c: c.level == level, self.children)):
+                child.context.update({level: i + 1})
 
     def add_data(self, **data):
         """Add data.
