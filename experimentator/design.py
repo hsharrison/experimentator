@@ -19,11 +19,14 @@ class Design():
 
     Arguments
     ---------
-    ivs : list of tuple, optional
+    ivs : dict or list of tuple, optional
         List of tuples describing independent variables (IVs). Each  tuple is of length 2, with the first element being
         a string naming the IV, and the second a sequence containing the possible values of that IV. Alternatively, the
-        second lement can be None, which represents an IV that takes continuous values. In that case, the values for
+        second element can be None, which represents an IV that takes continuous values. In that case, the values for
         that IV are taken from `design_matrix`. If `ivs` is omitted or empty, a `Design` with no IVs will be created.
+        IVs can also be passed as a dictionary, with keys as IV names and values as possible IV values. While this
+        format is more convenient, order is not guaranteed for a dictionary so it does not work well with design
+        matrices. However, using an `OrderedDict` is a possible solution.
     design_matrix : array-like, optional
         An experimental design matrix specifying how IV values should be grouped to form conditions. Each column
         represents one IV, and each row represents one condition. Values in `design_matrix` do not have to conform to
@@ -40,6 +43,8 @@ class Design():
 
     """
     def __init__(self, ivs=None, design_matrix=None, ordering=None, **extra_context):
+        if isinstance(ivs, dict):
+            ivs = list(ivs.items())
         if ivs:
             iv_names, iv_values = zip(*ivs)
             self.iv_names = list(iv_names)
