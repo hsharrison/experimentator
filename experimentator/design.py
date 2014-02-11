@@ -59,7 +59,7 @@ class Design():
         if not self.design_matrix and any(not iv_values for iv_values in self.iv_values):
             raise TypeError('Must specify a design matrix if using continuous IVs (values=None)')
 
-        self.order = self.ordering.order
+        self.get_order = self.ordering.get_order
 
     def first_pass(self):
         """First pass of design.
@@ -112,7 +112,8 @@ class Design():
         iv_names : list of str
             Names of IVs.
         iv_values : list of list
-            Each element defines the possible values of an IV. Must be the same length as `iv_names`.
+            Each element defines the possible values of an IV. Must be the same length as `iv_names`. Note that IV
+            values must be hashable (not the list of values of course, but each element of the list).
 
         Yields
         ------
@@ -177,9 +178,9 @@ class DesignTree():
             new_iv_names = []
             new_iv_values = []
             for design in designs:
-                new_ivs = design.first_pass()
-                new_iv_names.extend(list(new_ivs.keys()))
-                new_iv_values.extend(list(new_ivs.values()))
+                iv_names, iv_values = design.first_pass()
+                new_iv_names.extend(iv_names)
+                new_iv_values.extend(iv_values)
             for design in designs_above:
                 design.update(new_iv_names, new_iv_values)
 

@@ -97,12 +97,12 @@ class ExperimentSection():
 
         if to_start:
             for design in reversed(designs):
-                for new_context in reversed(design.order(**self.context)):
+                for new_context in reversed(design.get_order(**self.context)):
                     self.append_child(tree=tree, to_start=True, **new_context)
 
         else:
             for design in designs:
-                for new_context in design.order(**self.context):
+                for new_context in design.get_order(**self.context):
                     self.append_child(tree=tree, **new_context)
 
     def append_child(self, tree=None, to_start=False, **context):
