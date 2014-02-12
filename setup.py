@@ -3,6 +3,9 @@ from distutils.core import setup
 with open('experimentator/__version__.py') as f:
     exec(f.read())
 
+with open('README.rst') as f:
+    readme = f.read()
+
 setup(name='experimentator',
       packages=['experimentator'],
       py_modules=['experimentator', 'experimentator.orderings', 'experimentator.api'],
@@ -12,15 +15,7 @@ setup(name='experimentator',
       url='https://bitbucket.org/hharrison/experimentator',
       download_url='https://bitbucket.org/hharrison/experimentator/get/default.tar.gz',
       description='Experiment builder',
-      long_description="""\
-Experiment builder
-------------------
-
-experimentator is a Python package for designing, constructing, and running experiments in Python. Its original purpose was for Psychology experiments, in which participants  interact with the terminal or, more commonly, a graphical interface, but there is nothing domain-specific; experimentator will be useful for any kind of experiment run with the aid of a computer. The basic use case is that you have already written code to run a single trial and would like to run a set of experimental sessions in which inputs to your trial function are systematically varied and repeated.
-
-
-Currently, experimentator requires Python 3.3 or later.
-      """,
+      long_description=readme,
       classifiers=[
           'Programming Language :: Python',
           'Programming Language :: Python :: 3',
