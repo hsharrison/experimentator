@@ -109,6 +109,8 @@ From a Python3 virtual environment::
 License
 -------
 
+Licensed under the MIT License, which may or may not appear below depending on where you're reading this. If not, see ``LICENSE.txt``.
+
 .. include:: LICENSE.txt
 
 
@@ -130,7 +132,7 @@ Complimentary libraries
 What are your options for handling the things that **experimentator** doesn't do? Here's a short selection:
 
 * experimental design
-    * `pyDOE <http://pythonhosted.org/pyDOE/>`_: Construct design matrices that experimentator can use to construct your experiment.
+    * `pyDOE <http://pythonhosted.org/pyDOE/>`_: Construct design matrices in a format that experimentator can use to build your experiment.
 * graphics
     * `Pygame <http://pygame.org/news.html>`_: Very popular but not platform-independent.
     * `Pyglet <http://www.pyglet.org/>`_: A smaller community than Pygame, but my personal preference. Works with callbacks rather than with an explicit event loop. Platform-independent and includes OpenGL bindings.
