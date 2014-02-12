@@ -224,15 +224,14 @@ class Experiment():
             self.data.to_csv(f)
 
     def section(self, **section_numbers):
-        """Find section by number.
+        """Find single section by number.
 
         Finds an `ExperimentSection` based on section numbers.
 
         Arguments
         ---------
         **section_numbers
-            Keyword arguments describing which section to find. For example,
-            `Experiment.section(participant=2, session=1, block=3)`. Must include every level higher than the desired
+            Keyword arguments describing which section to find. Must include every level higher than the desired
             section. This method will descend the experimental hierarchy until it can no longer determine how to
             proceed, at which point it returns the current `ExperimentSection`.
 
@@ -240,6 +239,16 @@ class Experiment():
         -------
         ExperimentSection
             The specified section.
+
+        See Also
+        --------
+        Experiment.all_sections : find all sections matching a set of criteria
+
+        Examples
+        --------
+        Assuming an `Experiment` named ``exp`` with levels ``['participant', 'session', 'block', 'trial']``:
+
+        >>>some_block = exp.section(participant=2, session=1, block=3)
 
         """
         node = self.base_section
@@ -252,6 +261,61 @@ class Experiment():
                 break
 
         return node
+
+    def all_sections(self, **section_numbers):
+        """Find a set of sections by number.
+
+        Finds all sections in the experiment matching the given section numbers.
+
+        Arguments
+        ---------
+        **section_numbers
+            Keyword arguments describing what sections to find. Keys are level names, values are ints or sequences of
+            ints.
+
+        Yields
+        ------
+        ExperimentSection
+            The specified `ExperimentSection` instances. The returned sections will be at the lowest level given in
+            `section_numbers`. When encountering levels that aren't in `section_numbers` before reaching its lowest
+            level, all sections will be descended into.
+
+        See Also
+        --------
+        Experiment.section : find a single section.
+
+        Examples
+        --------
+        Assuming an `Experiment` named ``exp`` with levels ``['participant', 'session', 'block', 'trial']``:
+
+        >>>all_first_sessions = exp.all_sections(session=1)
+
+        ``all_first_sessions`` will be the first session of every participant.
+
+        >>>trials = exp.all_sections(block=1, trial=2)
+
+        ``trials`` will be the second trial of the first block in every session.
+
+        >>>other_trials = exp.all_sections(session=1, trial=[1, 2, 3])
+
+        ``other_trials`` will be the first three trials of every block in the first session of every participant.
+
+        """
+        # The state of the recursion is passed in the keyword argument '_section'.
+        section = section_numbers.pop('_section', self.base_section)
+
+        if section.is_bottom_level or not section_numbers:
+            # When section_numbers is empty, we're done with the search.
+            yield section
+
+        elif section.level in section_numbers:
+            # Remove the section from section_numbers...it needs to be empty to signal completion.
+            numbers = section_numbers.pop(section.level)
+            yield from (self.all_sections(_section=section.children[n-1]) for n in numbers)
+
+        else:
+            # Section not specified but we're not done; descend into every child.
+            yield from (self.all_sections(_section=child) for child in section.children)
 
     def find_first_not_run(self, at_level, by_started=True):
         """Find the first section that has not been run.
