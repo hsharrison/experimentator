@@ -20,7 +20,7 @@ The philosophy of experimentator is to do one thing and do it well. It does not 
 * statistics
 * data processing
 
-Experimentator is meant to be used with other libraries that handle the above functionality, and gives you the freedom to choose which you prefer. It is best suited for someone with programming experience and some knowledge of the Python ecosystem. After all, building a graphics library is hard. It's probably best to stick with one that's widely used by a variety of developers (i.e., not just experimentalists).
+Experimentator is meant to be used with other libraries that handle the above functionality, and gives you the freedom to choose which you prefer. It is best suited for someone with programming experience and some knowledge of the Python ecosystem, who would rather choose the best tool for each aspect of a project than use an all-in-one package.
 
 Of course, there are alternatives that offer experimental design features along with other capabilities. A selection, as well as recommended complimentary packages are listed at the end of this document.
 
@@ -129,7 +129,7 @@ With that in mind, the Python ecosystem offers some wonderful alternatives that 
 Complimentary libraries
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-What are your options for handling the things that **experimentator** doesn't do? Here's a short selection:
+What are your options for handling the things that experimentator doesn't do? Here's a short selection:
 
 * experimental design
     * `pyDOE <http://pythonhosted.org/pyDOE/>`_: Construct design matrices in a format that experimentator can use to build your experiment.
