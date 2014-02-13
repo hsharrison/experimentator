@@ -6,6 +6,8 @@ Contains the `ExperimentSection` class, which is imported in `__init__.py`.
 import logging
 import collections
 
+logger = logging.getLogger(__name__)
+
 
 class ExperimentSection():
     """A section of an experiment.
@@ -137,7 +139,7 @@ class ExperimentSection():
         child_context.update(context)
         level = tree.levels_and_designs[0][0]
 
-        logging.debug('Generating {} with context {}.'.format(level, child_context))
+        logger.debug('Generating {} with context {}.'.format(level, child_context))
         child = ExperimentSection(tree, child_context)
         if to_start:
             self.children.appendleft(child)

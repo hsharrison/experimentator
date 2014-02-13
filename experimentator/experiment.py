@@ -17,6 +17,8 @@ from collections import ChainMap
 from experimentator.common import QuitSession
 from experimentator.section import ExperimentSection
 
+logger = logging.getLogger(__name__)
+
 
 def load_experiment(experiment_file):
     """Load an experiment from disk.
@@ -68,7 +70,7 @@ def run_experiment_section(experiment, demo=False, section=None, **section_numbe
     try:
         exp.run_section(section, demo=demo)
     except QuitSession as e:
-        logging.warning('Quit event detected: {}.'.format(str(e)))
+        logger.warning('Quit event detected: {}.'.format(str(e)))
         # Backup experiment file.
         os.rename(experiment.experiment_file,
                   experiment.experiment_file + datetime.now().strftime('.%m-%d-%H-%M-backup'))
@@ -196,12 +198,12 @@ class Experiment():
 
         """
         if self.experiment_file:
-            logging.debug('Saving Experiment instance to {}.'.format(self.experiment_file))
+            logger.debug('Saving Experiment instance to {}.'.format(self.experiment_file))
             with open(self.experiment_file, 'wb') as f:
                 pickle.dump(self, f)
 
         else:
-            logging.warning('Cannot save experiment: No filename provided.')
+            logger.warning('Cannot save experiment: No filename provided.')
 
     def export_data(self, filename):
         """Export data.
@@ -254,10 +256,10 @@ class Experiment():
         node = self.base_section
         for level in self.levels:
             if level in section_numbers:
-                logging.debug('Found specified {}.'.format(level))
+                logger.debug('Found specified {}.'.format(level))
                 node = node.children[section_numbers[level]-1]
             else:
-                logging.info('No {} specified, returning previous level.'.format(level))
+                logger.info('No {} specified, returning previous level.'.format(level))
                 break
 
         return node
@@ -341,7 +343,7 @@ class Experiment():
         node = self.base_section
         section = {}
         for level in self.levels:
-            logging.debug('Checking all {}s...'.format(level))
+            logger.debug('Checking all {}s...'.format(level))
             found = False
             for i, child in enumerate(node.children):
                 if not getattr(child, attribute):
@@ -356,7 +358,7 @@ class Experiment():
         if found:
             return self.section(**section)
         else:
-            logging.warning('Could not find a {} not run.'.format(at_level))
+            logger.warning('Could not find a {} not run.'.format(at_level))
             return None
 
     def run_section(self, section, demo=False):
@@ -373,7 +375,7 @@ class Experiment():
             Data will only be saved if `demo` is False (the default).
 
         """
-        logging.debug('Running {} with context {}.'.format(section.level, section.context))
+        logger.debug('Running {} with context {}.'.format(section.level, section.context))
 
         # Enter context.
         with self.context_managers[section.level]() as self.session_data['as'][section.level]:
@@ -384,12 +386,12 @@ class Experiment():
             if section.is_bottom_level:
                 # Run a trial (or whatever the lowest level is.
                 results = self.run_callback(self.session_data, self.persistent_data, **section.context)
-                logging.debug('Results: {}.'.format(results))
+                logger.debug('Results: {}.'.format(results))
 
                 if not demo:
                     # Save the data
                     section.add_data(**results)
-                    logging.debug('New context: {}.'.format(section.context))
+                    logger.debug('New context: {}.'.format(section.context))
 
             else:
                 self.start_callbacks[section.level](self.session_data, self.persistent_data, **section.context)
@@ -572,7 +574,7 @@ class Experiment():
         try:
             original_module = import_module(state['original_module'])
         except ImportError:
-            logging.warning("The original script that created this experiment doesn't seem to be in this directory.")
+            logger.warning("The original script that created this experiment doesn't seem to be in this directory.")
             raise
 
         # Replace references to callbacks functions.

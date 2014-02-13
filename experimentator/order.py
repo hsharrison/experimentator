@@ -19,6 +19,8 @@ from math import factorial
 
 from experimentator.common import latin_square, balanced_latin_square
 
+logger = logging.getLogger(__name__)
+
 
 class Ordering():
     """Base ordering class.
@@ -251,7 +253,7 @@ class CompleteCounterbalance(NonAtomicOrdering):
         # Warn because this might hang if this method is accidentally used with too many possible orders.
         non_distinct_orders = factorial(len(self.all_conditions))
         equivalent_orders = factorial(self.number)**len(conditions)
-        logging.warning("Creating IV '_counterbalance_order' with {} levels.".format(
+        logger.warning("Creating IV '_counterbalance_order' with {} levels.".format(
             non_distinct_orders//equivalent_orders))
 
         self.order_ivs = dict(enumerate(self.possible_orders(self.all_conditions)))
@@ -318,7 +320,7 @@ class Sorted(NonAtomicOrdering):
                                                reverse=True)}
 
         if self.order == 'both':
-            logging.warning("Creating IV 'order' with levels 'ascending' and 'descending'.")
+            logger.warning("Creating IV 'order' with levels 'ascending' and 'descending'.")
             return self.iv
         else:
             return (), ()
@@ -422,15 +424,15 @@ class LatinSquare(NonAtomicOrdering):
                 uniform_string = ''
             else:
                 uniform_string = 'non-'
-            logging.warning('Constructing Latin square of order {} from a {}uniform distribution...'.format(
+            logger.warning('Constructing Latin square of order {} from a {}uniform distribution...'.format(
                 order, uniform_string))
 
             square = latin_square(order, uniform=self.uniform, reduced=not self.uniform, shuffle=not self.uniform)
-            logging.warning('Latin square construction complete.')
+            logger.warning('Latin square construction complete.')
 
         self.order_ivs = [self.number * [self.all_conditions[i] for i in row] for row in square]
 
-        logging.warning("Creating IV 'order' with {} levels.".format(order))
+        logger.warning("Creating IV 'order' with {} levels.".format(order))
         return self.iv
 
 
