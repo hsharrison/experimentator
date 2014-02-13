@@ -83,7 +83,7 @@ Experimentator requires Python 3.3 or later. It also depends on the following Py
 Version control
 ^^^^^^^^^^^^^^^
 
-Experimentator is hosted on both `GitHub <https://github.com/hsharrison/experimentator>`_ and `BitBucket <https://bitbucket.org/hharrison/experimentator>`_, thanks to the `hg-git <http://hg-git.github.io/>`_ extension. The Mercurial repository is considered canonical.
+Experimentator is hosted on both `GitHub <https://github.com/hsharrison/experimentator>`_ and `BitBucket <https://bitbucket.org/hharrison/experimentator>`_. The Mercurial repository is considered canonical.
 
 From PyPi
 ^^^^^^^^^
