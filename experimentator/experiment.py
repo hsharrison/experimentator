@@ -339,7 +339,7 @@ class Experiment():
             The first `ExperimentSection` satisfying the specified criteria.
 
         """
-        attribute = {True: 'has_started', False: 'has_finished'}[by_started]
+        attribute = 'has_started' if by_started else 'has_finished'
         node = self.base_section
         section = {}
         for level in self.levels:
