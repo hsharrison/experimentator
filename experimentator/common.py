@@ -89,12 +89,12 @@ def latin_square(order, reduced=False, uniform=True, shuffle=False):
         while not _is_latin_rect(square):
             square = [numbers]   # To get a uniform sampling of latin squares, we must start over every time.
             for row in range(1, order):
-                square.append(_new_row(order, row=row, reduced=True))
+                square.append(_new_row(order, reduced_row=row))
                 if uniform and not _is_latin_rect(square):
                     break
                 elif not uniform:
                     while not _is_latin_rect(square):
-                        square[-1] = _new_row(order, row=row, reduced=True)
+                        square[-1] = _new_row(order, reduced_row=row)
 
     else:  # Not reduced.
         while not _is_latin_rect(square):
@@ -210,10 +210,10 @@ def _is_latin_rect(matrix):
         all(len(set(column)) == len(column) for column in zip(*matrix))
 
 
-def _new_row(order, row=None, reduced=False):
+def _new_row(order, reduced_row=None):
     numbers = list(range(order))
-    if reduced:
-        new_row = [row]
+    if reduced_row is not None:
+        new_row = [reduced_row]
         remaining_numbers = list(set(numbers) - set(new_row))
         random.shuffle(remaining_numbers)
         new_row.extend(remaining_numbers)
