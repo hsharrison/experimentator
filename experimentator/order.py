@@ -389,7 +389,7 @@ class LatinSquare(NonAtomicOrdering):
     """
     iv_name = '_latin_square_row'
 
-    def __init__(self, balanced=True, uniform=False, number=1):
+    def __init__(self, number=1, balanced=True, uniform=False):
         if balanced and uniform:
             raise ValueError('Cannot create a balanced, uniform Latin square')
         super().__init__(number=number)
@@ -433,7 +433,7 @@ class LatinSquare(NonAtomicOrdering):
             square = latin_square(order, uniform=self.uniform, reduced=not self.uniform, shuffle=not self.uniform)
             logger.warning('Latin square construction complete.')
 
-        self.order_ivs = [self.number * [self.all_conditions[i] for i in row] for row in square]
+        self.order_ivs = dict(enumerate(self.number * [self.all_conditions[i] for i in row] for row in square))
 
         logger.warning("Creating IV 'order' with {} levels.".format(order))
         return self.iv
