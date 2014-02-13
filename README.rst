@@ -129,7 +129,7 @@ With that in mind, the Python ecosystem offers some wonderful alternatives that 
 Complimentary libraries
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-What are your options for handling the things that experimentator doesn't do? Here's a short selection:
+What are your options for handling the things that experimentator doesn't do? Here's a short selection. If you're already using Python some of these will go without saying, but they're included here for completeness:
 
 * experimental design
     * `pyDOE <http://pythonhosted.org/pyDOE/>`_: Construct design matrices in a format that experimentator can use to build your experiment.
