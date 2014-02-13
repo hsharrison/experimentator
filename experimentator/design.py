@@ -82,7 +82,7 @@ class Design():
            conditions in this `Design`. If `Design.ordering` is non-atomic,
 
         """
-        if self.design_matrix:
+        if self.design_matrix is not None:
             all_conditions = self._parse_design_matrix(self.design_matrix)
             for condition in all_conditions:
                 condition.update(self.extra_context)
