@@ -121,8 +121,8 @@ class Shuffle(Ordering):
         If True (default is False), no unique conditions will appear back-to-back.
 
     """
-    def __init__(self, avoid_repeats=False, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, number=1, avoid_repeats=False):
+        super().__init__(number=number)
         self.avoid_repeats = avoid_repeats
 
     def get_order(self, **context):
@@ -160,8 +160,8 @@ class NonAtomicOrdering(Ordering):
     """
     iv_name = '_order'
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, number=1):
+        super().__init__(number=number)
         self.order_ivs = {}
 
     @property
@@ -265,14 +265,14 @@ class Sorted(NonAtomicOrdering):
 
     Arguments
     ---------
-    number : int, optional
-        The number of times each condition should appear.
     order : {'both', 'ascending', 'descending'}, optional
         If `order` is ``'ascending'`` or ``'descending'``, all sections will be sorted the same way as this ordering
         will be atomic. No IV will be created one  level up. However, if `order` is ``'both'`` (the default), an IV
         ``'_sorted_order'`` will be created created one level up, with possible values ``'ascending'`` and
         ``'descending'``. As a result, half the sections will be created in ascending order, and half in descending
         order.
+    number : int, optional
+        The number of times each condition should appear.
 
     Note
     ----
@@ -281,8 +281,8 @@ class Sorted(NonAtomicOrdering):
     """
     iv_name = '_sorted_order'
 
-    def __init__(self, order='both', **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, order='both', number=1):
+        super().__init__(number=number)
         self.order = order
 
     def first_pass(self, conditions):
@@ -384,10 +384,10 @@ class LatinSquare(NonAtomicOrdering):
     """
     iv_name = '_latin_square_row'
 
-    def __init__(self, balanced=True, uniform=False, **kwargs):
+    def __init__(self, balanced=True, uniform=False, number=1):
         if balanced and uniform:
             raise ValueError('Cannot create a balanced, uniform Latin square')
-        super().__init__(**kwargs)
+        super().__init__(number=number)
         self.balanced = balanced
         self.uniform = uniform
 
