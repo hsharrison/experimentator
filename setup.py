@@ -8,7 +8,6 @@ with open('README.rst') as f:
 
 setup(name='experimentator',
       packages=['experimentator'],
-      py_modules=['experimentator', 'experimentator.orderings', 'experimentator.api'],
       version=__version__,
       author='Henry S. Harrison',
       author_email='henry.schafer.harrison@gmail.com',
