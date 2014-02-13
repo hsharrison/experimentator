@@ -25,6 +25,7 @@ Options:
 
 """
 import logging
+import sys
 from docopt import docopt
 
 from experimentator import load_experiment, run_experiment_section, export_experiment_data, __version__
@@ -45,3 +46,5 @@ if options['run']:
 
 elif options['export']:
     export_experiment_data(options['<experiment-file>'], options['<data-file>'])
+
+sys.exit(0)
