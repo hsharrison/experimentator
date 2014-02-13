@@ -16,6 +16,12 @@ CONDITIONS_2_2 = [{'a': 1, 'b': 1},
                   {'a': 2, 'b': 1},
                   {'a': 2, 'b': 2}]
 
+CONDITIONS_WITH_REPEAT = [{'a': 1, 'b': 1},
+                          {'a': 1, 'b': 2},
+                          {'a': 2, 'b': 1},
+                          {'a': 2, 'b': 2},
+                          {'a': 2, 'b': 2}]
+
 CONDITIONS_2_3_2 = [{'a': 1, 'b': 10, 'c': False},
                     {'a': 1, 'b': 10, 'c': True},
                     {'a': 1, 'b': 20, 'c': False},
@@ -95,6 +101,10 @@ def test_counterbalance():
     _, iv_values = o.first_pass(CONDITIONS_2_2)
     yield check_unique, o, iv_values
     yield check_counterbalance_number, o, len(CONDITIONS_2_2), iv_values
+
+    o = order.CompleteCounterbalance()
+    _, iv_values = o.first_pass(CONDITIONS_WITH_REPEAT)
+    yield check_unique, o, iv_values
 
 
 def check_sorted(o, n_conditions):
