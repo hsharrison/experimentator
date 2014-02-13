@@ -105,7 +105,9 @@ class Ordering():
 
         """
         if unique:
-            yield from set(itertools.permutations(conditions))
+            unique_orders = set(tuple(p) for p in itertools.permutations(tuple(c.items()) for c in conditions))
+            for order in unique_orders:
+                yield list(dict(c) for c in order)
         else:
             yield from itertools.permutations(conditions)
 
@@ -185,7 +187,7 @@ class NonAtomicOrdering(Ordering):
         else:
             return (), ()
 
-    def get_order(self, *, order, **_):
+    def get_order(self, **context):
         """Order the conditions.
 
         This is the method that is called to get an order of conditions. For non-atomic orderings, the order will depend
@@ -203,7 +205,7 @@ class NonAtomicOrdering(Ordering):
             A list of dictionaries, each specifying a condition (a combination of IVs).
 
         """
-        return self.order_ivs[order]
+        return self.order_ivs[context[self.iv_name]]
 
 
 class CompleteCounterbalance(NonAtomicOrdering):
