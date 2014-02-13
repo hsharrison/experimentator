@@ -144,12 +144,13 @@ class Shuffle(Ordering):
             A list of dictionaries, each specifying a condition (a combination of IVs).
 
         """
-        random.shuffle(self.all_conditions)
+        conditions = self.all_conditions.copy()
+        random.shuffle(conditions)
         if self.avoid_repeats:
-            while _has_repeats(self.all_conditions):
-                random.shuffle(self.all_conditions)
+            while _has_repeats(conditions):
+                random.shuffle(conditions)
 
-        return self.all_conditions
+        return conditions
 
 
 class NonAtomicOrdering(Ordering):
