@@ -347,7 +347,7 @@ class Sorted(NonAtomicOrdering):
 
         """
         if self.order == 'both':
-            order = context['order']
+            order = context[self.iv_name]
         else:
             order = self.order
         return self.order_ivs[order]
