@@ -150,9 +150,10 @@ class ExperimentSection():
             self._number_children()
 
     def _number_children(self):
-        levels = [child.level for child in self.children]
+        levels = {child.level for child in self.children}
         for level in levels:
-            for i, child in enumerate(filter(lambda c: c.level == level, self.children)):
+            children_at_level = [child for child in self.children if child.level == level]
+            for i, child in enumerate(children_at_level):
                 child.context.update({level: i + 1})
 
     def add_data(self, **data):
