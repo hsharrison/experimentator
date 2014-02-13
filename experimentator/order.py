@@ -225,8 +225,9 @@ class CompleteCounterbalance(NonAtomicOrdering):
     ----
     The number of possible orderings can get very large very quickly. Therefore, a complete counterbalance is not
     recommended for more than 3 conditions. The number of unique orderings can be determined by
-    ``factorial(number * k) // number**k``, where `k` is the number of unique conditions. For example, with 5 conditions
-    there are 120 possible orders; with 3 conditions and ``number==2``, there are 90 unique orders.
+    ``factorial(number * k) // number**k``, where `k` is the number of conditions (assuming all conditions are unique).
+    For example, with 5 conditions there are 120 possible orders; with 3 conditions and ``number==2``, there are 90
+    unique orders.
 
     """
     iv_name = '_counterbalance_order'

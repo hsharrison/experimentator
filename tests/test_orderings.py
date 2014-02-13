@@ -86,8 +86,8 @@ def check_unique(o, iv_values):
                    for one_iv_value, another_iv_value in iv_combinations)
 
 
-def check_counterbalance_number(o, n_conditions, iv_values):
-    assert len(iv_values) == factorial(o.number * n_conditions) // o.number**n_conditions
+def check_counterbalance_number(o, n_conditions, iv_values, n_repeats):
+    assert len(iv_values) == factorial(o.number * n_conditions) // (factorial(n_repeats) * o.number**n_conditions)
 
 
 def test_counterbalance():
@@ -95,16 +95,17 @@ def test_counterbalance():
         o = order.CompleteCounterbalance(n)
         _, iv_values = o.first_pass(CONDITIONS_3)
         yield check_unique, o, iv_values
-        yield check_counterbalance_number, o, len(CONDITIONS_3), iv_values
+        yield check_counterbalance_number, o, len(CONDITIONS_3), iv_values, 1
 
     o = order.CompleteCounterbalance()
     _, iv_values = o.first_pass(CONDITIONS_2_2)
     yield check_unique, o, iv_values
-    yield check_counterbalance_number, o, len(CONDITIONS_2_2), iv_values
+    yield check_counterbalance_number, o, len(CONDITIONS_2_2), iv_values, 1
 
     o = order.CompleteCounterbalance()
     _, iv_values = o.first_pass(CONDITIONS_WITH_REPEAT)
     yield check_unique, o, iv_values
+    yield check_counterbalance_number, o, len(CONDITIONS_WITH_REPEAT), iv_values, 2
 
 
 def check_sorted(o, n_conditions):
