@@ -61,7 +61,7 @@ class Design():
         else:
             self.ordering = Shuffle()
 
-        if not self.design_matrix and any(not iv_values for iv_values in self.iv_values):
+        if self.design_matrix is None and any(iv_values is None for iv_values in self.iv_values):
             raise TypeError('Must specify a design matrix if using continuous IVs (values=None)')
 
         self.get_order = self.ordering.get_order
