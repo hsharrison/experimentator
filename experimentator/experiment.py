@@ -151,7 +151,7 @@ class Experiment():
         self.experiment_file = experiment_file
         self.levels = list(zip(*self.tree.levels_and_designs))[0]
 
-        self.tree._add_base_level()
+        self.tree.add_base_level()
         self.base_section = ExperimentSection(self.tree, ChainMap())
 
         self.run_callback = _dummy_callback

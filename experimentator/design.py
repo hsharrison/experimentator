@@ -208,7 +208,18 @@ class DesignTree():
     def __getitem__(self, item):
         return self.levels_and_designs[item]
 
-    def _add_base_level(self):
+    def add_base_level(self):
+        """Add base level to tree.
+
+        Adds a section to the top of the tree called ``'base'``. This makes the `DesignTree` suitable for constructing
+        an `Experiment`.
+
+        Note
+        ----
+        The `Experiment` constructor calls this automatically, and this shouldn't be called when appending a tree to an
+        existing `Experiment`, so there are no real reasons to call this in client code.
+
+        """
         levels_and_designs = [('base', Design())]
         levels_and_designs.extend(self.levels_and_designs)
         self.levels_and_designs = levels_and_designs
