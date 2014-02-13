@@ -286,7 +286,7 @@ class Sorted(NonAtomicOrdering):
     """
     iv_name = '_sorted_order'
 
-    def __init__(self, order='both', number=1):
+    def __init__(self, number=1, order='both'):
         super().__init__(number=number)
         self.order = order
 
