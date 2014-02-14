@@ -1,10 +1,25 @@
 from setuptools import setup
+from setuptools.command.test import test
+import sys
 
 with open('experimentator/__version__.py') as f:
     exec(f.read())
 
 with open('README.rst') as f:
     readme = f.read()
+
+
+class PyTest(test):
+    def finalize_options(self):
+        test.finalize_options(self)
+        self.test_args = []
+        self.test_suite = True
+
+    def run_tests(self):
+        import pytest
+        errno = pytest.main(self.test_args)
+        sys.exit(errno)
+
 
 setup(name='experimentator',
       packages=['experimentator'],
@@ -28,8 +43,8 @@ setup(name='experimentator',
           'Topic :: Utilities',
       ],
       entry_points={
-          'console_scripts': [
-              'exp = experimentator.__main__:main',
-          ],
+          'console_scripts': ['exp = experimentator.__main__:main'],
       },
+      tests_require=['pytest'],
+      cmdclass={'test': PyTest},
       )
