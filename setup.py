@@ -27,9 +27,11 @@ setup(name='experimentator',
       author='Henry S. Harrison',
       author_email='henry.schafer.harrison@gmail.com',
       url='https://bitbucket.org/hharrison/experimentator',
+      license='MIT',
       download_url='https://bitbucket.org/hharrison/experimentator/get/default.tar.gz',
       description='Experiment builder',
       long_description=readme,
+      keywords='experiment science psychology experimental design research',
       classifiers=[
           'Programming Language :: Python',
           'Programming Language :: Python :: 3',
@@ -43,8 +45,15 @@ setup(name='experimentator',
           'Topic :: Utilities',
       ],
       entry_points={
-          'console_scripts': ['exp = experimentator.__main__:main'],
+          'console_scripts': ['exp = experimentator.__main__:main [cli]'],
       },
       tests_require=['pytest'],
       cmdclass={'test': PyTest},
+      install_requires=['numpy', 'pandas>=0.13.1'],
+      package_data={
+          '': ['*.txt', '*.rst'],
+      },
+      extras_require={
+          'cli': ['docopt>=0.6.1'],
+      }
       )
