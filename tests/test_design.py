@@ -159,7 +159,7 @@ def test_design_tree():
     assert designs[2][1] is block_design
     assert designs[3][0] is trial_design
 
-    assert len(designs[1][0].iv_names) == len(participant_iv_names) + 1
-    assert len(designs[2][0].iv_names) == 0
-    assert len(designs[2][1].iv_names) == len(block_ivs)
-    assert len(designs[3][0].iv_names) == len(trial_iv_names)
+    assert set(designs[1][0].iv_names) == {'A', 'B', CompleteCounterbalance.iv_name}
+    assert set(designs[2][0].iv_names) == set([])
+    assert set(designs[2][1].iv_names) == {'block'}
+    assert set(designs[3][0].iv_names) == {'a', 'b'}
