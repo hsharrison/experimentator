@@ -183,9 +183,10 @@ class DesignTree():
             new_iv_names = []
             new_iv_values = []
             for design in designs:
-                iv_names, iv_values = design.first_pass()
-                new_iv_names.extend(iv_names)
-                new_iv_values.extend(iv_values)
+                iv_name, iv_values = design.first_pass()
+                if iv_name:
+                    new_iv_names.append(iv_name)
+                    new_iv_values.append(iv_values)
             for design in designs_above:
                 design.update(new_iv_names, new_iv_values)
 

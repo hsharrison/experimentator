@@ -4,7 +4,8 @@
 import numpy as np
 from itertools import product
 
-from experimentator import Design
+from experimentator import Design, DesignTree
+from experimentator.order import Shuffle, Ordering, CompleteCounterbalance
 
 
 def check_sequences(first, second):
@@ -116,3 +117,49 @@ def test_design_matrix_with_continuous_iv():
     d.first_pass()
     for _ in range(3):
         yield check_design_matrix, d.get_order(), iv_names, iv_values, matrix
+
+
+def test_design_tree():
+    trial_matrix = np.array([[-1, -1],
+                             [1, -1],
+                             [-1, 1],
+                             [1, 1],
+                             [0, 0],
+                             [0, 0],
+                             [0, 0],
+                             [0, 0],
+                             [-1.41421356, 0],
+                             [1.41421356,  0],
+                             [0, -1.41421356],
+                             [0, 1.41421356],
+                             [0, 0],
+                             [0, 0],
+                             [0, 0],
+                             [0, 0]])  # pyDOE.ccdesign(2)
+    trial_iv_names = ['a', 'b']
+    trial_iv_values = [None, None]
+    block_ivs = {'block': [1, 2]}
+    participant_iv_names = ('A', 'B')
+    participant_iv_values = [[1, 2], [1, 2, 3]]
+
+    trial_design = Design(ivs=zip(trial_iv_names, trial_iv_values), ordering=Shuffle(3), design_matrix=trial_matrix)
+    block_design = Design(block_ivs, ordering=CompleteCounterbalance())
+    practice_block_design = Design()
+    participant_design = Design(dict(zip(participant_iv_names, participant_iv_values)), ordering=Ordering(10))
+
+    tree = DesignTree([('participant', [participant_design]),
+                       ('block', [practice_block_design, block_design]),
+                       ('trial', [trial_design])])
+    tree.add_base_level()
+
+    levels, designs = zip(*tree.levels_and_designs)
+
+    assert designs[1][0] is participant_design
+    assert designs[2][0] is practice_block_design
+    assert designs[2][1] is block_design
+    assert designs[3][0] is trial_design
+
+    assert len(designs[1][0].iv_names) == len(participant_iv_names) + 1
+    assert len(designs[2][0].iv_names) == 0
+    assert len(designs[2][1].iv_names) == len(block_ivs)
+    assert len(designs[3][0].iv_names) == len(trial_iv_names)

@@ -252,7 +252,8 @@ class CompleteCounterbalance(NonAtomicOrdering):
             Integers, values of the IV one level up, each associated with a unique ordering of conditions.
 
         """
-        self.all_conditions = self.number * list(conditions)
+        conditions = list(conditions)
+        self.all_conditions = self.number * conditions
 
         # Warn because this might hang if this method is accidentally used with too many possible orders.
         non_distinct_orders = factorial(len(self.all_conditions))
