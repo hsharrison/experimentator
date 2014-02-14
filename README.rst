@@ -50,17 +50,13 @@ To demonstrate, let's build a 2x3 factorial within-subjects experiment::
 
 This experiment has two independent variables, ``'congruent'`` with two levels, and ``'display_time'`` with three, for a total of six conditions (ignore, for now, the other elements of the function's signature). It has 20 participants, though more can be added later. The conditions are shuffled, with each appearing 10 times.
 
-If the previous code was saved in a file called ``distractor.py``, then running it from the command line creates ``distractor.dat`` (the filenames are arbitrary--though giving them similar names is a convention)::
+Running the above script creates ``distractor.dat``. From there, we can run sessions of the experiment straight from the command line, using the entry point ``exp``, automatically installed with experimentator::
 
-    python distractor.py
-
-From there, we can run sessions of the experiment straight from the command line::
-
-    python -m experimentator run distractor.dat --next participant
+    exp run distractor.dat --next participant
 
 Finally, we can export the data to a text file::
 
-    python -m experimentator export distractor.dat data.csv
+    exp export distractor.dat data.csv
 
 Or, access the data in a Python session::
 

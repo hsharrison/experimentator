@@ -1,4 +1,4 @@
-from distutils.core import setup
+from setuptools import setup
 
 with open('experimentator/__version__.py') as f:
     exec(f.read())
@@ -27,4 +27,9 @@ setup(name='experimentator',
           'Topic :: Software Development :: Libraries :: Python Modules',
           'Topic :: Utilities',
       ],
+      entry_points={
+          'console_scripts': [
+              'exp = experimentator.__main__:main',
+          ],
+      },
       )

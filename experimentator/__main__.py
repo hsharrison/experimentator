@@ -1,16 +1,16 @@
 """Usage:
-  experimentator run <experiment-file> (--next <level>  [--not-finished] | (<level> <n>)...) [--demo] [--debug]
-  experimentator  export <experiment-file> <data-file> [--debug]
-  experimentator -h | --help
-  experimentator --version
+  exp run <experiment-file> (--next <level>  [--not-finished] | (<level> <n>)...) [--demo] [--debug]
+  exp  export <experiment-file> <data-file> [--debug]
+  exp -h | --help
+  exp --version
 
 
 Commands:
   run <experiment-file> --next <level>      Runs the first <level> that hasn't started. E.g.:
-                                              experimentator.py run experiment1.dat --next session
+                                              exp run experiment1.dat --next session
 
   run <experiment-file> (<level> <n>)...    Runs the section specified by any number of level=n pairs. E.g.:
-                                              experimentator.py run experiment1.dat participant 3 session 1
+                                              exp run experiment1.dat participant 3 session 1
 
   export <experiment-file> <data-file>      Export the data in <experiment_file> to csv format as <data_file>.
                                               Note: This will not produce readable csv files for experiments with
@@ -24,27 +24,33 @@ Options:
   --version          Print the installed version number of experimentator.
 
 """
-import logging
-import sys
-from docopt import docopt
 
-from experimentator import load_experiment, run_experiment_section, export_experiment_data, __version__
 
-options = docopt(__doc__, version=__version__)
+def main():
+    import logging
+    import sys
+    from docopt import docopt
 
-if options['--debug']:
-    logging.basicConfig(level=logging.DEBUG)
+    from experimentator import load_experiment, run_experiment_section, export_experiment_data, __version__
 
-if options['run']:
-    cli_exp = load_experiment(options['<experiment-file>'])
-    cli_demo = options['--demo']
-    if options['--next']:
-        cli_section = cli_exp.find_first_not_run(options['<level>'][0], by_started=options['--not-finished'])
-        run_experiment_section(cli_exp, demo=cli_demo, section=cli_section)
-    else:
-        run_experiment_section(cli_exp, demo=cli_demo, **dict(zip(options['<level>'], options['<n>'])))
+    options = docopt(__doc__, version=__version__)
 
-elif options['export']:
-    export_experiment_data(options['<experiment-file>'], options['<data-file>'])
+    if options['--debug']:
+        logging.basicConfig(level=logging.DEBUG)
 
-sys.exit(0)
+    if options['run']:
+        cli_exp = load_experiment(options['<experiment-file>'])
+        cli_demo = options['--demo']
+        if options['--next']:
+            cli_section = cli_exp.find_first_not_run(options['<level>'][0], by_started=options['--not-finished'])
+            run_experiment_section(cli_exp, demo=cli_demo, section=cli_section)
+        else:
+            run_experiment_section(cli_exp, demo=cli_demo, **dict(zip(options['<level>'], options['<n>'])))
+
+    elif options['export']:
+        export_experiment_data(options['<experiment-file>'], options['<data-file>'])
+
+    sys.exit(0)
+
+if __name__ == '__main__':
+    main()
