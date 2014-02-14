@@ -90,7 +90,7 @@ Experimentator is hosted on both `GitHub <https://github.com/hsharrison/experime
 From PyPi
 ^^^^^^^^^
 
-Assuming you are in a Python3 virtual environment, run ::
+Assuming you are in a Python 3 virtual environment, run ::
 
     pip install experimentator
 
@@ -99,7 +99,7 @@ to install experimentator. Use the ``--upgrade`` flag to update your copy to the
 From source
 ^^^^^^^^^^^
 
-From a Python3 virtual environment::
+From a Python 3 virtual environment::
 
     hg clone https://bitbucket.org/hharrison/experimentator
     # or
@@ -151,5 +151,6 @@ What are your options for handling the things that experimentator doesn't do? He
     * `SciPy <http://docs.scipy.org/doc/scipy/reference/>`_: A comprehensive scientific computing library.
     * `Statsmodels <http://statsmodels.sourceforge.net/>`_: Statistical modeling and hypothesis testing.
     * `scikit-learn <http://scikit-learn.org/stable/>`_: Machine learning in Python.
+    * `rpy2 <http://rpy.sourceforge.net/rpy2.html>`_: Call R from Python. Because sometimes the model or test you need isn't in statsmodels or scikit-learn.
 
 .. _author: mailto:henry.schafer.harrison@gmail.com
