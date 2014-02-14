@@ -1,4 +1,4 @@
-"""Tests for Latin squares in experimentator.common.
+"""Tests for Latin squares in experimentator/common.py.
 
 """
 from collections import Counter
