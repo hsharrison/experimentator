@@ -27,7 +27,9 @@ Of course, there are alternatives that offer experimental design features along 
 An example
 ----------
 
-To demonstrate, let's build a 2x3 factorial within-subjects experiment::
+To demonstrate, let's build a 2x3 factorial within-subjects experiment:
+
+.. code-block:::: python
 
     from experimentator.api import within_subjects_experiment
     from experimentator.order import Shuffle
@@ -50,15 +52,21 @@ To demonstrate, let's build a 2x3 factorial within-subjects experiment::
 
 This experiment has two independent variables, ``'congruent'`` with two levels, and ``'display_time'`` with three, for a total of six conditions (ignore, for now, the other elements of the function's signature). It has 20 participants, though more can be added later. The conditions are shuffled, with each appearing 10 times.
 
-Running the above script creates ``distractor.dat``. From there, we can run sessions of the experiment straight from the command line, using the entry point ``exp``, automatically installed with experimentator::
+Running the above script creates ``distractor.dat``. From there, we can run sessions of the experiment straight from the command line, using the entry point ``exp``, automatically installed with experimentator:
+
+.. code-block:: bash
 
     exp run distractor.dat --next participant
 
-Finally, we can export the data to a text file::
+Finally, we can export the data to a text file:
+
+.. code-block:: bash
 
     exp export distractor.dat data.csv
 
-Or, access the data in a Python session::
+Or, access the data in a Python session:
+
+.. code-block:: python
 
     from experimentator import load_experiment
 
@@ -74,19 +82,21 @@ Dependencies
 
 Experimentator requires Python 3.3 or later. It also depends on the following Python libraries:
 
-* `numpy <http://www.numpy.org/>`_ v1.8.0 or later
-* `pandas <http://pandas.pydata.org/>`_ v0.13.0 or later
-* `docopt <http://docopt.org/>`_ v0.6.1 or later
+* `numpy <http://www.numpy.org/>`_ ``v1.8.0`` or later
+* `pandas <http://pandas.pydata.org/>`_ ``v0.13.0`` or later
+* `docopt <http://docopt.org/>`_ ``v0.6.1`` or later
 
 Version control
 ^^^^^^^^^^^^^^^
 
-Experimentator is hosted on both `GitHub <https://github.com/hsharrison/experimentator>`_ and `BitBucket <https://bitbucket.org/hharrison/experimentator>`_. The Mercurial repository is considered canonical.
+Experimentator is hosted on both `GitHub <https://github.com/hsharrison/experimentator>`_ and `BitBucket <https://bitbucket.org/hharrison/experimentator>`_. The Mercurial repository (BitBucket) is considered canonical.
 
 From PyPi
 ^^^^^^^^^
 
-Assuming you are in a Python 3 virtual environment, run ::
+Assuming you are in a Python 3 virtual environment, run:
+
+.. code-block:: bash
 
     pip install experimentator
 
@@ -95,7 +105,9 @@ to install experimentator. Use the ``--upgrade`` flag to update your copy to the
 From source
 ^^^^^^^^^^^
 
-From a Python 3 virtual environment::
+From a Python 3 virtual environment:
+
+.. code-block:: bash
 
     hg clone https://bitbucket.org/hharrison/experimentator
     # or
@@ -147,6 +159,6 @@ What are your options for handling the things that experimentator doesn't do? He
     * `SciPy <http://docs.scipy.org/doc/scipy/reference/>`_: A comprehensive scientific computing library.
     * `Statsmodels <http://statsmodels.sourceforge.net/>`_: Statistical modeling and hypothesis testing.
     * `scikit-learn <http://scikit-learn.org/stable/>`_: Machine learning in Python.
-    * `rpy2 <http://rpy.sourceforge.net/rpy2.html>`_: Call R from Python. Because sometimes the model or test you need isn't in statsmodels or scikit-learn.
+    * `rpy2 <http://rpy.sourceforge.net/rpy2.html>`_: Call ``R`` from Python. Because sometimes the model or test you need isn't in statsmodels or scikit-learn.
 
 .. _author: mailto:henry.schafer.harrison@gmail.com
