@@ -1,6 +1,19 @@
 from setuptools import setup
 from setuptools.command.test import test
+from distutils.version import StrictVersion
 import sys
+
+try:
+    import numpy
+except ImportError:
+    raise ImportError("experimentator requires numpy, try 'pip install numpy'")
+
+try:
+    import pandas
+    if StrictVersion(pandas.__version__) < StrictVersion('0.13.1'):
+        raise ImportError("experimentator requires pandas >= v0.13.1, try 'pip install -U pandas'")
+except ImportError:
+    raise ImportError("experimentator requires pandas, try 'pip install pandas'")
 
 with open('experimentator/__version__.py') as f:
     exec(f.read())
@@ -45,15 +58,12 @@ setup(name='experimentator',
           'Topic :: Utilities',
       ],
       entry_points={
-          'console_scripts': ['exp = experimentator.__main__:main [cli]'],
+          'console_scripts': ['exp = experimentator.__main__:main'],
       },
+      install_requires=['docopt>=0.6.1'],
       tests_require=['pytest'],
       cmdclass={'test': PyTest},
-      install_requires=['numpy', 'pandas>=0.13.1'],
       package_data={
           '': ['*.txt', '*.rst'],
       },
-      extras_require={
-          'cli': ['docopt>=0.6.1'],
-      }
       )
