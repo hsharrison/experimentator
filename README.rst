@@ -7,7 +7,7 @@ Python experiment builder
 
 Do you write code to run experiments? If so, you've probably had the experience of sitting down to code an experiment but getting side-tracked by all the logistics: crossing your independent variables to form conditions, repeating your conditions, randomization, storing intermediate data, etc. It's frustrating to put all that effort in before even getting to what's really unique about your experiment. Worse, it encourages bad coding practices like copy-pasting boilerplate from someone else's experiment code without understanding it.
 
-The underlying purpose of **experimentator** is to handle all the boring logistics of running experiments and allow you to get straight to what really interests you, whatever that may be. This package was originally designed for behavioral experiments in which human participants are interacting with a graphical interface, but there is nothing domain-specific about it--it should be useful for anyone running experiments with a computer. You might say that **experimentator** is a library for 'repeatedly calling a function while systematically varying its inputs and saving the data'. Although that doesn't do full justice to its functionality.
+The underlying purpose of **experimentator** is to handle all the boring logistics of running experiments and allow you to get straight to what really interests you, whatever that may be. This package was originally designed for behavioral experiments in which human participants are interacting with a graphical interface, but there is nothing domain-specific about it--it should be useful for anyone running experiments with a computer. You might say that **experimentator** is a library for 'repeatedly calling a function while systematically varying its inputs and saving the data', although that doesn't do full justice to its functionality.
 
 What experimentator is not
 --------------------------
@@ -68,6 +68,8 @@ Or, access the data in a Python session::
 
     data = load_experiment('distractor.dat').data
 
+In this example the data will have four columns: two index columns with labels ``'participant'`` and ``'trial'``, and two data columns with labels ``'reaction_time'`` and ``'correct'`` (the keys in the dictionary returned by ``present_stimulus_data``).
+
 Installation
 ------------
 
@@ -120,9 +122,9 @@ Other libraries
 Alternatives to experimentator
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-With that in mind, the Python ecosystem offers some wonderful alternatives that *do* do some of the things on the above list:
+The Python ecosystem offers some wonderful alternatives that *do* handle experimentation logistics in addition to providing other functionality like graphics and input/output.
 
-* `expyriment <https://code.google.com/p/expyriment/>`_: graphics, input/output, hardware interfacing, data preprocessing, some experimental design features. For an all-in-one package, this is your best bet. If you are coming from the Matlab world, this is the closest thing to `Psychtoolbox <http://psychtoolbox.org/HomePage>`_.
+* `expyriment <https://code.google.com/p/expyriment/>`_: graphics, input/output, hardware interfacing, data preprocessing, experimental design. If you are coming from the Matlab world, this is the closest thing to `Psychtoolbox <http://psychtoolbox.org/HomePage>`_.
 * `OpenSesame <http://www.osdoc.cogsci.nl/>`_: an all-in-one package with a graphical interface to boot. An impressive piece of software.
 * Contact the `author`_ or submit a pull request and I'll add your software to this list.
 
