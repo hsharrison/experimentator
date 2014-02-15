@@ -173,6 +173,22 @@ def test_design_tree():
     assert designs[2][1] is block_design
     assert designs[3][0] is trial_design
 
+    assert len(tree) == 4
+    assert tree[3] == ('trial', [trial_design])
+
+    assert next(tree).levels_and_designs == next(tree).levels_and_designs == tree.levels_and_designs[1:]
+    tree_with_participant_base = next(tree)
+    tree_with_block_base = next(tree_with_participant_base)
+    assert tree_with_block_base.levels_and_designs \
+        == next(next(tree)).levels_and_designs\
+        == [('block', [practice_block_design, block_design]), ('trial', [trial_design])]
+    tree_with_trial_base = next(tree_with_block_base)
+    assert tree_with_trial_base.levels_and_designs \
+        == [('trial', [trial_design])] \
+        == next(tree_with_block_base).levels_and_designs
+    with pytest.raises(StopIteration):
+        next(tree_with_trial_base)
+
     for design, iv_names, iv_values, n, context, matrix in zip(
             [designs[1][0], designs[2][0], designs[2][1], designs[3][0]],
             [['A', 'B', CompleteCounterbalance.iv_name], [], ['block'], ['a', 'b']],
