@@ -64,7 +64,11 @@ class Design():
         if self.design_matrix is None and any(iv_values is None for iv_values in self.iv_values):
             raise TypeError('Must specify a design matrix if using continuous IVs (values=None)')
 
-        self.get_order = self.ordering.get_order
+    def get_order(self, **context):
+        order = self.ordering.get_order(**context)
+        for condition in order:
+            condition.update(self.extra_context)
+        return order
 
     def first_pass(self):
         """First pass of design.
@@ -89,8 +93,6 @@ class Design():
                 raise TypeError("Size of design matrix doesn't match number of IVs")
 
             all_conditions = self._parse_design_matrix(self.design_matrix)
-            for condition in all_conditions:
-                condition.update(self.extra_context)
 
         else:
             all_conditions = self.full_cross(self.iv_names, self.iv_values)
