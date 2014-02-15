@@ -96,7 +96,7 @@ def blocked_experiment(trial_ivs, n_participants,
     levels_and_designs = [('participant', [Design(ordering=Shuffle(n_participants))]),
                           ('block', [Design(ivs=block_ivs,
                                             design_matrix=design_matrices.get('block'),
-                                            ordering=orderings.get('trial'))]),
+                                            ordering=orderings.get('block'))]),
                           ('trial', [Design(ivs=trial_ivs,
                                             design_matrix=design_matrices.get('trial'),
                                             ordering=orderings.get('trial'))])]
