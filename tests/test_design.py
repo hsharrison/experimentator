@@ -119,6 +119,19 @@ def test_design_matrix_with_continuous_iv():
         yield check_design_matrix, d.get_order(), iv_names, iv_values, matrix
 
 
+def check_design(design, iv_names, iv_values, n, context, matrix):
+    assert set(design.iv_names) == set(iv_names)
+    assert len(design.get_order(**context)) == n
+
+    ivs = dict(zip(iv_names, iv_values))
+    for condition in design.get_order(**context):
+        for iv, value in condition.items():
+            if matrix is not None:
+                assert value in matrix
+            else:
+                assert value in ivs[iv]
+
+
 def test_design_tree():
     trial_matrix = np.array([[-1, -1],
                              [1, -1],
@@ -128,14 +141,14 @@ def test_design_tree():
                              [0, 0],
                              [0, 0],
                              [0, 0],
-                             [-1.41421356, 0],
-                             [1.41421356,  0],
+                             [-1.41421356, 0.1],
+                             [1.41421356,  0.1],
                              [0, -1.41421356],
                              [0, 1.41421356],
                              [0, 0],
                              [0, 0],
                              [0, 0],
-                             [0, 0]])  # pyDOE.ccdesign(2)
+                             [0, 0]])  # pyDOE.ccdesign(2) with two 0.1 elements to prevent symmetry in the IVs.
     trial_iv_names = ['a', 'b']
     trial_iv_values = [None, None]
     block_ivs = {'block': [1, 2]}
@@ -159,7 +172,13 @@ def test_design_tree():
     assert designs[2][1] is block_design
     assert designs[3][0] is trial_design
 
-    assert set(designs[1][0].iv_names) == {'A', 'B', CompleteCounterbalance.iv_name}
-    assert set(designs[2][0].iv_names) == set([])
-    assert set(designs[2][1].iv_names) == {'block'}
-    assert set(designs[3][0].iv_names) == {'a', 'b'}
+    for design, iv_names, iv_values, n, context, matrix in zip(
+            [designs[1][0], designs[2][0], designs[2][1], designs[3][0]],
+            [['A', 'B', CompleteCounterbalance.iv_name], [], ['block'], ['a', 'b']],
+            [[[1, 2], [1, 2, 3], [0, 1]], [], [[1, 2]], [None, None]],
+            [10*2*2*3, 1, 2, 3*len(trial_matrix)],
+            [{}, {}, {CompleteCounterbalance.iv_name: 0}, {}],
+            [None, None, None, trial_matrix]):
+        yield check_design, design, iv_names, iv_values, n, context, matrix
+
+    yield check_design_matrix, designs[3][0].get_order(), ['a', 'b'], [None, None], trial_matrix
