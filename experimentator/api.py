@@ -37,7 +37,7 @@ def within_subjects_experiment(ivs, n_participants, design_matrix=None, ordering
 
     """
     levels_and_designs = [('participant', [Design(ordering=Shuffle(n_participants))]),
-                          ('trial', [Design(ivs=ivs, design=design_matrix, ordering=ordering)])]
+                          ('trial', [Design(ivs=ivs, design_matrix=design_matrix, ordering=ordering)])]
 
     experiment = Experiment(DesignTree(levels_and_designs), experiment_file=experiment_file)
 
@@ -94,10 +94,10 @@ def blocked_experiment(trial_ivs, n_participants,
 
     levels_and_designs = [('participant', Design(ordering=Shuffle(n_participants)),
                            ('block', Design(ivs=block_ivs,
-                                            design=[design_matrices.get('block')],
+                                            design_matrix=[design_matrices.get('block')],
                                             ordering=orderings.get('trial')),
                             ('trial', Design(ivs=trial_ivs,
-                                             design=[design_matrices.get('trial')],
+                                             design_matrix=[design_matrices.get('trial')],
                                              ordering=orderings.get('trial')))))]
 
     experiment = Experiment(DesignTree(levels_and_designs), experiment_file=experiment_file)
