@@ -61,7 +61,8 @@ def blocked_experiment(trial_ivs, n_participants,
         IV name and the second element a list of its possible values. Alternatively, the IVs at each level can be
         specified in a dictionary. See documentation for `Design` for more information on specifying IVs.
     n_participants : int
-        Number of participants to initialize.
+        Number of participants to initialize. If a non-atomic block ordering is used, this is the number of participants
+        per ordering condition.
     design_matrices : dict, optional
         Design matrices for the experiment. Keys are ``'trial'`` and ``'block'``; values are the respective design
         matrices (if any). If not specified, IVs will be fully crossed. See documentation for `Design` for more on
