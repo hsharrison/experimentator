@@ -92,13 +92,13 @@ def blocked_experiment(trial_ivs, n_participants,
     if not orderings:
         orderings = {}
 
-    levels_and_designs = [('participant', Design(ordering=Shuffle(n_participants)),
-                           ('block', Design(ivs=block_ivs,
-                                            design_matrix=[design_matrices.get('block')],
-                                            ordering=orderings.get('trial')),
-                            ('trial', Design(ivs=trial_ivs,
-                                             design_matrix=[design_matrices.get('trial')],
-                                             ordering=orderings.get('trial')))))]
+    levels_and_designs = [('participant', [Design(ordering=Shuffle(n_participants))]),
+                          ('block', [Design(ivs=block_ivs,
+                                            design_matrix=design_matrices.get('block'),
+                                            ordering=orderings.get('trial'))]),
+                          ('trial', [Design(ivs=trial_ivs,
+                                            design_matrix=design_matrices.get('trial'),
+                                            ordering=orderings.get('trial'))])]
 
     experiment = Experiment(DesignTree(levels_and_designs), experiment_file=experiment_file)
 
