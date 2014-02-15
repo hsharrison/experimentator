@@ -26,7 +26,7 @@ with open('README.rst') as f:
     readme = f.read()
 
 # Delete dist folder (necessary due to setuptools bug).
-if os.path.exists('dist'):
+if os.path.exists('dist') and sys.path[0] == 'experimentator':
     shutil.rmtree('dist')
 
 
