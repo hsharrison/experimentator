@@ -189,3 +189,8 @@ def test_bad_design_matrix():
     with pytest.raises(TypeError):
         design = Design(ivs=[('a', [1]), ('b', [1])], design_matrix=np.ones((3,3)))
         design.first_pass()
+
+
+def test_continuous_ivs_without_design_matrix():
+    with pytest.raises(TypeError):
+        Design(ivs=[('a', None)])
