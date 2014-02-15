@@ -1,5 +1,5 @@
 from setuptools import setup
-from setuptools.command.test import test
+from setuptools.command.test import test as Test
 from distutils.version import StrictVersion
 import sys
 import os.path
@@ -30,16 +30,17 @@ if os.path.exists('dist') and sys.path[0] == 'experimentator':
     shutil.rmtree('dist')
 
 
-class PyTest(test):
+# Code from py.test to enable python setup.py test.
+class PyTest(Test):
     def finalize_options(self):
-        test.finalize_options(self)
+        super().finalize_options()
         self.test_args = []
         self.test_suite = True
 
     def run_tests(self):
         import pytest
-        errno = pytest.main(self.test_args)
-        sys.exit(errno)
+        error = pytest.main(self.test_args)
+        sys.exit(error)
 
 
 setup(name='experimentator',
