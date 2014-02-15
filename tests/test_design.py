@@ -1,8 +1,9 @@
 """Tests for objects in experimentator/design.py
 
 """
-import numpy as np
 from itertools import product
+import pytest
+import numpy as np
 
 from experimentator import Design, DesignTree
 from experimentator.order import Shuffle, Ordering, CompleteCounterbalance
@@ -182,3 +183,9 @@ def test_design_tree():
         yield check_design, design, iv_names, iv_values, n, context, matrix
 
     yield check_design_matrix, designs[3][0].get_order(), ['a', 'b'], [None, None], trial_matrix
+
+
+def test_bad_design_matrix():
+    with pytest.raises(TypeError):
+        design = Design(ivs=[('a', [1]), ('b', [1])], design_matrix=np.ones((3,3)))
+        design.first_pass()
