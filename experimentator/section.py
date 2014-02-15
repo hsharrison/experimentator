@@ -92,7 +92,7 @@ class ExperimentSection():
         level, designs = tree.levels_and_designs[0]
 
         if self.level == level:
-            return ValueError('DesignTree to be appended is at the same level as the current section')
+            raise ValueError('DesignTree to be appended is at the same level as the current section')
 
         if to_start:
             for design in reversed(designs):
