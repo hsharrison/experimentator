@@ -97,17 +97,17 @@ class ExperimentSection():
         if to_start:
             for design in reversed(designs):
                 for new_context in reversed(design.get_order(**self.context)):
-                    self.append_child(tree=tree, to_start=True, _renumber=False, **new_context)
+                    self.append_child(tree=tree, to_start=True, _renumber=False, context=new_context)
 
         else:
             for design in designs:
                 for new_context in design.get_order(**self.context):
-                    self.append_child(tree=tree, _renumber=False, **new_context)
+                    self.append_child(tree=tree, _renumber=False, context=new_context)
 
         if _renumber:
             self._number_children()
 
-    def append_child(self, tree=None, to_start=False, _renumber=True, **context):
+    def append_child(self, tree=None, to_start=False, _renumber=True, context=None):
         """Append a single section to this section's children.
 
         This method appends a single section to the `ExperimentSection.children` attribute. In the process, its children
@@ -136,7 +136,8 @@ class ExperimentSection():
             tree = next(self.tree)
 
         child_context = self.context.new_child()
-        child_context.update(context)
+        if context:
+            child_context.update(context)
         level = tree.levels_and_designs[0][0]
 
         logger.debug('Generating {} with context {}.'.format(level, child_context))
