@@ -203,10 +203,19 @@ def test_design_tree():
 
 def test_bad_design_matrix():
     with pytest.raises(TypeError):
-        design = Design(ivs=[('a', [1]), ('b', [1])], design_matrix=np.ones((3,3)))
+        design = Design(ivs=[('a', [1]), ('b', [1])], design_matrix=np.ones((3, 3)))
         design.first_pass()
 
 
 def test_continuous_ivs_without_design_matrix():
     with pytest.raises(TypeError):
         Design(ivs=[('a', None)])
+
+
+def test_different_bad_design_matrix():
+    iv_names = ('a', 'b', 'c')
+    iv_values = [[1, 2], [1, 2, 3], [1, 2]]
+    matrix = np.array([[-1., -1.,  1.], [1., -1., -1.], [-1.,  1., -1.], [1.,  1.,  1.]])  # pyDOE.fracfact('a b ab')
+    d = Design(ivs=zip(iv_names, iv_values), design_matrix=matrix)
+    with pytest.raises(ValueError):
+        d.first_pass()
