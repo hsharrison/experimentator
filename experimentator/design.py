@@ -139,9 +139,6 @@ class Design():
         yield from (dict(zip(iv_names, iv_combination)) for iv_combination in iv_combinations)
 
     def _parse_design_matrix(self, design_matrix):
-        if not np.shape(design_matrix)[1] == len(self.iv_names):
-            raise ValueError('Number of columns in design matrix not equal to number of IVs')
-
         values_per_factor = [np.unique(column) for column in np.transpose(design_matrix)]
         if any(iv_values and not len(iv_values) == len(values)
                for iv_values, values in zip(self.iv_values, values_per_factor)):
