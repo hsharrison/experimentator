@@ -83,6 +83,11 @@ class Design():
 
         """
         if self.design_matrix is not None:
+            print(np.shape(self.design_matrix))
+            print(self.iv_names)
+            if not np.shape(self.design_matrix)[1] == len(self.iv_names):
+                raise TypeError("Size of design matrix doesn't match number of IVs")
+
             all_conditions = self._parse_design_matrix(self.design_matrix)
             for condition in all_conditions:
                 condition.update(self.extra_context)
