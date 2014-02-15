@@ -3,6 +3,7 @@
 """
 from collections import ChainMap
 import pandas as pd
+import pytest
 
 from experimentator import Design, DesignTree, ExperimentSection
 
@@ -39,6 +40,9 @@ def test_appending_tree():
     assert section[4].context['block'] == 1
     section.append_design_tree(make_tree(['block', 'trial'], {'foo': 'bar'}), to_start=True)
     assert section[8].context['block'] == 5
+
+    with pytest.raises(ValueError):
+        section.append_design_tree(make_tree(['session', 'block', 'trial'], {}), ChainMap())
 
 
 def test_append_child():
