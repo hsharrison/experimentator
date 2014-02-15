@@ -172,12 +172,20 @@ class ExperimentSection():
         """
         self.context.update(data)
 
-    def _generate_data(self):
+    def generate_data(self):
+        """Generate data.
+
+        Yields
+        ------
+        ChainMap
+            Context of all bottom-level sections that are descendants of this section.
+
+        """
         for child in self.children:
             if child.is_bottom_level:
                 yield child.context
             else:
-                yield from child._generate_data()
+                yield from child.generate_data()
 
     def __len__(self):
         return len(self.children)

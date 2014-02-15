@@ -188,7 +188,7 @@ class Experiment():
 
         """
         from pandas import DataFrame
-        data = DataFrame(self.base_section._generate_data()).set_index(list(self.levels))
+        data = DataFrame(self.base_section.generate_data()).set_index(list(self.levels))
         return data
 
     def save(self):
