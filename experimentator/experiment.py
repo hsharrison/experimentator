@@ -566,7 +566,8 @@ class Experiment():
         state['run_callbacks'] = state['run_callbacks'].__name__
         for level in state['levels']:
             for callback in ('start_callbacks', 'inter_callbacks', 'end_callbacks', 'context_managers'):
-                state[callback][level] = state[callback][level].__name__
+                if not (state[callback][level] == _dummy_callback or state[callback][level] == _dummy_context):
+                    state[callback][level] = state[callback][level].__name__
         return state
 
     def __setstate__(self, state):
@@ -585,8 +586,9 @@ class Experiment():
                                    ('inter_callbacks', '_inter_callback_args'),
                                    ('end_callbacks', '_end_callback_args'),
                                    ('context_managers', '_context_manager_args')):
-                state[callback][level] = functools.partial(getattr(original_module, state[callback][level]),
-                                                           *args[0], **args[1])
+                if isinstance(state[callback][level], str):
+                    state[callback][level] = functools.partial(getattr(original_module, state[callback][level]),
+                                                               *args[0], **args[1])
         self.__dict__.update(state)
 
 
