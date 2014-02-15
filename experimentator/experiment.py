@@ -306,18 +306,26 @@ class Experiment():
         # The state of the recursion is passed in the keyword argument '_section'.
         section = section_numbers.pop('_section', self.base_section)
 
-        if section.is_bottom_level or not section_numbers:
-            # When section_numbers is empty, we're done with the search.
-            yield section
-
-        elif section.level in section_numbers:
+        if section.tree[1][0] in section_numbers:
             # Remove the section from section_numbers...it needs to be empty to signal completion.
-            numbers = section_numbers.pop(section.level)
-            yield from (self.all_sections(_section=section.children[n-1]) for n in numbers)
+            numbers = section_numbers.pop(section.tree[1][0])
 
+            if isinstance(numbers, int):  # Only one number specified.
+                if section_numbers:  # We're not done.
+                    yield from self.all_sections(_section=section[numbers-1], **section_numbers)
+                else:  # We're done.
+                    yield section[numbers-1]
+
+            else:  # Multiple numbers specified.
+                if section_numbers:  # We're not done.
+                    for n in numbers:
+                        yield from self.all_sections(_section=section[n-1], **section_numbers)
+                else:  # We're done.
+                    yield from (section[n-1] for n in numbers)
         else:
             # Section not specified but we're not done; descend into every child.
-            yield from (self.all_sections(_section=child) for child in section.children)
+            for child in section.children:
+                yield from self.all_sections(_section=child, **section_numbers)
 
     def find_first_not_run(self, at_level, by_started=True):
         """Find the first section that has not been run.
