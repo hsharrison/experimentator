@@ -399,7 +399,7 @@ class Experiment():
                 for i, next_section in enumerate(section.children):
                     if i:  # don't run inter on first section of level
                         self.inter_callbacks[section.level](self.session_data, self.persistent_data, **section.context)
-                    self.run_section(next_section)
+                    self.run_section(next_section, demo=demo)
 
                 self.end_callbacks[section.level](self.session_data, self.persistent_data, **section.context)
 
