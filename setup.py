@@ -2,6 +2,8 @@ from setuptools import setup
 from setuptools.command.test import test
 from distutils.version import StrictVersion
 import sys
+import os.path
+import shutil
 
 try:
     import numpy
@@ -15,11 +17,17 @@ try:
 except ImportError:
     raise ImportError("experimentator requires pandas, try 'pip install pandas'")
 
+#  Read version number.
 with open('experimentator/__version__.py') as f:
     exec(f.read())
 
+# Read README
 with open('README.rst') as f:
     readme = f.read()
+
+# Delete dist folder (necessary due to setuptools bug).
+if os.path.exists('dist'):
+    shutil.rmtree('dist')
 
 
 class PyTest(test):
