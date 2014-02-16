@@ -38,7 +38,7 @@ def load_experiment(experiment_file):
         return pickle.load(f)
 
 
-def run_experiment_section(experiment, demo=False, section=None, **section_numbers):
+def run_experiment_section(experiment, demo=False, parent_callbacks=True, section=None, **section_numbers):
     """Run an experiment section.
 
     Runs an experiment instance from a file or an `Experiment` instance, and saves it. If a `QuitSession` exception is
@@ -50,6 +50,8 @@ def run_experiment_section(experiment, demo=False, section=None, **section_numbe
         File location where an `Experiment` instance is pickled, or an Experiment instance.
     demo : bool, optional
         If True, data will not be saved and sections will not be marked as run.
+    parent_callbacks : bool, optional
+            If True (the default), all parent callbacks will be called.
     section : ExperimentSection, optional
         The section of the experiment to run. Alternatively, the section can be specified in the keyword arguments.
     **section_numbers
@@ -68,7 +70,7 @@ def run_experiment_section(experiment, demo=False, section=None, **section_numbe
         section = exp.section(**section_numbers)
 
     try:
-        exp.run_section(section, demo=demo)
+        exp.run_section(section, demo=demo, parent_callbacks=parent_callbacks)
     except QuitSession as e:
         logger.warning('Quit event detected: {}.'.format(str(e)))
         # Backup experiment file.
