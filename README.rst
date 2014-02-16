@@ -29,7 +29,7 @@ An example
 
 To demonstrate, let's build a 2x3 factorial within-subjects experiment:
 
-.. code-block:::: python
+.. code-block:: python
 
     from experimentator.api import within_subjects_experiment
     from experimentator.order import Shuffle
