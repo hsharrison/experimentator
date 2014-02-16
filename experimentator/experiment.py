@@ -374,7 +374,7 @@ class Experiment():
             logger.warning('Could not find a {} not run.'.format(at_level))
             return None
 
-    def run_section(self, section, demo=False, parent_callbacks=True):
+    def run_section(self, section, demo=False, parent_callbacks=True, from_section=1):
         """Run a section.
 
         Runs a section by descending the hierarchy and running each child section. Also calls the start, end, and inter
@@ -388,9 +388,24 @@ class Experiment():
             Data will only be saved if `demo` is False (the default).
         parent_callbacks : bool, optional
             If True (the default), all parent callbacks will be called.
+        from_section : int or list of int, optional
+            Which section to start running from. This makes it possible to resume a session. If a list is passed, it
+            specifies where to start running on multiple levels. For example:
+
+            >>> exp.run_section(exp.section(participant=1, session=2), from_section=[2, 5])
+
+            Assuming the hierarchy is ``('participant', 'session', 'block', 'trial')``, this would run the first
+            participant's second session, starting from the fifth trial of the second block.
 
         """
         logger.debug('Running {} with context {}.'.format(section.level, section.context))
+
+        if isinstance(from_section, int):
+            from_section = [from_section]
+        if len(from_section) > 1:
+            next_from_section = from_section[1:]
+        else:
+            next_from_section = [1]
 
         # Handle parent callbacks.
         with ExitStack() as stack:
@@ -424,8 +439,9 @@ class Experiment():
                         section.add_data(**results)
 
                 else:  # Not bottom level.
-                    for next_section in section:
-                        self.run_section(next_section, demo=demo, parent_callbacks=False)
+                    for next_section in section[from_section[0]-1:]:
+                        self.run_section(
+                            next_section, demo=demo, parent_callbacks=False, from_section=next_from_section)
 
             if not demo:
                 section.has_finished = True

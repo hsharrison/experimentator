@@ -103,3 +103,15 @@ def test_find_first_not_run():
     exp.run_section(exp.base_section[0])
     assert exp.find_first_not_run('participant') is exp.base_section[1]
     assert exp.find_first_not_run('trial') is exp.base_section[1][0]
+
+
+def test_resume():
+    exp = make_blocked_exp()
+    exp.run_section(exp.section(participant=1), from_section=[2, 4])
+    assert not exp.section(participant=1, block=1).has_started and not exp.section(participant=1, block=1).has_finished
+    assert not any(exp.section(participant=1, block=2, trial=n).has_started or
+                   exp.section(participant=1, block=2, trial=n).has_finished for n in range(1, 4))
+    assert all(exp.section(participant=1, block=2, trial=n).has_started and
+               exp.section(participant=1, block=2, trial=n).has_finished for n in range(4, 9))
+    assert exp.section(participant=1, block=3).has_started and exp.section(participant=1, block=3).has_finished
+    assert not exp.section(particiapnt=2).has_started
