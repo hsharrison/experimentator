@@ -10,7 +10,7 @@ import logging
 import pickle
 import functools
 from importlib import import_module
-from contextlib import contextmanager
+from contextlib import contextmanager, ExitStack
 from datetime import datetime
 from collections import ChainMap
 
@@ -387,25 +387,46 @@ class Experiment():
         """
         logger.debug('Running {} with context {}.'.format(section.level, section.context))
 
-        with self._enter_section(section.level, self.session_data, self.persistent_data, **section.context) as \
-                self.session_data['as'][section.level]:
+        # Handle parent callbacks.
+        with ExitStack() as stack:
+            if parent_callbacks and not section.level == 'base':
+                parent_section_numbers = {}
+                logger.debug('Entering all parent levels...')
+                for level in self.levels:
+                    if level == section.level:
+                        break
 
-            if not demo:
-                section.has_started = True
+                    # Find parent section (so we know what context to use).
+                    parent_section_numbers.update({level: section.context[level]})
+                    parent_section = self.section(**parent_section_numbers)
+                    logger.debug('Entering {} with context {}...'.format(level, parent_section.context))
+                    # Enter the parent's context.
+                    stack.enter_context(self._enter_level(
+                        level, self.session_data, self.persistent_data, _call_inter=False, **parent_section.context))
 
-            if section.is_bottom_level:
-                results = self.run_callback(self.session_data, self.persistent_data, **section.context)
-                logger.debug('Results: {}.'.format(results))
+            # Back to the regular behavior.
+            with self._enter_level(section.level, self.session_data, self.persistent_data, **section.context) as \
+                    self.session_data['as'][section.level]:
 
                 if not demo:
-                    section.add_data(**results)
+                    section.has_started = True
 
-            else:  # Not bottom level.
-                for next_section in section:
-                    self.run_section(next_section, demo=demo, parent_callbacks=False)
+                if section.is_bottom_level:
+                    results = self.run_callback(self.session_data, self.persistent_data, **section.context)
+                    logger.debug('Results: {}.'.format(results))
 
-        if not demo:
-            section.has_finished = True
+                    if not demo:
+                        section.add_data(**results)
+
+                else:  # Not bottom level.
+                    for next_section in section:
+                        self.run_section(next_section, demo=demo, parent_callbacks=False)
+
+            if not demo:
+                section.has_finished = True
+
+            if parent_callbacks:
+                logger.debug('Exiting all parent levels...')
 
     def set_context_manager(self, level, func, *args, **kwargs):
         """Set a context manager to run at a certain level.
@@ -593,8 +614,8 @@ class Experiment():
         self.__dict__.update(state)
 
     @contextmanager
-    def _enter_section(self, level, *args, **kwargs):
-        if not level == 'base' and kwargs.get(level) > 1:
+    def _enter_level(self, level, *args, _call_inter=True, **kwargs):
+        if _call_inter and not level == 'base' and kwargs.get(level) > 1:
             self.inter_callbacks[level](*args, **kwargs)
 
         self.start_callbacks[level](*args, **kwargs)
