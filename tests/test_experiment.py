@@ -26,7 +26,7 @@ def make_blocked_exp():
 
 def test_construction():
     exp = make_simple_exp()
-    assert exp.tree.levels_and_designs[0][0] == exp.base_section.level == 'base'
+    assert exp.tree.levels_and_designs[0][0] == exp.base_section.level == '_base'
     assert exp.levels == type(exp.levels)([exp.base_section[0].level, exp.base_section[0][0].level]) \
         == type(exp.levels)(['participant', 'trial'])
 

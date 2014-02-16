@@ -205,7 +205,7 @@ class DesignTree():
         self.levels_and_designs = levels_and_designs
 
     def __repr__(self):
-        if self.levels_and_designs[0][0] == 'base':
+        if self.levels_and_designs[0][0] == '_base':
             levels_and_designs = self.levels_and_designs[1:]
         else:
             levels_and_designs = self.levels_and_designs
@@ -227,7 +227,7 @@ class DesignTree():
     def add_base_level(self):
         """Add base level to tree.
 
-        Adds a section to the top of the tree called ``'base'``. This makes the `DesignTree` suitable for constructing
+        Adds a section to the top of the tree called ``'_base'``. This makes the `DesignTree` suitable for constructing
         an `Experiment`.
 
         Note
@@ -236,6 +236,6 @@ class DesignTree():
         existing `Experiment`, so there are no real reasons to call this in client code.
 
         """
-        levels_and_designs = [('base', Design())]
+        levels_and_designs = [('_base', Design())]
         levels_and_designs.extend(self.levels_and_designs)
         self.levels_and_designs = levels_and_designs

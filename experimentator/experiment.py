@@ -156,13 +156,13 @@ class Experiment():
 
         self.run_callback = _dummy_callback
         callbacks = {level: _dummy_callback for level in self.levels}
-        callbacks.update({'base': _dummy_callback})
+        callbacks.update({'_base': _dummy_callback})
         self.start_callbacks = callbacks.copy()
         self.inter_callbacks = callbacks.copy()
         self.end_callbacks = callbacks.copy()
 
         args = {level: (None, None) for level in self.levels}
-        args.update({'base': (None, None)})
+        args.update({'_base': (None, None)})
         self._run_callback_args = (None, None)
         self._start_callback_args = args.copy()
         self._inter_callback_args = args.copy()
@@ -171,7 +171,7 @@ class Experiment():
         self.session_data = {'as': {}}
         self.persistent_data = {}
         self.context_managers = {level: _dummy_context for level in self.levels}
-        self.context_managers.update({'base': _dummy_context})
+        self.context_managers.update({'_base': _dummy_context})
         self._context_manager_args = args.copy()
 
         self.original_module = sys.argv[0][:-3]
@@ -392,7 +392,7 @@ class Experiment():
 
         # Handle parent callbacks.
         with ExitStack() as stack:
-            if parent_callbacks and not section.level == 'base':
+            if parent_callbacks and not section.level == '_base':
                 parent_section_numbers = {}
                 logger.debug('Entering all parent levels...')
                 for level in self.levels:
@@ -618,7 +618,7 @@ class Experiment():
 
     @contextmanager
     def _enter_level(self, level, *args, _call_inter=True, **kwargs):
-        if _call_inter and not level == 'base' and kwargs.get(level) > 1:
+        if _call_inter and not level == '_base' and kwargs.get(level) > 1:
             self.inter_callbacks[level](*args, **kwargs)
 
         self.start_callbacks[level](*args, **kwargs)
