@@ -5,6 +5,7 @@ Contains the `ExperimentSection` class, which is imported in `__init__.py`.
 """
 import logging
 import collections
+import itertools
 
 logger = logging.getLogger(__name__)
 
@@ -194,4 +195,7 @@ class ExperimentSection():
         return len(self.children)
 
     def __getitem__(self, item):
-        return self.children[item]
+        if isinstance(item, slice):
+            return list(itertools.islice(self.children, *item.indices(len(self))))
+        else:
+            return self.children[item]
