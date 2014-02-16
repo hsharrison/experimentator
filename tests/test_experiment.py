@@ -1,6 +1,8 @@
 """Tests for Experiment object.
 
 """
+import pytest
+
 from experimentator.api import within_subjects_experiment, blocked_experiment
 from experimentator.order import Shuffle, CompleteCounterbalance
 
@@ -99,6 +101,13 @@ def test_find_section():
         assert section.context['trial'] in (4, 8)
 
 
+def test_find_parents():
+    exp = make_blocked_exp()
+    assert list(exp.parents(exp.section(participant=1))) == []
+    assert list(exp.parents(exp.section(participant=1, block=2))) == [exp.base_section[0]]
+    assert list(exp.parents(exp.section(participant=1, block=2, trial=3))) == [exp.base_section[0], exp.base_section[0][1]]
+
+
 def test_find_first_not_run():
     exp = make_simple_exp()
     exp.run_section(exp.base_section[0])
@@ -109,7 +118,7 @@ def test_find_first_not_run():
     assert exp.find_first_not_run('trial', starting_at=exp.section(participant=3)) is exp.base_section[2][0]
 
 
-def test_resume():
+def test_run_from():
     exp = make_blocked_exp()
     exp.run_section(exp.section(participant=1), from_section=[2, 4])
     assert not exp.section(participant=1, block=1).has_started and not exp.section(participant=1, block=1).has_finished
@@ -119,3 +128,36 @@ def test_resume():
                exp.section(participant=1, block=2, trial=n).has_finished for n in range(4, 9))
     assert exp.section(participant=1, block=3).has_started and exp.section(participant=1, block=3).has_finished
     assert not exp.section(particiapnt=2).has_started
+
+
+def test_resume():
+    exp = make_blocked_exp()
+    exp.run_section(exp.section(participant=1, block=1))
+    print(exp.section(participant=1).has_started, exp.section(participant=1).has_finished)
+    assert exp.section(participant=1).has_started and not exp.section(participant=1).has_finished
+    assert exp.section(participant=1, block=1).has_started and exp.section(participant=1, block=1).has_finished
+    assert not exp.section(participant=1, block=2).has_started and not exp.section(participant=1, block=2).has_finished
+    assert exp.find_first_not_run('participant') is exp.section(participant=2)
+    assert exp.find_first_not_run('participant', by_started=False) is exp.section(participant=1)
+
+    with pytest.raises(ValueError):
+        exp.resume_section(exp.section(participant=1, block=2, trial=1))
+    with pytest.raises(ValueError):
+        exp.resume_section(exp.section(participant=1, block=1))
+    with pytest.raises(ValueError):
+        exp.resume_section(exp.section(participant=1, block=2))
+
+    exp.resume_section(exp.section(participant=1))
+    assert exp.section(participant=1).has_finished
+    assert exp.find_first_not_run('participant') is exp.section(participant=2)
+    assert exp.find_first_not_run('participant', by_started=False) is exp.section(participant=2)
+
+
+def test_finished_section_detection():
+    exp = make_blocked_exp()
+    exp.run_section(exp.section(participant=1, block=1))
+    assert exp.section(participant=1).has_started
+    exp.run_section(exp.section(participant=1, block=2))
+    assert not exp.section(participant=1).has_finished
+    exp.run_section(exp.section(participant=1, block=3))
+    assert exp.section(participant=1).has_finished

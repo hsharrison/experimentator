@@ -386,7 +386,7 @@ class Experiment():
 
         return node
 
-    def run_section(self, section, demo=False, parent_callbacks=True, from_section=1):
+    def run_section(self, section, demo=False, parent_callbacks=True, from_section=None):
         """Run a section.
 
         Runs a section by descending the hierarchy and running each child section. Also calls the start, end, and inter
@@ -414,27 +414,23 @@ class Experiment():
 
         if isinstance(from_section, int):
             from_section = [from_section]
+        if from_section is None:
+            from_section = [1]
         if len(from_section) > 1:
             next_from_section = from_section[1:]
         else:
             next_from_section = [1]
 
-        # Handle parent callbacks.
+        # Handle parent callbacks and set parent has_started to True.
         with ExitStack() as stack:
-            if parent_callbacks and not section.level == '_base':
-                parent_section_numbers = {}
+            if parent_callbacks:
                 logger.debug('Entering all parent levels...')
-                for level in self.levels:
-                    if level == section.level:
-                        break
-
-                    # Find parent section (so we know what context to use).
-                    parent_section_numbers.update({level: section.context[level]})
-                    parent_section = self.section(**parent_section_numbers)
-                    logger.debug('Entering {} with context {}...'.format(level, parent_section.context))
-                    # Enter the parent's context.
+            for parent in self.parents(section):
+                parent.has_started = True
+                if parent_callbacks:
+                    logger.debug('Entering {} with context {}...'.format(parent.level, parent.context))
                     stack.enter_context(self._enter_level(
-                        level, self.session_data, self.persistent_data, _call_inter=False, **parent_section.context))
+                        parent.level, self.session_data, self.persistent_data, _call_inter=False, **parent.context))
 
             # Back to the regular behavior.
             with self._enter_level(section.level, self.session_data, self.persistent_data, **section.context) as \
@@ -460,6 +456,66 @@ class Experiment():
 
             if parent_callbacks:
                 logger.debug('Exiting all parent levels...')
+
+        # Finished parents detection.
+        if not section.level == '_base':
+            for parent in reversed(list(self.parents(section))):
+                if all(child.has_finished for child in parent):
+                    parent.has_finished = True
+
+    def resume_section(self, section, **kwargs):
+        """Resume a section.
+
+        Reruns a section that has been started but not finished, starting where running left off.
+
+        Arguments
+        ---------
+        section : ExperimentSection
+            The section to resume.
+        **kwargs
+            Arbitrary keyword arguments to pass to `Experiment.run_section`. See its docstring for details.
+
+        """
+        if section.is_bottom_level:
+            raise ValueError('Cannot resume a section at the lowest level')
+        if not section.has_started:
+            raise ValueError('Cannot resume a section that has not started')
+        if section.has_finished:
+            raise ValueError('Cannot resume a section that has finished')
+
+        levels, _ = zip(*section.tree)
+
+        start_at_numbers = []
+        start_at_section = section
+        for level in levels[1:]:
+            start_at_section = self.find_first_not_run(level, starting_at=start_at_section)
+            start_at_numbers.append(start_at_section.context[level])
+
+        self.run_section(section, from_section=start_at_numbers, **kwargs)
+
+    def parents(self, section):
+        """Find parents.
+
+        Returns a list of all parents of a section, in top-to-bottom order.
+
+        Arguments
+        ---------
+        section : ExperimentSection
+            The section to find the parents of.
+
+        Yields
+        -------
+        ExperimentSection
+            Sections, one per level, each a parent of the next, and the last a parent of `section`.
+
+        """
+        parent_section_numbers = {}
+        for level in self.levels:
+            if level == section.level or section.level == '_base':
+                break
+
+            parent_section_numbers.update({level: section.context[level]})
+            yield self.section(**parent_section_numbers)
 
     def set_context_manager(self, level, func, *args, **kwargs):
         """Set a context manager to run at a certain level.
