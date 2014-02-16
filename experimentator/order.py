@@ -164,7 +164,7 @@ class Shuffle(Ordering):
 class NonAtomicOrdering(Ordering):
     """Non-atomic ordering.
 
-    This is a base class fro non-atomic orderings, and should not be directly instantiated. Non-atomic orderings work
+    This is a base class for non-atomic orderings, and should not be directly instantiated. Non-atomic orderings work
     by creating a new independent variable one level up. The IV name will start with an underscore, a convention to
     avoid name clashes with other IVs.
 
