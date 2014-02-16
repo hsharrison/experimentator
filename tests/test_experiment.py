@@ -132,13 +132,14 @@ def test_run_from():
 
 def test_resume():
     exp = make_blocked_exp()
+    assert exp.find_first_partially_run('participant') is None
     exp.run_section(exp.section(participant=1, block=1))
-    print(exp.section(participant=1).has_started, exp.section(participant=1).has_finished)
     assert exp.section(participant=1).has_started and not exp.section(participant=1).has_finished
     assert exp.section(participant=1, block=1).has_started and exp.section(participant=1, block=1).has_finished
     assert not exp.section(participant=1, block=2).has_started and not exp.section(participant=1, block=2).has_finished
     assert exp.find_first_not_run('participant') is exp.section(participant=2)
     assert exp.find_first_not_run('participant', by_started=False) is exp.section(participant=1)
+    assert exp.find_first_partially_run('participant') is exp.base_section[0]
 
     with pytest.raises(ValueError):
         exp.resume_section(exp.section(participant=1, block=2, trial=1))

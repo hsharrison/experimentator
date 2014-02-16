@@ -344,8 +344,7 @@ class Experiment():
     def find_first_not_run(self, at_level, by_started=True, starting_at=None):
         """Find the first section that has not been run.
 
-        Searches the experimental hierarchy, returning the first `ExperimentSection` at a given level that has not been
-        run.
+        Searches the experimental hierarchy, returning the first `ExperimentSection` at `level` that has not been run.
 
         Arguments
         ---------
@@ -367,21 +366,52 @@ class Experiment():
             The first `ExperimentSection` satisfying the specified criteria.
 
         """
-        attribute = 'has_started' if by_started else 'has_finished'
+        if by_started:
+            key = lambda x: not x.has_started
+            descriptor = 'not started'
+        else:
+            key = lambda x: not x.has_finished
+            descriptor = 'not finished'
+
+        return self._find_top_down(at_level, key, starting_at=starting_at, descriptor=descriptor)
+
+    def find_first_partially_run(self, at_level, starting_at=None):
+        """Find the first section that has been partially run.
+
+        Searches the experimental hierarchy, returning the first `ExperimentSection` at `level` that has been started
+        but not finished.
+
+        Arguments
+        ---------
+        at_level : str
+            Which level to search.
+        starting_at : ExperimentSection, optional
+            Starts the search at the given `ExperimentSection`. Allows for finding the first partially-run section of a
+            particular part of the experiment.
+
+        Returns
+        -------
+        ExperimentSection
+            The first `ExperimentSection` satisfying the specified criteria.
+
+        """
+        return self._find_top_down(at_level, lambda x: x.has_started and not x.has_finished,
+                                   starting_at=starting_at, descriptor='partially run')
+
+    def _find_top_down(self, at_level, key, starting_at=None, descriptor=''):
         node = starting_at or self.base_section
         while not node.level == at_level:
             level = node.tree[1][0]
             logger.debug('Checking all {}s...'.format(level))
             next_node = None
             for child in node:
-                if not getattr(child, attribute):
+                if key(child):
                     next_node = child
                     break
 
             if not next_node:
-                logger.warning('Could not find a {} not run.'.format(level))
+                logger.warning('Count not find a {} {}'.format(level, descriptor))
                 return
-
             node = next_node
 
         return node
