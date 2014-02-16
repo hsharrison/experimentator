@@ -38,7 +38,8 @@ def load_experiment(experiment_file):
         return pickle.load(f)
 
 
-def run_experiment_section(experiment, demo=False, parent_callbacks=True, section=None, **section_numbers):
+def run_experiment_section(experiment, demo=False, parent_callbacks=True, section=None, from_section=1,
+                           **section_numbers):
     """Run an experiment section.
 
     Runs an experiment instance from a file or an `Experiment` instance, and saves it. If a `QuitSession` exception is
@@ -54,6 +55,14 @@ def run_experiment_section(experiment, demo=False, parent_callbacks=True, sectio
             If True (the default), all parent callbacks will be called.
     section : ExperimentSection, optional
         The section of the experiment to run. Alternatively, the section can be specified in the keyword arguments.
+    from_section : int or list of int, optional
+            Which section to start running from. This makes it possible to resume a session. If a list is passed, it
+            specifies where to start running on multiple levels. For example:
+
+            >>> run_experiment_section(exp, participant=1, session=2, from_section=[3, 5])
+
+            Assuming the hierarchy is ``('participant', 'session', 'block', 'trial')``, this would run the first
+            participant's second session, starting from the fifth trial of the third block.
     **section_numbers
         Keyword arguments describing how to descend the experiment hierarchy to find a section to be run. For example,
         `run_experiment_section(..., participant=3, session=1)` to run the third participant's first session (section
@@ -392,10 +401,10 @@ class Experiment():
             Which section to start running from. This makes it possible to resume a session. If a list is passed, it
             specifies where to start running on multiple levels. For example:
 
-            >>> exp.run_section(exp.section(participant=1, session=2), from_section=[2, 5])
+            >>> exp.run_section(exp.section(participant=1, session=2), from_section=[3, 5])
 
             Assuming the hierarchy is ``('participant', 'session', 'block', 'trial')``, this would run the first
-            participant's second session, starting from the fifth trial of the second block.
+            participant's second session, starting from the fifth trial of the third block.
 
         """
         logger.debug('Running {} with context {}.'.format(section.level, section.context))
