@@ -38,8 +38,8 @@ def load_experiment(experiment_file):
         return pickle.load(f)
 
 
-def run_experiment_section(experiment, demo=False, parent_callbacks=True, section=None, from_section=1,
-                           **section_numbers):
+def run_experiment_section(experiment, demo=False, resume=False, parent_callbacks=True,
+                           section_obj=None, from_section=1, **section_numbers):
     """Run an experiment section.
 
     Runs an experiment instance from a file or an `Experiment` instance, and saves it. If a `QuitSession` exception is
@@ -51,9 +51,11 @@ def run_experiment_section(experiment, demo=False, parent_callbacks=True, sectio
         File location where an `Experiment` instance is pickled, or an Experiment instance.
     demo : bool, optional
         If True, data will not be saved and sections will not be marked as run.
+    resume: bool, optional
+        If True, the specified section will be resumed (as opposed to starting at the beginning).
     parent_callbacks : bool, optional
             If True (the default), all parent callbacks will be called.
-    section : ExperimentSection, optional
+    section_obj : ExperimentSection, optional
         The section of the experiment to run. Alternatively, the section can be specified in the keyword arguments.
     from_section : int or list of int, optional
             Which section to start running from. This makes it possible to resume a session. If a list is passed, it
@@ -75,11 +77,14 @@ def run_experiment_section(experiment, demo=False, parent_callbacks=True, sectio
         exp = load_experiment(experiment)
         exp.experiment_file = experiment
 
-    if not section:
-        section = exp.section(**section_numbers)
+    if not section_obj:
+        section_obj = exp.section(**section_numbers)
 
     try:
-        exp.run_section(section, demo=demo, parent_callbacks=parent_callbacks)
+        if resume:
+            exp.resume_section(section_obj, demo=demo, parent_callbacks=parent_callbacks)
+        else:
+            exp.run_section(section_obj, demo=demo, parent_callbacks=parent_callbacks, from_section=from_section)
     except QuitSession as e:
         logger.warning('Quit event detected: {}.'.format(str(e)))
         # Backup experiment file.
