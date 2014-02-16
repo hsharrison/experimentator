@@ -176,6 +176,9 @@ class Experiment():
 
         self.original_module = sys.argv[0][:-3]
 
+    def __repr__(self):
+        return 'Experiment({}, experiment_file={})'.format(self.tree.__repr__(), self.experiment_file)
+
     @property
     def data(self):
         """Data.

@@ -38,6 +38,9 @@ class Ordering():
         self.number = number
         self.all_conditions = []
 
+    def __repr__(self):
+        return '{}(number={})'.format(self.__class__.__name__, self.number)
+
     def first_pass(self, conditions):
         """First pass of order.
 
@@ -128,6 +131,9 @@ class Shuffle(Ordering):
     def __init__(self, number=1, avoid_repeats=False):
         super().__init__(number=number)
         self.avoid_repeats = avoid_repeats
+
+    def __repr__(self):
+        return '{}(number={}, avoid_repeats={})'.format(self.__class__.__name__, self.number, self.avoid_repeats)
 
     def get_order(self, **context):
         """Order the conditions.
@@ -292,6 +298,9 @@ class Sorted(NonAtomicOrdering):
         super().__init__(number=number)
         self.order = order
 
+    def __repr__(self):
+        return '{}(number={}, order={})'.format(self.__class__.__name__, self.number, self.order)
+
     def first_pass(self, conditions):
         """First pass of order.
 
@@ -397,6 +406,10 @@ class LatinSquare(NonAtomicOrdering):
         super().__init__(number=number)
         self.balanced = balanced
         self.uniform = uniform
+
+    def __repr__(self):
+        return '{}(number={}, balanced={}, uniform={})'.format(
+            self.__class__.__name__, self.number, self.balanced, self.uniform)
 
     def first_pass(self, conditions):
         """First pass of order.

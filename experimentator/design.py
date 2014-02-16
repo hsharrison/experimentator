@@ -64,6 +64,10 @@ class Design():
         if self.design_matrix is None and any(iv_values is None for iv_values in self.iv_values):
             raise TypeError('Must specify a design matrix if using continuous IVs (values=None)')
 
+    def __repr__(self):
+        return 'Design(ivs={}, design_matrix={}, ordering={}, **{})'.format(
+            list(zip(self.iv_names, self.iv_values)), self.design_matrix, self.ordering, self.extra_context)
+
     def get_order(self, **context):
         order = self.ordering.get_order(**context)
         for condition in order:
@@ -199,6 +203,13 @@ class DesignTree():
             design.first_pass()
 
         self.levels_and_designs = levels_and_designs
+
+    def __repr__(self):
+        if self.levels_and_designs[0][0] == 'base':
+            levels_and_designs = self.levels_and_designs[1:]
+        else:
+            levels_and_designs = self.levels_and_designs
+        return 'DesignTree({})'.format(levels_and_designs)
 
     def __next__(self):
         if len(self.levels_and_designs) == 1:
