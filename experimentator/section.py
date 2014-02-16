@@ -199,3 +199,6 @@ class ExperimentSection():
             return list(itertools.islice(self.children, *item.indices(len(self))))
         else:
             return self.children[item]
+
+    def __bool__(self):
+        return True
