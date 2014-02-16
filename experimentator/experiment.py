@@ -273,7 +273,7 @@ class Experiment():
                 logger.debug('Found specified {}.'.format(level))
                 node = node.children[section_numbers[level]-1]
             else:
-                logger.info('No {} specified, returning previous level.'.format(level))
+                logger.info('No {} specified, returning to previous level.'.format(level))
                 break
 
         return node
@@ -341,7 +341,7 @@ class Experiment():
             for child in section.children:
                 yield from self.all_sections(_section=child, **section_numbers)
 
-    def find_first_not_run(self, at_level, by_started=True):
+    def find_first_not_run(self, at_level, by_started=True, starting_at=None):
         """Find the first section that has not been run.
 
         Searches the experimental hierarchy, returning the first `ExperimentSection` at a given level that has not been
@@ -354,6 +354,12 @@ class Experiment():
         by_started : bool, optional
             If true (default), finds the first section that has not been started. Otherwise, finds the first section
             that has not finished.
+        starting_at : ExperimentSection, optional
+            Starts the search at the given `ExperimentSection`. Allows for finding the first section not run of a
+            particular part of the experiment. For example, the first block not run of the second participant could be
+            found by:
+
+            >>> exp.find_first_not_run('block', starting_at=exp.section(participant=2))
 
         Returns
         -------
@@ -362,26 +368,23 @@ class Experiment():
 
         """
         attribute = 'has_started' if by_started else 'has_finished'
-        node = self.base_section
-        section = {}
-        for level in self.levels:
+        node = starting_at or self.base_section
+        while not node.level == at_level:
+            level = node.tree[1][0]
             logger.debug('Checking all {}s...'.format(level))
-            found = False
-            for i, child in enumerate(node.children):
+            next_node = None
+            for child in node:
                 if not getattr(child, attribute):
-                    node = child
-                    section[level] = i+1
-                    found = True
+                    next_node = child
                     break
 
-            if level == at_level:
-                break
+            if not next_node:
+                logger.warning('Could not find a {} not run.'.format(level))
+                return
 
-        if found:
-            return self.section(**section)
-        else:
-            logger.warning('Could not find a {} not run.'.format(at_level))
-            return None
+            node = next_node
+
+        return node
 
     def run_section(self, section, demo=False, parent_callbacks=True, from_section=1):
         """Run a section.

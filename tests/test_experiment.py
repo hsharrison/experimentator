@@ -71,6 +71,7 @@ def test_data_after_running():
     exp.run_section(exp.base_section)
     for row in exp.data.iterrows():
         yield check_trial, row
+    assert exp.find_first_not_run('trial') is None
 
 
 def test_find_section():
@@ -103,6 +104,9 @@ def test_find_first_not_run():
     exp.run_section(exp.base_section[0])
     assert exp.find_first_not_run('participant') is exp.base_section[1]
     assert exp.find_first_not_run('trial') is exp.base_section[1][0]
+    assert exp.find_first_not_run('trial', starting_at=exp.section(participant=1)) is None
+    assert exp.find_first_not_run('trial', starting_at=exp.section(participant=2)) is exp.base_section[1][0]
+    assert exp.find_first_not_run('trial', starting_at=exp.section(participant=3)) is exp.base_section[2][0]
 
 
 def test_resume():
