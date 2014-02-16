@@ -369,7 +369,7 @@ class Experiment():
             logger.warning('Could not find a {} not run.'.format(at_level))
             return None
 
-    def run_section(self, section, demo=False):
+    def run_section(self, section, demo=False, parent_callbacks=True):
         """Run a section.
 
         Runs a section by descending the hierarchy and running each child section. Also calls the start, end, and inter
@@ -381,35 +381,28 @@ class Experiment():
             The `ExperimentSection` instance to be run.
         demo : bool, optional
             Data will only be saved if `demo` is False (the default).
+        parent_callbacks : bool, optional
+            If True (the default), all parent callbacks will be called.
 
         """
         logger.debug('Running {} with context {}.'.format(section.level, section.context))
 
-        # Enter context.
-        with self.context_managers[section.level]() as self.session_data['as'][section.level]:
+        with self._enter_section(section.level, self.session_data, self.persistent_data, **section.context) as \
+                self.session_data['as'][section.level]:
 
             if not demo:
                 section.has_started = True
 
             if section.is_bottom_level:
-                # Run a trial (or whatever the lowest level is.
                 results = self.run_callback(self.session_data, self.persistent_data, **section.context)
                 logger.debug('Results: {}.'.format(results))
 
                 if not demo:
-                    # Save the data
                     section.add_data(**results)
-                    logger.debug('New context: {}.'.format(section.context))
 
-            else:
-                self.start_callbacks[section.level](self.session_data, self.persistent_data, **section.context)
-
-                for i, next_section in enumerate(section.children):
-                    if i:  # don't run inter on first section of level
-                        self.inter_callbacks[section.level](self.session_data, self.persistent_data, **section.context)
-                    self.run_section(next_section, demo=demo)
-
-                self.end_callbacks[section.level](self.session_data, self.persistent_data, **section.context)
+            else:  # Not bottom level.
+                for next_section in section:
+                    self.run_section(next_section, demo=demo, parent_callbacks=False)
 
         if not demo:
             section.has_finished = True
@@ -599,9 +592,21 @@ class Experiment():
                                                                *args[0], **args[1])
         self.__dict__.update(state)
 
+    @contextmanager
+    def _enter_section(self, level, *args, **kwargs):
+        if not level == 'base' and kwargs.get(level) > 1:
+            self.inter_callbacks[level](*args, **kwargs)
+
+        self.start_callbacks[level](*args, **kwargs)
+
+        with self.context_managers[level](*args, **kwargs) as context_manager_output:
+            yield context_manager_output
+
+        self.end_callbacks[level](*args, **kwargs)
+
 
 @contextmanager
-def _dummy_context():
+def _dummy_context(*args, **kwargs):
     yield
 
 
