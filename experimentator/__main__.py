@@ -31,16 +31,15 @@ Commands:
                                            results in multi-element data structures (e.g., timeseries, dicts).
 
 """
+import sys
+import logging
+from docopt import docopt
+
+from experimentator import __version__, load_experiment, run_experiment_section, export_experiment_data
 
 
-def main():
-    import logging
-    import sys
-    from docopt import docopt
-
-    from experimentator import load_experiment, run_experiment_section, export_experiment_data, __version__
-
-    options = docopt(__doc__, version=__version__)
+def main(*args):
+    options = docopt(__doc__, argv=args, version=__version__)
 
     if options['--debug']:
         logging.basicConfig(level=logging.DEBUG)
@@ -70,4 +69,4 @@ def main():
     sys.exit(0)
 
 if __name__ == '__main__':
-    main()
+    main(*sys.argv)
