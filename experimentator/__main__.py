@@ -1,7 +1,9 @@
-"""Usage:
+"""experimentator
+
+Usage:
   exp run [options] <exp-file> (--next <level>  [--not-finished] | (<level> <n>)...)
   exp resume [options] <exp-file> <level> [<n> (<level> <n>)...]
-  exp  export [--debug] <exp-file> <data-file>
+  exp  export <exp-file> <data-file>
   exp -h | --help
   exp --version
 
@@ -10,7 +12,7 @@ Options:
   --demo             Don't save data.
   --debug            Set logging level to DEBUG.
   --skip-parents     Don't call start and end callbacks of parent levels.
-  -h, --help         Show this screen.
+  -h, --help         Show full help.
   --version          Print the installed version number of experimentator.
 
 Commands:
