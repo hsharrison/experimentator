@@ -162,3 +162,57 @@ def test_finished_section_detection():
     assert not exp.section(participant=1).has_finished
     exp.run_section(exp.section(participant=1, block=3))
     assert exp.section(participant=1).has_finished
+
+
+def start_callback(level, session_data, persistent_data, **kwargs):
+    if level + 's_started' in session_data:
+        session_data[level + 's_started'] += 1
+    else:
+        session_data[level + 's_started'] = 1
+
+    if persistent_data[level] in session_data:
+        session_data[persistent_data[level]].add(kwargs[level])
+    else:
+        session_data[persistent_data[level]] = {kwargs[level]}
+
+
+def end_callback(level, session_data, persistent_data, **kwargs):
+    if level + 's_ended' in session_data:
+        session_data[level + 's_ended'] += 1
+    else:
+        session_data[level + 's_ended'] = 1
+
+
+def inter_callback(level, session_data, persistent_data, **kwargs):
+    if level + 's_between' in session_data:
+        session_data[level + 's_between'] += 1
+    else:
+        session_data[level + 's_between'] = 1
+
+
+def test_callbacks_and_data():
+    exp = make_blocked_exp()
+    exp.set_start_callback('participant', start_callback, 'participant')
+    exp.set_start_callback('block', start_callback, 'block')
+    exp.set_end_callback('participant', end_callback, 'participant')
+    exp.set_end_callback('block', end_callback, 'block')
+    exp.set_inter_callback('participant', inter_callback, 'participant')
+    exp.set_inter_callback('block', inter_callback, 'block')
+    exp.set_inter_callback('trial', inter_callback, 'trial')
+
+    exp.persistent_data.update({level: level + 's_seen' for level in ('participant', 'block')})
+    exp.run_section(exp.base_section)
+
+    assert exp.session_data['blocks_between'] == 6 * 2 * (3-1)
+    assert exp.session_data['trials_between'] == 6 * 2 * 3 * (2*4 - 1)
+
+    assert exp.session_data['participants_seen'] == set(range(1, 6*2 + 1))
+    assert exp.session_data['blocks_seen'] == {1, 2, 3}
+
+    assert exp.session_data['blocks_started'] == \
+        exp.session_data['blocks_ended'] == \
+        6 * 2 * 3
+    assert exp.session_data['participants_started'] == \
+        exp.session_data['participants_ended'] == \
+        exp.session_data['participants_between'] + 1 == \
+        6 * 2
