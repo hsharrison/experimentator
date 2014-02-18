@@ -68,7 +68,6 @@ def main(*args):
     elif options['export']:
         export_experiment_data(options['<exp-file>'], options['<data-file>'])
 
-    sys.exit(0)
-
 if __name__ == '__main__':
     main(*sys.argv)
+    sys.exit(0)
