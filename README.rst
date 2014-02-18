@@ -72,7 +72,7 @@ Or, access the data in a Python session:
 
     data = load_experiment('distractor.dat').data
 
-In this example the data will have four columns: two index columns with labels ``'participant'`` and ``'trial'``, and two data columns with labels ``'reaction_time'`` and ``'correct'`` (the keys in the dictionary returned by ``present_stimulus_data``).
+In this example the data will have six columns: two index columns with labels ``'participant'`` and ``'trial'``, two columns from the IVs, with labels ``'congruent'`` and ``'display_time'``, and two data columns with labels ``'reaction_time'`` and ``'correct'`` (the keys in the dictionary returned by ``present_stimulus_data``).
 
 Installation
 ------------
