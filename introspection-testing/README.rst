@@ -1,1 +1,1 @@
-This directory contains some code snippets to test out various options for introspecting the location of functions.d
+This directory contains some code snippets to test out various options for introspecting the location of functions. This was necessary to figure out a good way to pickle callback functions, and I'm keeping it around for posterity.

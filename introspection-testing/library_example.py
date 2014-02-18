@@ -4,15 +4,12 @@ import inspect
 
 
 THINGS_TO_SHOW = [
-    'self.func.__name__',
-    '__name__',
-    'os.path.basename(__file__)',
-    'inspect.getsourcefile(self.func)',
-    'inspect.getfile(inspect.currentframe())',
-    'inspect.stack()[0][1]',
-    'inspect.stack()[1][1]',
-    'inspect.stack()[-1][1]',
-
+    'os.path.basename(__file__)[:-3]',
+    'os.path.basename(sys.argv[0])[:-3]',
+    'os.path.basename(inspect.getsourcefile(self.func))[:-3]',
+    'os.path.basename(inspect.stack()[1][1])[:-3]',
+    'os.path.basename(inspect.stack()[-1][1])[:-3]',
+    'self.func.__module__',
 ]
 
 
@@ -25,5 +22,5 @@ class Dummy():
         return func
 
     def show(self):
-        for thing in THINGS_TO_SHOW:
-            print('{}:\n{}\n'.format(thing, eval(thing)))
+        for i, thing in enumerate(THINGS_TO_SHOW):
+            print('{}. {}:\n\t{}\n'.format(i+1, thing, eval(thing)))

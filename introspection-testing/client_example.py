@@ -1,5 +1,7 @@
 from library_example import Dummy
 
+print('\nDESIRED OUTPUT: client_example\n')
+
 
 def f():
     pass
