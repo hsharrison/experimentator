@@ -1,0 +1,1 @@
+This directory contains some code snippets to test out various options for introspecting the location of functions.d
