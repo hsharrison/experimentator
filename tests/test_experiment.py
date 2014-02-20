@@ -3,8 +3,9 @@
 """
 import pytest
 
-from experimentator.api import within_subjects_experiment, blocked_experiment
+from experimentator.api import within_subjects_experiment, blocked_experiment, standard_experiment
 from experimentator.order import Shuffle, CompleteCounterbalance
+from experimentator import Design, DesignTree, Experiment
 
 
 def trial(*args, a, b, **kwargs):
@@ -26,6 +27,27 @@ def make_blocked_exp():
     return exp
 
 
+def make_standard_exp():
+    exp = standard_experiment(('participant', 'block', 'trial'),
+                              {'block': [('b', [0, 1, 2])],
+                               'trial': [('a', [False, True])]},
+                              ordering_by_level={'trial': Shuffle(4),
+                                                 'block': CompleteCounterbalance(),
+                                                 'participant': Shuffle(2)})
+    exp.set_run_callback(trial)
+    return exp
+
+
+def make_manual_exp():
+    tree = DesignTree([('participant', [Design(ordering=Shuffle(2))]),
+                       ('block', [Design(ivs={'b': [0, 1, 2]}, ordering=CompleteCounterbalance())]),
+                       ('trial', [Design({'a': [False, True]}, ordering=Shuffle(4))]),
+                       ])
+    exp = Experiment(tree)
+    exp.set_run_callback(trial)
+    return exp
+
+
 def test_construction():
     exp = make_simple_exp()
     assert exp.tree.levels_and_designs[0][0] == exp.base_section.level == '_base'
@@ -42,6 +64,20 @@ def test_data_before_running():
     assert sum(data['b']) == 2*10*4*1 + 2*10*4*2
 
     data = make_blocked_exp().data
+    assert data.shape == (2 * 3 * 4 * 6 * 2, 3)
+    assert set(data.columns.values) == {'a', 'b', CompleteCounterbalance.iv_name}
+    assert data.index.names == type(data.index.names)(['participant', 'block', 'trial'])
+    assert data['a'].sum() == (-data['a']).sum()
+    assert sum(data['b']) == 2*6*2*4*1 + 2*6*2*4*2
+
+    data = make_standard_exp().data
+    assert data.shape == (2 * 3 * 4 * 6 * 2, 3)
+    assert set(data.columns.values) == {'a', 'b', CompleteCounterbalance.iv_name}
+    assert data.index.names == type(data.index.names)(['participant', 'block', 'trial'])
+    assert data['a'].sum() == (-data['a']).sum()
+    assert sum(data['b']) == 2*6*2*4*1 + 2*6*2*4*2
+
+    data = make_manual_exp().data
     assert data.shape == (2 * 3 * 4 * 6 * 2, 3)
     assert set(data.columns.values) == {'a', 'b', CompleteCounterbalance.iv_name}
     assert data.index.names == type(data.index.names)(['participant', 'block', 'trial'])
@@ -93,16 +129,23 @@ def test_find_section():
         assert section.context['trial'] == 1
         assert section.is_bottom_level
 
-    exp = make_blocked_exp()
+    exp = make_standard_exp()
     some_trials = list(exp.all_sections(block=3, trial=[4, 8]))
     assert len(some_trials) == 2 * 6 * 2
     for section in some_trials:
         assert section.context['block'] == 3
         assert section.context['trial'] in (4, 8)
 
+    some_trials = list(exp.all_sections(participant=3, block=[1, 3], trial=6))
+    assert len(some_trials) == 2
+    for section in some_trials:
+        assert section.context['participant'] == 3
+        assert section.context['block'] in (1, 3)
+        assert section.context['trial'] == 6
+
 
 def test_find_parents():
-    exp = make_blocked_exp()
+    exp = make_manual_exp()
     assert list(exp.parents(exp.section(participant=1))) == []
     assert list(exp.parents(exp.section(participant=1, block=2))) == [exp.base_section[0]]
     assert list(exp.parents(exp.section(participant=1, block=2, trial=3))) == [exp.base_section[0], exp.base_section[0][1]]
@@ -131,7 +174,7 @@ def test_run_from():
 
 
 def test_resume():
-    exp = make_blocked_exp()
+    exp = make_standard_exp()
     assert exp.find_first_partially_run('participant') is None
     exp.run_section(exp.section(participant=1, block=1))
     assert exp.section(participant=1).has_started and not exp.section(participant=1).has_finished
@@ -155,7 +198,7 @@ def test_resume():
 
 
 def test_finished_section_detection():
-    exp = make_blocked_exp()
+    exp = make_manual_exp()
     exp.run_section(exp.section(participant=1, block=1))
     assert exp.section(participant=1).has_started
     exp.run_section(exp.section(participant=1, block=2))
