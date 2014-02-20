@@ -40,7 +40,7 @@ from docopt import docopt
 from experimentator import __version__, load_experiment, run_experiment_section, export_experiment_data
 
 
-def main(*args):
+def main(args=None):
     options = docopt(__doc__, argv=args, version=__version__)
 
     if options['--debug']:
@@ -69,5 +69,5 @@ def main(*args):
         export_experiment_data(options['<exp-file>'], options['<data-file>'])
 
 if __name__ == '__main__':
-    main(*sys.argv)
+    main(sys.argv)
     sys.exit(0)
