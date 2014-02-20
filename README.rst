@@ -1,6 +1,11 @@
 ==============
 experimentator
 ==============
+.. image:: https://travis-ci.org/hsharrison/experimentator.png?branch=master
+    :target: https://travis-ci.org/hsharrison/experimentator
+.. image:: https://coveralls.io/repos/hsharrison/experimentator/badge.png?branch=master
+  :target: https://coveralls.io/r/hsharrison/experimentator?branch=master
+
 -------------------------
 Python experiment builder
 -------------------------
