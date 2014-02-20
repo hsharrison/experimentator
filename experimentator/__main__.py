@@ -34,14 +34,32 @@ Commands:
 
 """
 import sys
+import os.path
 import logging
 from docopt import docopt
+from schema import Schema, Use, And, Or, Optional
 
 from experimentator import __version__, load_experiment, run_experiment_section, export_experiment_data
 
 
 def main(args=None):
-    options = docopt(__doc__, argv=args, version=__version__)
+    scheme = Schema({Optional('--debug'): bool,
+                     Optional('--demo'): bool,
+                     Optional('--help'): bool,
+                     Optional('--next'): bool,
+                     Optional('--not-finished'): bool,
+                     Optional('--skip-parents'): bool,
+                     Optional('--version'): bool,
+                     Optional('<data-file>'): Or(lambda x: x is None, os.path.exists),
+                     Optional('<exp-file>'): Or(lambda x: x is None, os.path.exists),
+                     Optional('<level>'): [str],
+                     Optional('<n>'): [And(Use(int), lambda n: n > 0)],
+                     Optional('export'): bool,
+                     Optional('resume'): bool,
+                     Optional('run'): bool,
+                     })
+
+    options = scheme.validate(docopt(__doc__, argv=args, version=__version__))
 
     if options['--debug']:
         logging.basicConfig(level=logging.DEBUG)
