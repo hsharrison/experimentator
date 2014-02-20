@@ -84,3 +84,5 @@ def test_cli():
             yield check_trial, row
         else:
             assert isnan(row[1]['result'])
+
+    os.remove('test.pkl')
