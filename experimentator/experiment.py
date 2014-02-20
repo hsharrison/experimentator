@@ -5,10 +5,10 @@ objects are imported in `__init__.py`.
 
 """
 import os
-import sys
-import logging
 import pickle
+import inspect
 import functools
+from logging import getLogger
 from importlib import import_module
 from contextlib import contextmanager, ExitStack
 from datetime import datetime
@@ -17,7 +17,7 @@ from collections import ChainMap
 from experimentator.common import QuitSession
 from experimentator.section import ExperimentSection
 
-logger = logging.getLogger(__name__)
+logger = getLogger(__name__)
 
 
 def load_experiment(experiment_file):
@@ -170,27 +170,14 @@ class Experiment():
         self.tree.add_base_level()
         self.base_section = ExperimentSection(self.tree, ChainMap())
 
-        self.run_callback = _dummy_callback
-        callbacks = {level: _dummy_callback for level in self.levels}
-        callbacks.update({'_base': _dummy_callback})
-        self.start_callbacks = callbacks.copy()
-        self.inter_callbacks = callbacks.copy()
-        self.end_callbacks = callbacks.copy()
+        callbacks = ('run', 'start', 'end', 'inter', 'context')
+        self.callbacks = {callback: {level: _dummy_callback for level in self.levels} for callback in callbacks}
+        self.callbacks['context'] = {level: _dummy_context for level in self.levels}
 
-        args = {level: (None, None) for level in self.levels}
-        args.update({'_base': (None, None)})
-        self._run_callback_args = (None, None)
-        self._start_callback_args = args.copy()
-        self._inter_callback_args = args.copy()
-        self._end_callback_args = args.copy()
+        self._callback_info = {callback: {level: None for level in self.levels} for callback in callbacks}
 
         self.session_data = {'as': {}}
         self.persistent_data = {}
-        self.context_managers = {level: _dummy_context for level in self.levels}
-        self.context_managers.update({'_base': _dummy_context})
-        self._context_manager_args = args.copy()
-
-        self.original_module = sys.argv[0][:-3]
 
     def __repr__(self):
         return 'Experiment({}, experiment_file={})'.format(self.tree.__repr__(), self.experiment_file)
@@ -475,7 +462,8 @@ class Experiment():
                     section.has_started = True
 
                 if section.is_bottom_level:
-                    results = self.run_callback(self.session_data, self.persistent_data, **section.context)
+                    results = self.callbacks['run'][section.level](
+                        self.session_data, self.persistent_data, **section.context)
                     logger.debug('Results: {}.'.format(results))
 
                     if not demo:
@@ -581,8 +569,7 @@ class Experiment():
         practice to use the keyword argument wildcard `**` in your definition of `func`.
 
         """
-        self.context_managers[level] = functools.partial(func, *args, **kwargs)
-        self._context_manager_args[level] = (args, kwargs)
+        self.callbacks['context'][level], self._callback_info['context'][level] = _set_callback(func, *args, **kwargs)
 
     def set_run_callback(self, func, *args, **kwargs):
         """Set the run callback.
@@ -609,8 +596,8 @@ class Experiment():
         practice to use the keyword argument wildcard `**` in your definition of `func`.
 
         """
-        self.run_callback = functools.partial(func, *args, **kwargs)
-        self._run_callback_args = (args, kwargs)
+        self.callbacks['run'][self.levels[-1]], self._callback_info['run'][self.levels[-1]] = _set_callback(
+            func, *args, **kwargs)
 
     def set_start_callback(self, level, func, *args, **kwargs):
         """Set a start callback.
@@ -639,8 +626,7 @@ class Experiment():
         practice to use the keyword argument wildcard `**` in your definition of `func`.
 
         """
-        self.start_callbacks[level] = functools.partial(func, *args, **kwargs)
-        self._start_callback_args[level] = (args, kwargs)
+        self.callbacks['start'][level], self._callback_info['start'][level] = _set_callback(func, *args, **kwargs)
 
     def set_inter_callback(self, level, func, *args, **kwargs):
         """Set a start callback.
@@ -670,8 +656,7 @@ class Experiment():
         to the inter callback is that of the next `ExperimentSection`.
 
         """
-        self.inter_callbacks[level] = functools.partial(func, *args, **kwargs)
-        self._inter_callback_args[level] = (args, kwargs)
+        self.callbacks['inter'][level], self._callback_info['inter'][level] = _set_callback(func, *args, **kwargs)
 
     def set_end_callback(self, level, func, *args, **kwargs):
         """Set an end callback.
@@ -700,54 +685,63 @@ class Experiment():
         practice to use the keyword argument wildcard `**` in your definition of `func`.
 
         """
-        self.end_callbacks[level] = functools.partial(func, *args, **kwargs)
-        self._end_callback_args[level] = (args, kwargs)
+        self.callbacks['end'][level], self._callback_info['end'][level] = _set_callback(func, *args, **kwargs)
 
     def __getstate__(self):
         state = self.__dict__.copy()
         #  Clear session_data before pickling.
         state['session_data'] = {'as': {}}
 
-        # Save only function names.
-        state['run_callbacks'] = state['run_callbacks'].__name__
-        for level in state['levels']:
-            for callback in ('start_callbacks', 'inter_callbacks', 'end_callbacks', 'context_managers'):
-                if not (state[callback][level] == _dummy_callback or state[callback][level] == _dummy_context):
-                    state[callback][level] = state[callback][level].__name__
+        # Clear functions.
+        del state['callbacks']
+
         return state
 
     def __setstate__(self, state):
-        # Import original module.
-        try:
-            original_module = import_module(state['original_module'])
-        except ImportError:
-            logger.warning("The original script that created this experiment doesn't seem to be in this directory.")
-            raise
-
-        # Replace references to callbacks functions.
-        state['run_callback'] = functools.partial(getattr(original_module, state['run_callback']),
-                                                  *state['_run_callback_args'][0], **state['_run_callback_args'][1])
-        for level in state['levels']:
-            for callback, args in (('start_callbacks', '_start_callback_args'),
-                                   ('inter_callbacks', '_inter_callback_args'),
-                                   ('end_callbacks', '_end_callback_args'),
-                                   ('context_managers', '_context_manager_args')):
-                if isinstance(state[callback][level], str):
-                    state[callback][level] = functools.partial(getattr(original_module, state[callback][level]),
-                                                               *args[0], **args[1])
         self.__dict__.update(state)
+
+        self.callbacks = {callback: {level: _get_callback(info) if info
+                                     else _dummy_context if callback == 'context' else _dummy_callback
+                                     for level, info in levels.items()}
+                          for callback, levels in self._callback_info.items()}
 
     @contextmanager
     def _enter_level(self, level, *args, _call_inter=True, **kwargs):
-        if _call_inter and not level == '_base' and kwargs.get(level) > 1:
-            self.inter_callbacks[level](*args, **kwargs)
+        if _call_inter and level != '_base' and kwargs.get(level) > 1:
+            self.callbacks['inter'][level](*args, **kwargs)
 
-        self.start_callbacks[level](*args, **kwargs)
+        if level == '_base':
+            yield
 
-        with self.context_managers[level](*args, **kwargs) as context_manager_output:
-            yield context_manager_output
+        else:
+            self.callbacks['start'][level](*args, **kwargs)
 
-        self.end_callbacks[level](*args, **kwargs)
+            with self.callbacks['context'][level](*args, **kwargs) as context_manager_output:
+                yield context_manager_output
+
+            self.callbacks['end'][level](*args, **kwargs)
+
+
+def _get_func_reference(func):
+    return os.path.basename(inspect.getsourcefile(func))[:-3], func.__name__
+
+
+def _load_func_reference(module_name, func_name):
+    try:
+        module = import_module(module_name)
+    except ImportError:
+        logger.warning(("The original source of the callback '{}', '{}', doesn't seem to be in the current " +
+                        "directory, or otherwise importable.").format(func_name, module_name))
+        raise
+    return getattr(module, func_name)
+
+
+def _set_callback(func, *args, **kwargs):
+    return functools.partial(func, *args, **kwargs), (_get_func_reference(func), args, kwargs)
+
+
+def _get_callback(info):
+    return functools.partial(_load_func_reference(*info[0]), *info[1], **info[2])
 
 
 @contextmanager
