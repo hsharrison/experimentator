@@ -22,5 +22,8 @@ class Dummy():
         return func
 
     def show(self):
+        result = {}
         for i, thing in enumerate(THINGS_TO_SHOW):
-            print('{}. {}:\n\t{}\n'.format(i+1, thing, eval(thing)))
+            result[thing] = eval(thing)
+            print('{}. {}:\n\t{}\n'.format(i+1, thing, result[thing]))
+        return result

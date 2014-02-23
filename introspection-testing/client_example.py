@@ -1,6 +1,9 @@
+from contextlib import contextmanager
 from library_example import Dummy
 
-print('\nDESIRED OUTPUT: client_example\n')
+
+desired = 'client_example'
+print('\nDESIRED OUTPUT: {}\n'.format(desired))
 
 
 def f():
@@ -11,14 +14,19 @@ d = Dummy()
 
 print('-------\nPassed as argument:\n-------\n')
 d.set_func(f)
-d.show()
-
-print('-------\nPassed in decorator:\n-------\n')
+arg_results = d.show()
 
 
-@d.set_func
+print('-------\nDecorated function:\n-------\n')
+
+
+@contextmanager
 def f():
-    pass
+    yield
+
+d.set_func(f)
+dec_results = d.show()
 
 
-d.show()
+for thing in arg_results.keys():
+    print('{}: {}'.format(thing, 'Y' if arg_results[thing] == dec_results[thing] == desired else 'N'))
