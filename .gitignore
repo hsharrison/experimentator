@@ -5,5 +5,7 @@
 *.egg-info
 build
 .idea
+.coverage
+.cache
 doc/_build
 dist
