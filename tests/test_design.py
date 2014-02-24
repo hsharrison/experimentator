@@ -120,12 +120,12 @@ def test_design_matrix_with_continuous_iv():
         yield check_design_matrix, d.get_order(), iv_names, iv_values, matrix
 
 
-def check_design(design, iv_names, iv_values, n, context, matrix):
+def check_design(design, iv_names, iv_values, n, data, matrix):
     assert set(design.iv_names) == set(iv_names)
-    assert len(design.get_order(**context)) == n
+    assert len(design.get_order(**data)) == n
 
     ivs = dict(zip(iv_names, iv_values))
-    for condition in design.get_order(**context):
+    for condition in design.get_order(**data):
         for iv, value in condition.items():
             if matrix is not None:
                 assert value in matrix
@@ -189,14 +189,14 @@ def test_design_tree():
     with pytest.raises(StopIteration):
         next(tree_with_trial_base)
 
-    for design, iv_names, iv_values, n, context, matrix in zip(
+    for design, iv_names, iv_values, n, data, matrix in zip(
             [designs[1][0], designs[2][0], designs[2][1], designs[3][0]],
             [['A', 'B', CompleteCounterbalance.iv_name], [], ['block'], ['a', 'b']],
             [[[1, 2], [1, 2, 3], [0, 1]], [], [[1, 2]], [None, None]],
             [10*2*2*3, 1, 2, 3*len(trial_matrix)],
             [{}, {}, {CompleteCounterbalance.iv_name: 0}, {}],
             [None, None, None, trial_matrix]):
-        yield check_design, design, iv_names, iv_values, n, context, matrix
+        yield check_design, design, iv_names, iv_values, n, data, matrix
 
     yield check_design_matrix, designs[3][0].get_order(), ['a', 'b'], [None, None], trial_matrix
 

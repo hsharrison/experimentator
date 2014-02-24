@@ -99,13 +99,11 @@ Experimentator is hosted on both `GitHub <https://github.com/hsharrison/experime
 From PyPi
 ^^^^^^^^^
 
-Assuming you are in a Python 3 virtual environment, run:
+Assuming you are in a Python 3 virtual environment, for the latest stable release run:
 
 .. code-block:: bash
 
-    pip install experimentator
-
-to install experimentator. Use the ``--upgrade`` flag to update your copy to the newest version.
+    pip install -U experimentator
 
 From source
 ^^^^^^^^^^^
@@ -127,6 +125,7 @@ License
 Licensed under the MIT License, which may or may not appear below depending on where you're reading this. If not, see ``LICENSE.txt``.
 
 .. include:: LICENSE.txt
+    :literal:
 
 
 Other libraries

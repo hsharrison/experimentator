@@ -126,22 +126,22 @@ def test_find_section():
     sections = list(exp.all_sections(trial=1))
     assert len(sections) == 10
     for section in sections:
-        assert section.context['trial'] == 1
+        assert section.data['trial'] == 1
         assert section.is_bottom_level
 
     exp = make_standard_exp()
     some_trials = list(exp.all_sections(block=3, trial=[4, 8]))
     assert len(some_trials) == 2 * 6 * 2
     for section in some_trials:
-        assert section.context['block'] == 3
-        assert section.context['trial'] in (4, 8)
+        assert section.data['block'] == 3
+        assert section.data['trial'] in (4, 8)
 
     some_trials = list(exp.all_sections(participant=3, block=[1, 3], trial=6))
     assert len(some_trials) == 2
     for section in some_trials:
-        assert section.context['participant'] == 3
-        assert section.context['block'] in (1, 3)
-        assert section.context['trial'] == 6
+        assert section.data['participant'] == 3
+        assert section.data['block'] in (1, 3)
+        assert section.data['trial'] == 6
 
 
 def test_find_parents():

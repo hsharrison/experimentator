@@ -31,18 +31,17 @@ class ExperimentSection():
     tree : DesignTree
         A `DesignTree` object, describing the design of the experiment hierarchy (containing the `Design` at the current
         level all levels below).
-    context : ChainMap
-        The context of the `ExperimentSection` is all data associated with it, including the values of independent
-        variables associated with this level and levels above, the section numbers indicating the section's location in
-        the experiment, and any results associated with this section, arising from either the run callback of the
-        `Experiment`, or the `ExperimentSection.add_data` method. The `context` is a `ChainMap`, which behaves like a
-        dictionary but has a hierarchical organization such that children can access values from the parent but not
-        vice-versa.
+    data : ChainMap
+        All data associated with the `ExperimentSection` and all its parents, including the values of independent
+        variables, the section numbers indicating the section's location in the experiment, and any results associated
+        with this section, arising from either the run callback of the `Experiment`, or the `ExperimentSection.add_data`
+        method. `data` is a `ChainMap`, which behaves like a dictionary but has a hierarchical organization such that
+        children can access values from the parent but not vice-versa.
 
     Attributes
     ----------
     tree : DesignTree
-    context : ChainMap
+    data : ChainMap
     level : str
         The level of the hierarchy at which this section lives.
     is_bottom_level : bool
@@ -55,8 +54,8 @@ class ExperimentSection():
         Whether this section has finished running.
 
     """
-    def __init__(self, tree, context):
-        self.context = context
+    def __init__(self, tree, data):
+        self.data = data
         self.tree = tree
         self.level = self.tree[0][0]
         self.is_bottom_level = len(self.tree) == 1
@@ -71,7 +70,7 @@ class ExperimentSection():
             self._number_children()
 
     def __repr__(self):
-        return 'ExperimentSection({}, {})'.format(self.tree.__repr__(), self.context.__repr__())
+        return 'ExperimentSection({}, {})'.format(self.tree.__repr__(), self.data.__repr__())
 
     def append_design_tree(self, tree, to_start=False, _renumber=True):
         """Append sections to this section's children.
@@ -89,7 +88,7 @@ class ExperimentSection():
 
         Note
         ----
-        After calling `ExperimentSection.append_design_tree`, the section numbers in the context of the child sections
+        After calling `ExperimentSection.append_design_tree`, the section numbers in the data of the child sections
         will be automatically replaced with the correct numbers.
 
         """
@@ -100,18 +99,18 @@ class ExperimentSection():
 
         if to_start:
             for design in reversed(designs):
-                for new_context in reversed(design.get_order(**self.context)):
-                    self.append_child(tree=tree, to_start=True, _renumber=False, context=new_context)
+                for new_data in reversed(design.get_order(**self.data)):
+                    self.append_child(tree=tree, to_start=True, _renumber=False, **new_data)
 
         else:
             for design in designs:
-                for new_context in design.get_order(**self.context):
-                    self.append_child(tree=tree, _renumber=False, context=new_context)
+                for new_data in design.get_order(**self.data):
+                    self.append_child(tree=tree, _renumber=False, **new_data)
 
         if _renumber:
             self._number_children()
 
-    def append_child(self, tree=None, to_start=False, _renumber=True, context=None):
+    def append_child(self, tree=None, to_start=False, _renumber=True, **data):
         """Append a single section to this section's children.
 
         This method appends a single section to the `ExperimentSection.children` attribute. In the process, its children
@@ -121,31 +120,30 @@ class ExperimentSection():
         ---------
         tree : DesignTree, optional
             If given, the section will be appended from the top level of `tree`. If not passed, the tree of the current
-            section will be used. Note that this does not affect IV values; IV values must be passed in `**context` a
+            section will be used. Note that this does not affect IV values; IV values must be passed in `**data` as
             keyword arguments.
         to_start : bool, optional
             If true, the section will be appended to the beginning of `ExperimentSection.children`. If False (the
             default), it will be appended to the end.
-        **context
-            Arbitrary keywords to be included in the new section's `ExperimentSection.context` `ChainMap`. Should
-            include values of IVs at the section's level, for example.
+        **data
+            Arbitrary keywords to be included in the new section's `ExperimentSection.data` `ChainMap`. Should include
+            values of IVs at the section's level, for example.
 
         Note
         ----
-        After calling `ExperimentSection.append_child`, the section numbers in the context of the child sections will
+        After calling `ExperimentSection.append_child`, the section numbers in the data of the child sections will
         be automatically replaced with the correct numbers.
 
         """
         if not tree:
             tree = next(self.tree)
 
-        child_context = self.context.new_child()
-        if context:
-            child_context.update(context)
+        child_data = self.data.new_child()
+        child_data.update(data)
         level = tree.levels_and_designs[0][0]
 
-        logger.debug('Generating {} with context {}.'.format(level, child_context))
-        child = ExperimentSection(tree, child_context)
+        logger.debug('Generating {} with data {}.'.format(level, child_data))
+        child = ExperimentSection(tree, child_data)
         if to_start:
             self.children.appendleft(child)
         else:
@@ -159,22 +157,22 @@ class ExperimentSection():
         for level in levels:
             children_at_level = [child for child in self.children if child.level == level]
             for i, child in enumerate(children_at_level):
-                child.context.update({level: i + 1})
+                child.data.update({level: i + 1})
 
     def add_data(self, **data):
         """Add data.
 
-        This method updates the `ExperimentSection.context` `ChainMap` according to the items in `data`. Use this, for
+        This method updates the `ExperimentSection.data` `ChainMap` according to the items in `data`. Use this, for
         example, to define data to apply to this section and all child sections, for example to record a participant's
         age.
 
         Arguments
         ---------
         **data
-            Arbitrary keyword arguments to be included in the `ExperimentSection.context` `ChainMap`.
+            Arbitrary keyword arguments to be included in the `ExperimentSection.data` `ChainMap`.
 
         """
-        self.context.update(data)
+        self.data.update(data)
 
     def generate_data(self):
         """Generate data.
@@ -182,12 +180,12 @@ class ExperimentSection():
         Yields
         ------
         ChainMap
-            Context of all bottom-level sections that are descendants of this section.
+            data of all bottom-level sections that are descendants of this section.
 
         """
         for child in self.children:
             if child.is_bottom_level:
-                yield child.context
+                yield child.data
             else:
                 yield from child.generate_data()
 

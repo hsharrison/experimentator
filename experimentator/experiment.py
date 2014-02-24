@@ -406,7 +406,7 @@ class Experiment():
         """Run a section.
 
         Runs a section by descending the hierarchy and running each child section. Also calls the start, end, and inter
-        callbacks where appropriate. Results are saved in each `ExperimentSection.context` attribute.
+        callbacks where appropriate. Results are saved in each `ExperimentSection.data` attribute.
 
         Arguments
         ---------
@@ -426,7 +426,7 @@ class Experiment():
             participant's second session, starting from the fifth trial of the third block.
 
         """
-        logger.debug('Running {} with context {}.'.format(section.level, section.context))
+        logger.debug('Running {} with data {}.'.format(section.level, section.data))
 
         if isinstance(from_section, int):
             from_section = [from_section]
@@ -444,19 +444,19 @@ class Experiment():
             for parent in self.parents(section):
                 parent.has_started = True
                 if parent_callbacks:
-                    logger.debug('Entering {} with context {}...'.format(parent.level, parent.context))
+                    logger.debug('Entering {} with data {}...'.format(parent.level, parent.data))
                     stack.enter_context(self.context_managers[parent.level](
-                        self.session_data, self.persistent_data, **parent.context))
+                        self.session_data, self.persistent_data, **parent.data))
 
             # Back to the regular behavior.
-            with self.context_managers[section.level](self.session_data, self.persistent_data, **section.context) as \
+            with self.context_managers[section.level](self.session_data, self.persistent_data, **section.data) as \
                     self.session_data['as'][section.level]:
 
                 if not demo:
                     section.has_started = True
 
                 if section.is_bottom_level:
-                    results = self.run_callback(self.session_data, self.persistent_data, **section.context)
+                    results = self.run_callback(self.session_data, self.persistent_data, **section.data)
                     logger.debug('Results: {}.'.format(results))
 
                     if not demo:
@@ -505,7 +505,7 @@ class Experiment():
         start_at_section = section
         for level in levels[1:]:
             start_at_section = self.find_first_not_run(level, starting_at=start_at_section)
-            start_at_numbers.append(start_at_section.context[level])
+            start_at_numbers.append(start_at_section.data[level])
 
         self.run_section(section, from_section=start_at_numbers, **kwargs)
 
@@ -530,7 +530,7 @@ class Experiment():
             if level == section.level or section.level == '_base':
                 break
 
-            parent_section_numbers.update({level: section.context[level]})
+            parent_section_numbers.update({level: section.data[level]})
             yield self.section(**parent_section_numbers)
 
     def set_context_manager(self, level, func, *args,
@@ -569,11 +569,11 @@ class Experiment():
         ----
         In addition to the arguments you set in `*args` and `**kwargs`, two positional arguments will be passed to
         `func`: `Experiment.session_data` and `Experiment.persistent_data`. Additionally, the items in the dictionary in
-        the section's `ExperimentSection.context` attribute will be passed as keyword arguments. So the context manager
-        should take the form of `(*args, session_data, persistent_data, **kwargs, **context)`, where `*args` and
-        `**kwargs` come from this method, `session_data` and `persistent_data` come from the `Experiment` instance, and
-        `context` comes from the `ExperimentSection` instance. Since the context can have many items, it is best
-        practice to use the keyword argument wildcard `**` in your definition of `func`.
+        the section's `ExperimentSection.data` attribute will be passed as keyword arguments. So the context manager
+        should take the form of `(*args, session_data, persistent_data, **kwargs, **data)`, where `*args` and `**kwargs`
+        come from this method, `session_data` and `persistent_data` come from the `Experiment` instance, and `data`
+        comes from the `ExperimentSection` instance. Since the data can have many items, it is best practice to use
+        the keyword argument wildcard `**` in your definition of `func`.
 
         """
         if not already_contextmanager:
@@ -610,11 +610,11 @@ class Experiment():
         ----
         In addition to the arguments you set in `*args` and `**kwargs`, two positional arguments will be passed to
         `func`: `Experiment.session_data` and `Experiment.persistent_data`. Additionally, the items in the dictionary in
-        the section's `ExperimentSection.context` attribute will be passed as keyword arguments. So the run callback
-        should take the form of `(*args, session_data, persistent_data, **kwargs, **context)`, where `*args` and
+        the section's `ExperimentSection.data` attribute will be passed as keyword arguments. So the run callback
+        should take the form of `(*args, session_data, persistent_data, **kwargs, **data)`, where `*args` and
         `**kwargs` come from this method, `session_data` and `persistent_data` come from the `Experiment` instance, and
-        `context` comes from the `ExperimentSection` instance. Since the context can have many items, it is best
-        practice to use the keyword argument wildcard `**` in your definition of `func`.
+        `data` comes from the `ExperimentSection` instance. Since the data can have many items, it is best practice
+        to use the keyword argument wildcard `**` in your definition of `func`.
 
         """
         self.run_callback = functools.partial(func, *args, **kwargs)

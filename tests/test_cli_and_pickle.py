@@ -16,22 +16,22 @@ from experimentator.__main__ import main
 from tests.test_experiment import make_blocked_exp, check_trial
 
 
-def set_session_data(session_data, persistent_data, **context):
+def set_session_data(session_data, persistent_data, **data):
     session_data['test'] = True
 
 
-def check_session_data(session_data, persistent_data, **context):
+def check_session_data(session_data, persistent_data, **data):
     assert session_data['test']
 
 
 @contextmanager
-def participant_context(session_data, persistent_data, **context):
+def participant_context(session_data, persistent_data, **data):
     session_data['test'] = True
     yield
 
 
-def block_context(session_data, persistent_data, **context):
-    if context['block'] > 1:
+def block_context(session_data, persistent_data, **data):
+    if data['block'] > 1:
         assert session_data['test']
     yield
 

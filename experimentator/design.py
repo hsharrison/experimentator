@@ -36,13 +36,13 @@ class Design():
     ordering : Ordering instance, optional
         An instance of an `experimentator.order.Ordering` subclass, defining the behavior for duplicating and ordering
         the conditions of the `Design`. If no `ordering` is given, the default is `experimentator.order.Shuffle()`.
-    **extra_context
-        Arbitrary keyword arguments that will be included in the context of `ExperimentSection` instances created under
+    **extra_data
+        Arbitrary keyword arguments that will be included in the data of `ExperimentSection` instances created under
         this `Design`. For example, if the keyword argument `practice=True`, any `ExperimentSection` objects resulting
-        from this `Design` will have `{'practice': True}` as an element of their `context` attribute.
+        from this `Design` will have `{'practice': True}` as an element of their `data` attribute.
 
     """
-    def __init__(self, ivs=None, design_matrix=None, ordering=None, **extra_context):
+    def __init__(self, ivs=None, design_matrix=None, ordering=None, **extra_data):
         if isinstance(ivs, dict):
             ivs = list(ivs.items())
         if ivs:
@@ -54,7 +54,7 @@ class Design():
             self.iv_values = []
 
         self.design_matrix = design_matrix
-        self.extra_context = extra_context
+        self.extra_data = extra_data
 
         if ordering:
             self.ordering = ordering
@@ -66,12 +66,12 @@ class Design():
 
     def __repr__(self):
         return 'Design(ivs={}, design_matrix={}, ordering={}, **{})'.format(
-            list(zip(self.iv_names, self.iv_values)), self.design_matrix, self.ordering, self.extra_context)
+            list(zip(self.iv_names, self.iv_values)), self.design_matrix, self.ordering, self.extra_data)
 
-    def get_order(self, **context):
-        order = self.ordering.get_order(**context)
+    def get_order(self, **data):
+        order = self.ordering.get_order(**data)
         for condition in order:
-            condition.update(self.extra_context)
+            condition.update(self.extra_data)
         return order
 
     def first_pass(self):
@@ -150,7 +150,7 @@ class Design():
 
         conditions = []
         for row in design_matrix:
-            condition = self.extra_context.copy()
+            condition = self.extra_data.copy()
             for iv_name, iv_values, factor_values, design_matrix_value in \
                     zip(self.iv_names, self.iv_values, values_per_factor, row):
                 if iv_values:

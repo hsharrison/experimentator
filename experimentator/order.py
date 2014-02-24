@@ -65,7 +65,7 @@ class Ordering():
 
         return (), ()
 
-    def get_order(self, **context):
+    def get_order(self, **data):
         """Get an order of conditions.
 
         This is the method that is called to get an order of conditions. In this case, the conditions are always
@@ -73,8 +73,8 @@ class Ordering():
 
         Arguments
         ---------
-        **context
-            Arbitrary keyword arguments describing the context of the parent section. Unused for atomic orderings.
+        **data
+            Arbitrary keyword arguments describing the data of the parent section. Unused for atomic orderings.
 
         Returns
         -------
@@ -135,7 +135,7 @@ class Shuffle(Ordering):
     def __repr__(self):
         return '{}(number={}, avoid_repeats={})'.format(self.__class__.__name__, self.number, self.avoid_repeats)
 
-    def get_order(self, **context):
+    def get_order(self, **data):
         """Order the conditions.
 
         This is the method that is called to get an order of conditions. In this case, a different, random order is
@@ -143,8 +143,8 @@ class Shuffle(Ordering):
 
         Arguments
         ---------
-        **context
-            Arbitrary keyword arguments describing the context of the parent section. Unused for atomic orderings.
+        **data
+            Arbitrary keyword arguments describing the data of the parent section. Unused for atomic orderings.
 
         Returns
         -------
@@ -193,7 +193,7 @@ class NonAtomicOrdering(Ordering):
         else:
             return (), ()
 
-    def get_order(self, **context):
+    def get_order(self, **data):
         """Order the conditions.
 
         This is the method that is called to get an order of conditions. For non-atomic orderings, the order will depend
@@ -201,8 +201,8 @@ class NonAtomicOrdering(Ordering):
 
         Arguments
         ---------
-        **context
-            Arbitrary keyword arguments describing the context of the parent section. For non-atomic orderings, one of
+        **data
+            Arbitrary keyword arguments describing the data of the parent section. For non-atomic orderings, one of
             these keyword arguments will determine the order to be used.
 
         Returns
@@ -211,7 +211,7 @@ class NonAtomicOrdering(Ordering):
             A list of dictionaries, each specifying a condition (a combination of IVs).
 
         """
-        return self.order_ivs[context[self.iv_name]]
+        return self.order_ivs[data[self.iv_name]]
 
 
 class CompleteCounterbalance(NonAtomicOrdering):
@@ -339,7 +339,7 @@ class Sorted(NonAtomicOrdering):
         else:
             return (), ()
 
-    def get_order(self, **context):
+    def get_order(self, **data):
         """Order the conditions.
 
         This is the method that is called to get an order of conditions. In this case, a sorted order is returned. If
@@ -347,8 +347,8 @@ class Sorted(NonAtomicOrdering):
 
         Arguments
         ---------
-        **context
-            Arbitrary keyword arguments describing the context of the parent section. In this case, only the IV
+        **data
+            Arbitrary keyword arguments describing the data of the parent section. In this case, only the IV
             ``'_sorted_order'`` is relevant.
 
         Returns
@@ -358,7 +358,7 @@ class Sorted(NonAtomicOrdering):
 
         """
         if self.order == 'both':
-            order = context[self.iv_name]
+            order = data[self.iv_name]
         else:
             order = self.order
         return self.order_ivs[order]
