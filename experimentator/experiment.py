@@ -131,7 +131,6 @@ class Experiment():
 
     Attributes
     ----------
-    data
     tree : DesignTree
         The `DesignTree` instance defining the experiment's hierarchy.
     experiment_file : str
@@ -143,12 +142,9 @@ class Experiment():
         descend.
     run_callback : func
         The function to be run when the bottom of the tree is reached (i.e., the trial function).
-    start_callbacks, inter_callbacks, end_callbacks : dict
-        Dictionaries, with keys naming levels and values as functions to be run at the beginning, in-between, and after
-        running `ExperimentSection`\ s at the associated level.
     context_managers : dict
-        A dictionary, with level names as keys and context manager functions as values. An alternative way to define
-        behavior to run at the start and end of `ExperimentSection`\ s.
+        A dictionary, with level names as keys and context managers (e.g., created by `contextlib.contextmanager`) as
+        values. Defines behavior to run before and/or after each section at the associated level.
     session_data : dict
         A dictionary where data can be stored that is persistent between `ExperimentSection`\ s run in the same Python
         session. This is the first positional argument for every callback, and a good place to store external resources
@@ -157,9 +153,6 @@ class Experiment():
     persistent_data : dict
         A dictionary where data can be stored that is persistent across Python sessions. Everything here must be
         picklable.
-    original_module : str
-        The filename which originally created this `Experiment`. This is where the `Experiment` will look for its
-        callbacks when it is loaded from disk.
 
     """
     def __init__(self, tree, experiment_file=None):
@@ -170,11 +163,12 @@ class Experiment():
         self.tree.add_base_level()
         self.base_section = ExperimentSection(self.tree, ChainMap())
 
-        callbacks = ('run', 'start', 'end', 'inter', 'context')
-        self.callbacks = {callback: {level: _dummy_callback for level in self.levels} for callback in callbacks}
-        self.callbacks['context'] = {level: _dummy_context for level in self.levels}
+        self.context_managers = {level: _dummy_context for level in self.levels}
+        self.context_managers['_base'] = _dummy_context
+        self._context_info = {level: None for level in self.levels}
 
-        self._callback_info = {callback: {level: None for level in self.levels} for callback in callbacks}
+        self.run_callback = _dummy_callback
+        self._callback_info = None
 
         self.session_data = {'as': {}}
         self.persistent_data = {}
@@ -451,19 +445,18 @@ class Experiment():
                 parent.has_started = True
                 if parent_callbacks:
                     logger.debug('Entering {} with context {}...'.format(parent.level, parent.context))
-                    stack.enter_context(self._enter_level(
-                        parent.level, self.session_data, self.persistent_data, _call_inter=False, **parent.context))
+                    stack.enter_context(self.context_managers[parent.level](
+                        self.session_data, self.persistent_data, **parent.context))
 
             # Back to the regular behavior.
-            with self._enter_level(section.level, self.session_data, self.persistent_data, **section.context) as \
+            with self.context_managers[section.level](self.session_data, self.persistent_data, **section.context) as \
                     self.session_data['as'][section.level]:
 
                 if not demo:
                     section.has_started = True
 
                 if section.is_bottom_level:
-                    results = self.callbacks['run'][section.level](
-                        self.session_data, self.persistent_data, **section.context)
+                    results = self.run_callback(self.session_data, self.persistent_data, **section.context)
                     logger.debug('Results: {}.'.format(results))
 
                     if not demo:
@@ -540,12 +533,18 @@ class Experiment():
             parent_section_numbers.update({level: section.context[level]})
             yield self.section(**parent_section_numbers)
 
-    def set_context_manager(self, level, func, *args, **kwargs):
+    def set_context_manager(self, level, func, *args,
+                            func_module=None, func_name=None, already_contextmanager=False, **kwargs):
         """Set a context manager to run at a certain level.
 
         Defines a context manager to run at every section at a particular level. This is an alternative to start and end
-        callbacks, to define behavior to occur at the beginning and end of every section. See :mod:`contextlib` for
-        details on building context managers.
+        callbacks, to define behavior to occur at the beginning and end of every section. `func` should be a function
+        that contains code to be run at the beginning of every section, followed by a ``yield`` statement, and then code
+        to be run at the end of every section. Any return value from the ``yield`` statement will be saved in
+        ``exp.session_data['as'][level]``.
+
+        Alternatively, `func` can be a  contextmanager object (see the documentation for `contextlib`), in which case
+        the flag ``already_contextmanager=True`` should be passed.
 
         Arguments
         ---------
@@ -555,6 +554,14 @@ class Experiment():
             The context manager function.
         *args
             Any arbitrary positional arguments to be passed to `func`.
+        func_module : str, optional
+        func_name : str, optional
+            These two arguments specify where the given function should be imported from in future Python sessions
+            (i.e., ``from func_module import func_name``). Usually, this is figured out automatically by introspection,
+            but these arguments are provided for the rare situation where introspection fails.
+        already_contextmanager : bool, optional
+           Pass True if `func` is already a contextmanager. Otherwise, it is assumed to be a generator function in the
+           form required by `contextmanager`.
         **kwargs
             Any arbitrary keyword arguments to be passed to `func`.
 
@@ -564,14 +571,23 @@ class Experiment():
         `func`: `Experiment.session_data` and `Experiment.persistent_data`. Additionally, the items in the dictionary in
         the section's `ExperimentSection.context` attribute will be passed as keyword arguments. So the context manager
         should take the form of `(*args, session_data, persistent_data, **kwargs, **context)`, where `*args` and
-        `**kwargs` come from this function, `session_data` and `persistent_data` come from the `Experiment` instance,
-        and `context` comes from the `ExperimentSection` instance. Since the context can have many items, it is best
+        `**kwargs` come from this method, `session_data` and `persistent_data` come from the `Experiment` instance, and
+        `context` comes from the `ExperimentSection` instance. Since the context can have many items, it is best
         practice to use the keyword argument wildcard `**` in your definition of `func`.
 
         """
-        self.callbacks['context'][level], self._callback_info['context'][level] = _set_callback(func, *args, **kwargs)
+        if not already_contextmanager:
+            func = contextmanager(func)
 
-    def set_run_callback(self, func, *args, **kwargs):
+        self.context_managers[level] = functools.partial(func, *args, **kwargs)
+        self._context_info[level] = [list(_get_func_reference(func)), args, kwargs, already_contextmanager]
+
+        if func_module:
+            self._context_info[level][0][0] = func_module
+        if func_name:
+            self._callback_info[level][0][1] = func_name
+
+    def set_run_callback(self, func, *args, func_module=None, func_name=None, **kwargs):
         """Set the run callback.
 
         Define a function to run at the lowest level of the experiment (i.e., the trial function).
@@ -582,6 +598,11 @@ class Experiment():
             The function to be set as the run callback.
         *args
             Any arbitrary positional arguments to be passed to `func`.
+        func_module : str, optional
+        func_name : str, optional
+            These two arguments specify where the given function should be imported from in future Python sessions
+            (i.e., ``from func_module import func_name``). Usually, this is figured out automatically by introspection,
+            but these arguments are provided for the rare situation where introspection fails.
         **kwargs
             Any arbitrary keyword arguments to be passed to `func`.
 
@@ -591,101 +612,18 @@ class Experiment():
         `func`: `Experiment.session_data` and `Experiment.persistent_data`. Additionally, the items in the dictionary in
         the section's `ExperimentSection.context` attribute will be passed as keyword arguments. So the run callback
         should take the form of `(*args, session_data, persistent_data, **kwargs, **context)`, where `*args` and
-        `**kwargs` come from this function, `session_data` and `persistent_data` come from the `Experiment` instance,
-        and `context` comes from the `ExperimentSection` instance. Since the context can have many items, it is best
+        `**kwargs` come from this method, `session_data` and `persistent_data` come from the `Experiment` instance, and
+        `context` comes from the `ExperimentSection` instance. Since the context can have many items, it is best
         practice to use the keyword argument wildcard `**` in your definition of `func`.
 
         """
-        self.callbacks['run'][self.levels[-1]], self._callback_info['run'][self.levels[-1]] = _set_callback(
-            func, *args, **kwargs)
+        self.run_callback = functools.partial(func, *args, **kwargs)
+        self._callback_info = [list(_get_func_reference(func)), args, kwargs]
 
-    def set_start_callback(self, level, func, *args, **kwargs):
-        """Set a start callback.
-
-        Define a function to run at the at the beginning of every section at a particular level.
-
-        Arguments
-        ---------
-        level : str
-            The level of the hierarchy at which the callback should be set.
-        func : func
-            The function to be set as the callback.
-        *args
-            Any arbitrary positional arguments to be passed to `func`.
-        **kwargs
-            Any arbitrary keyword arguments to be passed to `func`.
-
-        Note
-        ----
-        In addition to the arguments you set in `*args` and `**kwargs`, two positional arguments will be passed to
-        `func`: `Experiment.session_data` and `Experiment.persistent_data`. Additionally, the items in the dictionary in
-        the section's `ExperimentSection.context` attribute will be passed as keyword arguments. So the start callback
-        should take the form of `(*args, session_data, persistent_data, **kwargs, **context)`, where `*args` and
-        `**kwargs` come from this function, `session_data` and `persistent_data` come from the `Experiment` instance,
-        and `context` comes from the `ExperimentSection` instance. Since the context can have many items, it is best
-        practice to use the keyword argument wildcard `**` in your definition of `func`.
-
-        """
-        self.callbacks['start'][level], self._callback_info['start'][level] = _set_callback(func, *args, **kwargs)
-
-    def set_inter_callback(self, level, func, *args, **kwargs):
-        """Set a start callback.
-
-        Define a function to run in-between sections at a particular level.
-
-        Arguments
-        ---------
-        level : str
-            The level of the hierarchy at which the callback should be set.
-        func : func
-            The function to be set as the callback.
-        *args
-            Any arbitrary positional arguments to be passed to `func`.
-        **kwargs
-            Any arbitrary keyword arguments to be passed to `func`.
-
-        Note
-        ----
-        In addition to the arguments you set in `*args` and `**kwargs`, two positional arguments will be passed to
-        `func`: `Experiment.session_data` and `Experiment.persistent_data`. Additionally, the items in the dictionary in
-        the section's `ExperimentSection.context` attribute will be passed as keyword arguments. So the inter callback
-        should take the form of `(*args, session_data, persistent_data, **kwargs, **context)`, where `*args` and
-        `**kwargs` come from this function, `session_data` and `persistent_data` come from the `Experiment` instance,
-        and `context` comes from the `ExperimentSection` instance. Since the context can have many items, it is best
-        practice to use the keyword argument wildcard `**` in your definition of `func`. Note that the context passed
-        to the inter callback is that of the next `ExperimentSection`.
-
-        """
-        self.callbacks['inter'][level], self._callback_info['inter'][level] = _set_callback(func, *args, **kwargs)
-
-    def set_end_callback(self, level, func, *args, **kwargs):
-        """Set an end callback.
-
-        Define a function to run at the at the end of every section at a particular level.
-
-        Arguments
-        ---------
-        level : str
-            The level of the hierarchy at which the callback should be set.
-        func : func
-            The function to be set as the callback.
-        *args
-            Any arbitrary positional arguments to be passed to `func`.
-        **kwargs
-            Any arbitrary keyword arguments to be passed to `func`.
-
-        Note
-        ----
-        In addition to the arguments you set in `*args` and `**kwargs`, two positional arguments will be passed to
-        `func`: `Experiment.session_data` and `Experiment.persistent_data`. Additionally, the items in the dictionary in
-        the section's `ExperimentSection.context` attribute will be passed as keyword arguments. So the end callback
-        should take the form of `(*args, session_data, persistent_data, **kwargs, **context)`, where `*args` and
-        `**kwargs` come from this function, `session_data` and `persistent_data` come from the `Experiment` instance,
-        and `context` comes from the `ExperimentSection` instance. Since the context can have many items, it is best
-        practice to use the keyword argument wildcard `**` in your definition of `func`.
-
-        """
-        self.callbacks['end'][level], self._callback_info['end'][level] = _set_callback(func, *args, **kwargs)
+        if func_module:
+            self._callback_info[0][0] = func_module
+        if func_name:
+            self._callback_info[0][1] = func_name
 
     def __getstate__(self):
         state = self.__dict__.copy()
@@ -693,36 +631,36 @@ class Experiment():
         state['session_data'] = {'as': {}}
 
         # Clear functions.
-        del state['callbacks']
+        del state['context_managers']
+        del state['run_callback']
 
         return state
 
     def __setstate__(self, state):
         self.__dict__.update(state)
 
-        self.callbacks = {callback: {level: _get_callback(info) if info
-                                     else _dummy_context if callback == 'context' else _dummy_callback
-                                     for level, info in levels.items()}
-                          for callback, levels in self._callback_info.items()}
+        self.run_callback = functools.partial(_load_func_reference(*self._callback_info[0]),
+                                              *self._callback_info[1], **self._callback_info[2]) \
+            if self._callback_info else _dummy_callback
 
-    @contextmanager
-    def _enter_level(self, level, *args, _call_inter=True, **kwargs):
-        if _call_inter and level != '_base' and kwargs.get(level) > 1:
-            self.callbacks['inter'][level](*args, **kwargs)
+        self.context_managers = {'_base': _dummy_context}
+        for level in self.levels:
+            if self._context_info[level]:
+                func_info, func_args, func_kwargs, already_contextmanager = self._context_info[level]
+                func = _load_func_reference(*func_info)
 
-        if level == '_base':
-            yield
+                if not already_contextmanager:
+                    func = contextmanager(func)
 
-        else:
-            self.callbacks['start'][level](*args, **kwargs)
+                self.context_managers[level] = functools.partial(func, *func_args, **func_kwargs)
 
-            with self.callbacks['context'][level](*args, **kwargs) as context_manager_output:
-                yield context_manager_output
-
-            self.callbacks['end'][level](*args, **kwargs)
+            else:
+                self.context_managers[level] = _dummy_context
 
 
 def _get_func_reference(func):
+    if '__wrapped__' in func.__dict__:
+        func = func.__wrapped__
     return os.path.basename(inspect.getsourcefile(func))[:-3], func.__name__
 
 
@@ -734,14 +672,6 @@ def _load_func_reference(module_name, func_name):
                         "directory, or otherwise importable.").format(func_name, module_name))
         raise
     return getattr(module, func_name)
-
-
-def _set_callback(func, *args, **kwargs):
-    return functools.partial(func, *args, **kwargs), (_get_func_reference(func), args, kwargs)
-
-
-def _get_callback(info):
-    return functools.partial(_load_func_reference(*info[0]), *info[1], **info[2])
 
 
 @contextmanager

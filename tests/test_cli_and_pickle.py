@@ -8,6 +8,7 @@ import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+from contextlib import contextmanager
 from numpy import isnan
 
 from experimentator import load_experiment
@@ -23,10 +24,22 @@ def check_session_data(session_data, persistent_data, **context):
     assert session_data['test']
 
 
+@contextmanager
+def participant_context(session_data, persistent_data, **context):
+    session_data['test'] = True
+    yield
+
+
+def block_context(session_data, persistent_data, **context):
+    if context['block'] > 1:
+        assert session_data['test']
+    yield
+
+
 def test_cli():
     exp = make_blocked_exp()
-    exp.set_start_callback('participant', set_session_data)
-    exp.set_inter_callback('block', check_session_data)
+    exp.set_context_manager('participant', participant_context, already_contextmanager=True)
+    exp.set_context_manager('block', block_context)
     exp.experiment_file = 'test.pkl'
     exp.save()
 

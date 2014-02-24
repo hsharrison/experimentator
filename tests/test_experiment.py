@@ -233,17 +233,20 @@ def inter_callback(level, session_data, persistent_data, **kwargs):
         session_data[level + 's_between'] = 1
 
 
+def context(*args, **kwargs):
+    start_callback(*args, **kwargs)
+    if kwargs[args[0]] > 1:
+        inter_callback(*args, **kwargs)
+    yield
+    end_callback(*args, **kwargs)
+
+
 def test_callbacks_and_data():
     exp = make_blocked_exp()
-    exp.set_start_callback('participant', start_callback, 'participant')
-    exp.set_start_callback('block', start_callback, 'block')
-    exp.set_end_callback('participant', end_callback, 'participant')
-    exp.set_end_callback('block', end_callback, 'block')
-    exp.set_inter_callback('participant', inter_callback, 'participant')
-    exp.set_inter_callback('block', inter_callback, 'block')
-    exp.set_inter_callback('trial', inter_callback, 'trial')
+    for level in ('participant', 'block', 'trial'):
+        exp.set_context_manager(level, context, level)
 
-    exp.persistent_data.update({level: level + 's_seen' for level in ('participant', 'block')})
+    exp.persistent_data.update({level: level + 's_seen' for level in ('participant', 'block', 'trial')})
     exp.run_section(exp.base_section)
 
     assert exp.session_data['blocks_between'] == 6 * 2 * (3-1)
