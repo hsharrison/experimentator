@@ -10,6 +10,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from contextlib import contextmanager
 from numpy import isnan
+import pytest
 
 from experimentator import load_experiment
 from experimentator.__main__ import main
@@ -90,7 +91,7 @@ def test_cli():
         else:
             assert isnan(row[1]['result'])
 
-    main(args='exp resume test.pkl participant 3 block 1'.split()[1:])
+    main(args='exp --debug resume test.pkl participant 3 block 1'.split()[1:])
     exp = load_experiment('test.pkl')
     for row in exp.data.iterrows():
         if row[0][0] <= 2 or row[0][:2] == (3, 1):
@@ -99,3 +100,13 @@ def test_cli():
             assert isnan(row[1]['result'])
 
     os.remove('test.pkl')
+
+
+def test_pickle_error():
+    exp = make_blocked_exp()
+    exp.set_context_manager('block', block_context, func_module='not_a_module')
+    exp.experiment_file = 'test.pkl'
+    exp.save()
+
+    with pytest.raises(ImportError):
+        main(args='exp run test.pkl --next participant'.split()[1:])
