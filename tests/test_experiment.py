@@ -51,7 +51,7 @@ def make_manual_exp():
 def test_construction():
     exp = make_simple_exp()
     assert exp.tree.levels_and_designs[0][0] == exp.base_section.level == '_base'
-    assert exp.levels == type(exp.levels)([exp.base_section[0].level, exp.base_section[0][0].level]) \
+    assert exp.levels == type(exp.levels)([exp.base_section[1].level, exp.base_section[1][1].level]) \
         == type(exp.levels)(['participant', 'trial'])
 
 
@@ -147,18 +147,19 @@ def test_find_section():
 def test_find_parents():
     exp = make_manual_exp()
     assert list(exp.parents(exp.section(participant=1))) == []
-    assert list(exp.parents(exp.section(participant=1, block=2))) == [exp.base_section[0]]
-    assert list(exp.parents(exp.section(participant=1, block=2, trial=3))) == [exp.base_section[0], exp.base_section[0][1]]
+    assert list(exp.parents(exp.section(participant=1, block=2))) == [exp.base_section[1]]
+    assert list(exp.parents(exp.section(participant=1, block=2, trial=3))) == \
+        [exp.base_section[1], exp.base_section[1][2]]
 
 
 def test_find_first_not_run():
     exp = make_simple_exp()
-    exp.run_section(exp.base_section[0])
-    assert exp.find_first_not_run('participant') is exp.base_section[1]
-    assert exp.find_first_not_run('trial') is exp.base_section[1][0]
+    exp.run_section(exp.base_section[1])
+    assert exp.find_first_not_run('participant') is exp.base_section[2]
+    assert exp.find_first_not_run('trial') is exp.base_section[2][1]
     assert exp.find_first_not_run('trial', starting_at=exp.section(participant=1)) is None
-    assert exp.find_first_not_run('trial', starting_at=exp.section(participant=2)) is exp.base_section[1][0]
-    assert exp.find_first_not_run('trial', starting_at=exp.section(participant=3)) is exp.base_section[2][0]
+    assert exp.find_first_not_run('trial', starting_at=exp.section(participant=2)) is exp.base_section[2][1]
+    assert exp.find_first_not_run('trial', starting_at=exp.section(participant=3)) is exp.base_section[3][1]
 
 
 def test_run_from():
@@ -182,7 +183,7 @@ def test_resume():
     assert not exp.section(participant=1, block=2).has_started and not exp.section(participant=1, block=2).has_finished
     assert exp.find_first_not_run('participant') is exp.section(participant=2)
     assert exp.find_first_not_run('participant', by_started=False) is exp.section(participant=1)
-    assert exp.find_first_partially_run('participant') is exp.base_section[0]
+    assert exp.find_first_partially_run('participant') is exp.base_section[1]
 
     with pytest.raises(ValueError):
         exp.resume_section(exp.section(participant=1, block=2, trial=1))

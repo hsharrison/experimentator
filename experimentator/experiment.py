@@ -257,7 +257,7 @@ class Experiment():
         for level in self.levels:
             if level in section_numbers:
                 logger.debug('Found specified {}.'.format(level))
-                node = node.children[section_numbers[level]-1]
+                node = node[section_numbers[level]]
             else:
                 logger.info('No {} specified, returning to previous level.'.format(level))
                 break
@@ -312,19 +312,19 @@ class Experiment():
 
             if isinstance(numbers, int):  # Only one number specified.
                 if section_numbers:  # We're not done.
-                    yield from self.all_sections(_section=section[numbers-1], **section_numbers)
+                    yield from self.all_sections(_section=section[numbers], **section_numbers)
                 else:  # We're done.
-                    yield section[numbers-1]
+                    yield section[numbers]
 
             else:  # Multiple numbers specified.
                 if section_numbers:  # We're not done.
                     for n in numbers:
-                        yield from self.all_sections(_section=section[n-1], **section_numbers)
+                        yield from self.all_sections(_section=section[n], **section_numbers)
                 else:  # We're done.
-                    yield from (section[n-1] for n in numbers)
+                    yield from (section[n] for n in numbers)
         else:
             # Section not specified but we're not done; descend into every child.
-            for child in section.children:
+            for child in section:
                 yield from self.all_sections(_section=child, **section_numbers)
 
     def find_first_not_run(self, at_level, by_started=True, starting_at=None):
@@ -463,7 +463,7 @@ class Experiment():
                         section.add_data(**results)
 
                 else:  # Not bottom level.
-                    for next_section in section[from_section[0]-1:]:
+                    for next_section in section[from_section[0]:]:
                         self.run_section(
                             next_section, demo=demo, parent_callbacks=False, from_section=next_from_section)
 

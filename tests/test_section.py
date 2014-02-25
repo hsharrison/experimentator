@@ -16,30 +16,46 @@ def make_tree(levels, data):
 def test_constructor():
     section = ExperimentSection(make_tree(['session', 'block', 'trial'], {}), ChainMap())
     assert len(section) == 3*2
-    assert len(section[0].children) == 3*2
+    assert len(section[1]) == 3*2
     assert section.level == 'session'
-    assert section[0].level == 'block'
-    assert section.children[0].children[0].level == 'trial'
-    assert section.children[0][0].is_bottom_level
+    assert section[1].level == 'block'
+    assert section[1][1].level == 'trial'
+    assert section[1][1].is_bottom_level
     assert not section.is_bottom_level
-    first_trial_data = section[0][0].data
+    first_trial_data = section[1][1].data
     assert first_trial_data['block'] == first_trial_data['trial'] == 1
+
+    assert list(reversed(section)) == [section[i] for i in reversed(range(1, 7))]
+    first_block = section[1]
+    second_block = section[1]
+    assert first_block in section
+    del section[1]
+    assert first_block not in section
+    assert second_block.data['block'] == 1
+    section[2] = first_block
+    assert first_block.data['block'] == 2
+
+    with pytest.raises(IndexError):
+        not_a_section = section[0]
+
+    with pytest.raises(IndexError):
+        not_a_section = section[0:]
 
 
 def test_appending_tree():
     section = ExperimentSection(make_tree(['session', 'block', 'trial'], {}), ChainMap())
     section.append_design_tree(make_tree(['block-test', 'trial-test'], {'foo': 'bar'}), to_start=True)
     assert len(section) == 10
-    assert len(section[0]) == 4
-    assert len(section.children[4]) == 6
-    assert section[0].level == 'block-test'
-    assert section.children[0][0].level == 'trial-test'
-    assert section[0].data['foo'] == 'bar'
-    assert section[0][0].data['foo'] == 'bar'
-    assert section.children[0][0].data['trial-test'] == 1
-    assert section[4].data['block'] == 1
+    assert len(section[1]) == 4
+    assert len(section[5]) == 6
+    assert section[1].level == 'block-test'
+    assert section[1][1].level == 'trial-test'
+    assert section[1].data['foo'] == 'bar'
+    assert section[1][1].data['foo'] == 'bar'
+    assert section[1][1].data['trial-test'] == 1
+    assert section[5].data['block'] == 1
     section.append_design_tree(make_tree(['block', 'trial'], {'foo': 'bar'}), to_start=True)
-    assert section[8].data['block'] == 5
+    assert section[9].data['block'] == 5
 
     with pytest.raises(ValueError):
         section.append_design_tree(make_tree(['session', 'block', 'trial'], {}), ChainMap())
@@ -55,10 +71,10 @@ def test_append_child():
     for trial in section[-1]:
         yield check_test_data, trial
 
-    section[0].append_child(to_start=True, test=True)
-    yield check_test_data, section[0][0]
-    assert len(section[0]) == 7
-    assert [trial.data['trial'] for trial in section[0]] == list(range(1, 8))
+    section[1].append_child(to_start=True, test=True)
+    yield check_test_data, section[1][1]
+    assert len(section[1]) == 7
+    assert [trial.data['trial'] for trial in section[1]] == list(range(1, 8))
 
 
 def check_test_data(section):
