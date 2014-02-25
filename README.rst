@@ -96,15 +96,6 @@ Version control
 
 Experimentator is hosted on both `GitHub <https://github.com/hsharrison/experimentator>`_ and `BitBucket <https://bitbucket.org/hharrison/experimentator>`_. The Mercurial repository (BitBucket) is considered canonical.
 
-From PyPi
-^^^^^^^^^
-
-Assuming you are in a Python 3 virtual environment, for the latest stable release run:
-
-.. code-block:: bash
-
-    pip install -U experimentator
-
 From source
 ^^^^^^^^^^^
 
