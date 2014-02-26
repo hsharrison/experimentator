@@ -256,10 +256,8 @@ class Experiment():
         node = self.base_section
         for level in self.levels:
             if level in section_numbers:
-                logger.debug('Found specified {}.'.format(level))
                 node = node[section_numbers[level]]
             else:
-                logger.info('No {} specified, returning to previous level.'.format(level))
                 break
 
         return node
