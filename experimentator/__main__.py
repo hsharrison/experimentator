@@ -34,7 +34,7 @@ Commands:
 
 """
 import sys
-import os.path
+import os
 import logging
 from docopt import docopt
 from schema import Schema, Use, And, Or, Optional
@@ -43,6 +43,9 @@ from experimentator import __version__, load_experiment, run_experiment_section,
 
 
 def main(args=None):
+    # I can't figure out why but this is necessary.
+    sys.path.insert(0, os.getcwd())
+
     scheme = Schema({Optional('--debug'): bool,
                      Optional('--demo'): bool,
                      Optional('--help'): bool,
@@ -85,7 +88,3 @@ def main(args=None):
 
     elif options['export']:
         export_experiment_data(options['<exp-file>'], options['<data-file>'])
-
-if __name__ == '__main__':
-    main(sys.argv)
-    sys.exit(0)
