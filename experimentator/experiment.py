@@ -669,7 +669,7 @@ def _load_func_reference(module_name, func_name):
         module = import_module(module_name)
     except ImportError:
         logger.warning(("The original source of the callback '{}', '{}', doesn't seem to be in the current " +
-                        "directory, or otherwise importable.").format(func_name, module_name))
+                        "directory {}, or otherwise importable.").format(func_name, module_name, os.getcwd()))
         raise
     return getattr(module, func_name)
 
