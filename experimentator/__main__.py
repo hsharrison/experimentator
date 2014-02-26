@@ -43,7 +43,7 @@ from experimentator import __version__, load_experiment, run_experiment_section,
 
 
 def main(args=None):
-    # I can't figure out why but this is necessary.
+    # The console script created by setuptools takes the cwd off the path.
     sys.path.insert(0, os.getcwd())
 
     scheme = Schema({Optional('--debug'): bool,
