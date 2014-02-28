@@ -6,10 +6,12 @@ import pandas as pd
 import pytest
 
 from experimentator import Design, DesignTree, ExperimentSection
+from experimentator.order import Ordering
 
 
 def make_tree(levels, data):
-    designs = [[Design([('a', range(len(levels))), ('b', [False, True])], extra_data=data)] for _ in levels]
+    designs = [[Design([('a', range(len(levels))), ('b', [False, True])], extra_data=data, ordering=Ordering())]
+               for _ in levels]
     return DesignTree(list(zip(levels, designs)))
 
 
@@ -96,3 +98,8 @@ def test_data():
     data = pd.DataFrame(section.generate_data()).set_index(['block', 'trial'])
     assert int(sum(data['a'] == 0)) == int(sum(data['a'] == 1)) == int(sum(data['a'] == 2)) == 6*6//3
     assert int(sum(data['b'])) == int(sum(-data['b'])) == 6*6//2
+
+
+def test_repr():
+    section = ExperimentSection(make_tree(['session', 'block', 'trial'], {}), ChainMap())
+    assert section == eval(section.__repr__())

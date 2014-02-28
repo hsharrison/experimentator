@@ -9,6 +9,7 @@ from copy import copy
 import numpy as np
 
 from experimentator.order import Shuffle
+from collections import ChainMap
 
 
 class Design():
@@ -66,6 +67,10 @@ class Design():
     def __repr__(self):
         return 'Design(ivs={}, design_matrix={}, ordering={}, extra_data={})'.format(
             list(zip(self.iv_names, self.iv_values)), self.design_matrix, self.ordering, self.extra_data)
+
+    def __eq__(self, other):
+        if isinstance(other, type(self)):
+            return self.__dict__ == other.__dict__
 
     def get_order(self, data=None):
         order = self.ordering.get_order(data)
@@ -222,6 +227,10 @@ class DesignTree():
 
     def __getitem__(self, item):
         return self.levels_and_designs[item]
+
+    def __eq__(self, other):
+        if isinstance(other, type(self)):
+            return self.__dict__ == other.__dict__
 
     def add_base_level(self):
         """Add base level to tree.

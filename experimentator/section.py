@@ -81,6 +81,10 @@ class ExperimentSection():
     def __repr__(self):
         return 'ExperimentSection({}, {})'.format(self.tree.__repr__(), self.data.__repr__())
 
+    def __eq__(self, other):
+        if isinstance(other, type(self)):
+            return self.__dict__ == other.__dict__
+
     def append_design_tree(self, tree, to_start=False, _renumber=True):
         """Append sections to this section's children.
 
