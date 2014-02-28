@@ -192,10 +192,7 @@ class NonAtomicOrdering(Ordering):
         iv_values : seq
             The possible values of the IV. Empty for atomic orderings.
         """
-        if self.order_ivs:
-            return self.iv_name, list(self.order_ivs.keys())
-        else:
-            return (), ()
+        return self.iv_name, list(self.order_ivs.keys())
 
     def get_order(self, data=None):
         """Order the conditions.
