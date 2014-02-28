@@ -114,6 +114,10 @@ class Ordering():
         else:
             yield from itertools.permutations(conditions)
 
+    def __eq__(self, other):
+        if isinstance(other, type(self)):
+            return self.__dict__ == other.__dict__
+
 
 class Shuffle(Ordering):
     """Randomly shuffle the conditions.
@@ -299,7 +303,7 @@ class Sorted(NonAtomicOrdering):
         self.order = order
 
     def __repr__(self):
-        return '{}(number={}, order={})'.format(self.__class__.__name__, self.number, self.order)
+        return "{}(number={}, order='{}')".format(self.__class__.__name__, self.number, self.order)
 
     def first_pass(self, conditions):
         """First pass of order.

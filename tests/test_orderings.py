@@ -166,3 +166,12 @@ def test_latin_square_repeat():
         ord = o.get_order({iv_name: iv_value})
         assert ord[:len(ord)//2] == ord[len(ord)//2:]
         yield check_latin_square_row, ord[:len(ord)//2]
+
+
+def check_repr(obj):
+    assert obj == eval(obj.__repr__())
+
+
+def test_reprs():
+    for ord in (CompleteCounterbalance(), Shuffle(), LatinSquare(), Ordering(), Sorted()):
+        yield check_repr, ord
