@@ -13,7 +13,7 @@ from numpy import isnan
 import pytest
 
 from experimentator import load_experiment
-from experimentator.__main__ import main
+from experimentator.cli import main
 from tests.test_experiment import make_blocked_exp, check_trial
 
 

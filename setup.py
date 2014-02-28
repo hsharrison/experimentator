@@ -67,7 +67,7 @@ setup(name='experimentator',
           'Topic :: Utilities',
       ],
       entry_points={
-          'console_scripts': ['exp = experimentator.__main__:main'],
+          'console_scripts': ['exp = experimentator.cli:main'],
       },
       install_requires=['docopt>=0.6.1'],
       tests_require=['pytest'],
