@@ -9,7 +9,7 @@ from experimentator import Design, DesignTree, ExperimentSection
 
 
 def make_tree(levels, data):
-    designs = [[Design([('a', range(len(levels))), ('b', [False, True])], **data)] for _ in levels]
+    designs = [[Design([('a', range(len(levels))), ('b', [False, True])], extra_data=data)] for _ in levels]
     return DesignTree(list(zip(levels, designs)))
 
 
@@ -63,15 +63,15 @@ def test_appending_tree():
 
 def test_append_child():
     section = ExperimentSection(make_tree(['session', 'block', 'trial'], {}), ChainMap())
-    section.append_child(test=True)
+    section.append_child(dict(test=True))
     yield check_test_data, section[-1]
     assert section[-1].data['block'] == 7
 
-    section[-1].append_child(tree=next(next(section.tree)))
+    section[-1].append_child(dict(tree=next(next(section.tree))))
     for trial in section[-1]:
         yield check_test_data, trial
 
-    section[1].append_child(to_start=True, test=True)
+    section[1].append_child(dict(test=True), to_start=True)
     yield check_test_data, section[1][1]
     assert len(section[1]) == 7
     assert [trial.data['trial'] for trial in section[1]] == list(range(1, 8))
@@ -83,7 +83,7 @@ def check_test_data(section):
 
 def test_add_data():
     section = ExperimentSection(make_tree(['session', 'block', 'trial'], {}), ChainMap())
-    section.add_data(test=True)
+    section.add_data(dict(test=True))
     yield check_test_data, section
     for block in section:
         yield check_test_data, block

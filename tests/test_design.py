@@ -122,10 +122,10 @@ def test_design_matrix_with_continuous_iv():
 
 def check_design(design, iv_names, iv_values, n, data, matrix):
     assert set(design.iv_names) == set(iv_names)
-    assert len(design.get_order(**data)) == n
+    assert len(design.get_order(data)) == n
 
     ivs = dict(zip(iv_names, iv_values))
-    for condition in design.get_order(**data):
+    for condition in design.get_order(data):
         for iv, value in condition.items():
             if matrix is not None:
                 assert value in matrix

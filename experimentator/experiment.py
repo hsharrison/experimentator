@@ -150,7 +150,7 @@ class Experiment():
         session. This is the first positional argument for every callback, and a good place to store external resources
         that aren't picklable but can be loaded in a start callback. Anything yielded by a context manager will be saved
         here, in `session_data['as'][level]`. Note that this dictionary is emptied before pickling the `Experiment`.
-    persistent_data : dict
+    experiment_dat : dict
         A dictionary where data can be stored that is persistent across Python sessions. Everything here must be
         picklable.
 
@@ -171,7 +171,7 @@ class Experiment():
         self._callback_info = None
 
         self.session_data = {'as': {}}
-        self.persistent_data = {}
+        self.experiment_data = {}
 
     def __repr__(self):
         return 'Experiment({}, experiment_file={})'.format(self.tree.__repr__(), self.experiment_file)
@@ -444,21 +444,23 @@ class Experiment():
                 if parent_callbacks:
                     logger.debug('Entering {} with data {}...'.format(parent.level, parent.data))
                     stack.enter_context(self.context_managers[parent.level](
-                        self.session_data, self.persistent_data, **parent.data))
+                        parent.data, session_data=self.session_data, experiment_data=self.experiment_data))
 
             # Back to the regular behavior.
-            with self.context_managers[section.level](self.session_data, self.persistent_data, **section.data) as \
+            with self.context_managers[section.level](
+                    section.data, session_data=self.session_data, experiment_data=self.experiment_data) as \
                     self.session_data['as'][section.level]:
 
                 if not demo:
                     section.has_started = True
 
                 if section.is_bottom_level:
-                    results = self.run_callback(self.session_data, self.persistent_data, **section.data)
+                    results = self.run_callback(
+                        section.data, session_data=self.session_data, experiment_data=self.experiment_data)
                     logger.debug('Results: {}.'.format(results))
 
                     if not demo:
-                        section.add_data(**results)
+                        section.add_data(results)
 
                 else:  # Not bottom level.
                     for next_section in section[from_section[0]:]:

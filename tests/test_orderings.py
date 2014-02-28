@@ -5,7 +5,7 @@ from math import factorial
 from itertools import product
 import pytest
 
-import experimentator.order as order
+from experimentator.order import Shuffle, LatinSquare, Ordering, CompleteCounterbalance, Sorted
 
 CONDITIONS_3 = [{'a': c} for c in range(3)]
 
@@ -51,7 +51,7 @@ def check_ordering(o, n_conditions):
 def test_ordering():
     for n in range(1, 6, 2):
         for conditions in (CONDITIONS_3, CONDITIONS_6, CONDITIONS_2_3, CONDITIONS_2_3_2):
-            o = order.Ordering(n)
+            o = Ordering(n)
             o.first_pass(conditions)
             yield check_ordering, o, len(conditions)
 
@@ -70,11 +70,11 @@ def check_repeats(conditions):
 def test_shuffle():
     for n in range(1, 6, 2):
         for conditions in (CONDITIONS_6, CONDITIONS_2_3, CONDITIONS_2_3_2):
-            o = order.Shuffle(number=n)
+            o = Shuffle(number=n)
             o.first_pass(conditions)
             yield check_shuffle, o, len(conditions)
 
-            o = order.Shuffle(n, avoid_repeats=True)
+            o = Shuffle(n, avoid_repeats=True)
             o.first_pass(conditions)
             yield check_shuffle, o, len(conditions)
             yield check_repeats, o.get_order()
@@ -82,7 +82,7 @@ def test_shuffle():
 
 def check_unique(o, iv_values):
     iv_combinations = set(product(iv_values, repeat=2)) - {(iv_value, iv_value) for iv_value in iv_values}
-    assert not any(o.get_order(**{o.iv_name: one_iv_value}) == o.get_order(**{o.iv_name: another_iv_value})
+    assert not any(o.get_order({o.iv_name: one_iv_value}) == o.get_order({o.iv_name: another_iv_value})
                    for one_iv_value, another_iv_value in iv_combinations)
 
 
@@ -92,27 +92,27 @@ def check_counterbalance_number(o, n_conditions, iv_values, n_repeats):
 
 def test_counterbalance():
     for n in range(1, 3):
-        o = order.CompleteCounterbalance(n)
+        o = CompleteCounterbalance(n)
         _, iv_values = o.first_pass(CONDITIONS_3)
         yield check_unique, o, iv_values
         yield check_counterbalance_number, o, len(CONDITIONS_3), iv_values, 1
 
-    o = order.CompleteCounterbalance()
+    o = CompleteCounterbalance()
     _, iv_values = o.first_pass(CONDITIONS_2_2)
     yield check_unique, o, iv_values
     yield check_counterbalance_number, o, len(CONDITIONS_2_2), iv_values, 1
 
-    o = order.CompleteCounterbalance()
+    o = CompleteCounterbalance()
     _, iv_values = o.first_pass(CONDITIONS_WITH_REPEAT)
     yield check_unique, o, iv_values
     yield check_counterbalance_number, o, len(CONDITIONS_WITH_REPEAT), iv_values, 2
 
 
 def check_sorted(o, n_conditions):
-    assert len(o.get_order(**{o.iv_name: 'ascending'})) == n_conditions * o.number
+    assert len(o.get_order({o.iv_name: 'ascending'})) == n_conditions * o.number
     if o.order == 'both':
         print(o.iv_name)
-        assert o.get_order(**{o.iv_name: 'ascending'}) == list(reversed(o.get_order(**{o.iv_name: 'descending'})))
+        assert o.get_order({o.iv_name: 'ascending'}) == list(reversed(o.get_order({o.iv_name: 'descending'})))
     elif o.order == 'ascending':
         assert o.get_order() == o.get_order()
         assert sorted(o.get_order(), key=lambda x: list(x.values())[0]) == o.get_order()
@@ -125,13 +125,13 @@ def test_sorted():
     for n in range(1, 3):
         for conditions in (CONDITIONS_3, CONDITIONS_6):
             for sort in ('both', 'ascending', 'descending'):
-                o = order.Sorted(n, order=sort)
+                o = Sorted(n, order=sort)
                 o.first_pass(conditions)
                 yield check_sorted, o, len(conditions)
 
     for conditions in (CONDITIONS_2_2, CONDITIONS_2_3, CONDITIONS_2_3_2):
         with pytest.raises(ValueError):
-            o = order.Sorted()
+            o = Sorted()
             o.first_pass(conditions)
 
 
@@ -145,9 +145,9 @@ def test_latin_square():
             for balanced in (True, False):
                 if balanced and uniform:
                     with pytest.raises(ValueError):
-                        order.LatinSquare(balanced=balanced, uniform=uniform)
+                        LatinSquare(balanced=balanced, uniform=uniform)
                 else:
-                    o = order.LatinSquare(balanced=balanced, uniform=uniform)
+                    o = LatinSquare(balanced=balanced, uniform=uniform)
                     if balanced and len(conditions) % 2:
                         with pytest.raises(ValueError):
                             o.first_pass(conditions)
@@ -155,14 +155,14 @@ def test_latin_square():
                         iv_name, iv_values = o.first_pass(conditions)
                         yield check_unique, o, iv_values
                         for iv_value in iv_values:
-                            yield check_latin_square_row, o.get_order(**{iv_name: iv_value})
+                            yield check_latin_square_row, o.get_order({iv_name: iv_value})
 
 
 def test_latin_square_repeat():
-    o = order.LatinSquare(2)
+    o = LatinSquare(2)
     iv_name, iv_values = o.first_pass(CONDITIONS_2_2)
     yield check_unique, o, iv_values
     for iv_value in iv_values:
-        ord = o.get_order(**{iv_name: iv_value})
+        ord = o.get_order({iv_name: iv_value})
         assert ord[:len(ord)//2] == ord[len(ord)//2:]
         yield check_latin_square_row, ord[:len(ord)//2]

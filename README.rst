@@ -39,7 +39,9 @@ To demonstrate, let's build a 2x3 factorial within-subjects experiment:
     from experimentator.api import within_subjects_experiment
     from experimentator.order import Shuffle
 
-    def present_stimulus(session_data, experiment_data, congruent=False, display_time=0.1, **context):
+    def present_stimulus(trial_data, **_):
+        congruent = trial_data['congruent']
+        display_time = trial_data['display_time']
         # The interesting part goes here.
         # Let's imagine a stimulus is presented, and a response is collected.
         return {'reaction_time': rt, 'correct': response==answer}
@@ -55,7 +57,7 @@ To demonstrate, let's build a 2x3 factorial within-subjects experiment:
         distractor_experiment.set_run_callback(present_stimulus)
         distractor_experiment.save()
 
-This experiment has two independent variables, ``'congruent'`` with two levels, and ``'display_time'`` with three, for a total of six conditions (ignore, for now, the other elements of the function's signature). It has 20 participants, though more can be added later. The conditions are shuffled, with each appearing 10 times.
+This experiment has two independent variables, ``'congruent'`` with two levels, and ``'display_time'`` with three, for a total of six conditions (ignore, for now, the ``**_`` in the callback's signature). It has 20 participants, though more can be added later. The conditions are shuffled, with each appearing 10 times.
 
 Running the above script creates ``distractor.dat``. From there, we can run sessions of the experiment straight from the command line, using the entry point ``exp``, automatically installed with experimentator:
 

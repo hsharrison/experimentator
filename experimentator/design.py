@@ -36,13 +36,12 @@ class Design():
     ordering : Ordering instance, optional
         An instance of an `experimentator.order.Ordering` subclass, defining the behavior for duplicating and ordering
         the conditions of the `Design`. If no `ordering` is given, the default is `experimentator.order.Shuffle()`.
-    **extra_data
-        Arbitrary keyword arguments that will be included in the data of `ExperimentSection` instances created under
-        this `Design`. For example, if the keyword argument `practice=True`, any `ExperimentSection` objects resulting
-        from this `Design` will have `{'practice': True}` as an element of their `data` attribute.
+    extra_data : dict, optional
+        Dictionary elements that will be included in the data of `ExperimentSection` instances created under this
+        `Design`.
 
     """
-    def __init__(self, ivs=None, design_matrix=None, ordering=None, **extra_data):
+    def __init__(self, ivs=None, design_matrix=None, ordering=None, extra_data=None):
         if isinstance(ivs, dict):
             ivs = list(ivs.items())
         if ivs:
@@ -54,7 +53,7 @@ class Design():
             self.iv_values = []
 
         self.design_matrix = design_matrix
-        self.extra_data = extra_data
+        self.extra_data = extra_data or {}
 
         if ordering:
             self.ordering = ordering
@@ -65,11 +64,11 @@ class Design():
             raise TypeError('Must specify a design matrix if using continuous IVs (values=None)')
 
     def __repr__(self):
-        return 'Design(ivs={}, design_matrix={}, ordering={}, **{})'.format(
+        return 'Design(ivs={}, design_matrix={}, ordering={}, extra_data={})'.format(
             list(zip(self.iv_names, self.iv_values)), self.design_matrix, self.ordering, self.extra_data)
 
-    def get_order(self, **data):
-        order = self.ordering.get_order(**data)
+    def get_order(self, data=None):
+        order = self.ordering.get_order(data)
         for condition in order:
             condition.update(self.extra_data)
         return order

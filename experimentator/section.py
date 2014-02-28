@@ -108,18 +108,18 @@ class ExperimentSection():
 
         if to_start:
             for design in reversed(designs):
-                for new_data in reversed(design.get_order(**self.data)):
-                    self.append_child(tree=tree, to_start=True, _renumber=False, **new_data)
+                for new_data in reversed(design.get_order(self.data)):
+                    self.append_child(new_data, tree=tree, to_start=True, _renumber=False)
 
         else:
             for design in designs:
-                for new_data in design.get_order(**self.data):
-                    self.append_child(tree=tree, _renumber=False, **new_data)
+                for new_data in design.get_order(self.data):
+                    self.append_child(new_data, tree=tree, _renumber=False)
 
         if _renumber:
             self._number_children()
 
-    def append_child(self, tree=None, to_start=False, _renumber=True, **data):
+    def append_child(self, data, tree=None, to_start=False, _renumber=True):
         """Append a single section to this section's children.
 
         This method appends a single section to the `ExperimentSection` instance. In the process, its children are
@@ -127,16 +127,15 @@ class ExperimentSection():
 
         Arguments
         ---------
+        data : dict
+            Data to be included in the new section's `ExperimentSection.data` `ChainMap`. Should include values of IVs
+            at the section's level, for example.
         tree : DesignTree, optional
             If given, the section will be appended from the top level of `tree`. If not passed, the tree of the current
-            section will be used. Note that this does not affect IV values; IV values must be passed in `**data` as
-            keyword arguments.
+            section will be used. Note that this does not affect IV values; IV values must be included in `data`.
         to_start : bool, optional
             If true, the section will be appended to the beginning of the section. If False (the default), it will be
             appended to the end.
-        **data
-            Arbitrary keywords to be included in the new section's `ExperimentSection.data` `ChainMap`. Should include
-            values of IVs at the section's level, for example.
 
         Note
         ----
@@ -168,7 +167,7 @@ class ExperimentSection():
             for i, child in enumerate(children_at_level):
                 child.data.update({level: i + 1})
 
-    def add_data(self, **data):
+    def add_data(self, data):
         """Add data.
 
         This method updates the `ExperimentSection.data` `ChainMap` according to the items in `data`. Use this, for
@@ -177,8 +176,8 @@ class ExperimentSection():
 
         Arguments
         ---------
-        **data
-            Arbitrary keyword arguments to be included in the `ExperimentSection.data` `ChainMap`.
+        data : dict
+            Elements to be included in the `ExperimentSection.data` `ChainMap`.
 
         """
         self.data.update(data)

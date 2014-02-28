@@ -17,21 +17,21 @@ from experimentator.cli import main
 from tests.test_experiment import make_blocked_exp, check_trial
 
 
-def set_session_data(session_data, persistent_data, **data):
+def set_session_data(data, session_data, **_):
     session_data['test'] = True
 
 
-def check_session_data(session_data, persistent_data, **data):
+def check_session_data(data, session_data, **_):
     assert session_data['test']
 
 
 @contextmanager
-def participant_context(session_data, persistent_data, **data):
+def participant_context(data, session_data, **_):
     session_data['test'] = True
     yield
 
 
-def block_context(session_data, persistent_data, **data):
+def block_context(data, session_data, **_):
     if data['block'] > 1:
         assert session_data['test']
     yield

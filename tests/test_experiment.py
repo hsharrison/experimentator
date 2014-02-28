@@ -8,7 +8,9 @@ from experimentator.order import Shuffle, CompleteCounterbalance
 from experimentator import Design, DesignTree, Experiment
 
 
-def trial(*args, a, b, **kwargs):
+def trial(data, **_):
+    a = data['a']
+    b = data['b']
     return {'result': (b+1)**2 if a else b}
 
 
@@ -97,7 +99,7 @@ def test_demo_mode():
 
 
 def check_trial(row):
-    assert trial({}, {}, **row[1])['result'] == row[1]['result']
+    assert trial(row[1])['result'] == row[1]['result']
 
 
 def test_data_after_running():
@@ -208,38 +210,38 @@ def test_finished_section_detection():
     assert exp.section(participant=1).has_finished
 
 
-def start_callback(level, session_data, persistent_data, **kwargs):
+def start_callback(level, data, session_data, experiment_data):
     if level + 's_started' in session_data:
         session_data[level + 's_started'] += 1
     else:
         session_data[level + 's_started'] = 1
 
-    if persistent_data[level] in session_data:
-        session_data[persistent_data[level]].add(kwargs[level])
+    if experiment_data[level] in session_data:
+        session_data[experiment_data[level]].add(data[level])
     else:
-        session_data[persistent_data[level]] = {kwargs[level]}
+        session_data[experiment_data[level]] = {data[level]}
 
 
-def end_callback(level, session_data, persistent_data, **kwargs):
+def end_callback(level, data, session_data, **_):
     if level + 's_ended' in session_data:
         session_data[level + 's_ended'] += 1
     else:
         session_data[level + 's_ended'] = 1
 
 
-def inter_callback(level, session_data, persistent_data, **kwargs):
+def inter_callback(level, data, session_data, **_):
     if level + 's_between' in session_data:
         session_data[level + 's_between'] += 1
     else:
         session_data[level + 's_between'] = 1
 
 
-def context(*args, **kwargs):
-    start_callback(*args, **kwargs)
-    if kwargs[args[0]] > 1:
-        inter_callback(*args, **kwargs)
+def context(level, data, **kwargs):
+    start_callback(level, data, **kwargs)
+    if data[level] > 1:
+        inter_callback(level, data, **kwargs)
     yield
-    end_callback(*args, **kwargs)
+    end_callback(level, data, **kwargs)
 
 
 def test_callbacks_and_data():
@@ -247,7 +249,7 @@ def test_callbacks_and_data():
     for level in ('participant', 'block', 'trial'):
         exp.set_context_manager(level, context, level)
 
-    exp.persistent_data.update({level: level + 's_seen' for level in ('participant', 'block', 'trial')})
+    exp.experiment_data.update({level: level + 's_seen' for level in ('participant', 'block', 'trial')})
     exp.run_section(exp.base_section)
 
     assert exp.session_data['blocks_between'] == 6 * 2 * (3-1)

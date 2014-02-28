@@ -65,7 +65,7 @@ class Ordering():
 
         return (), ()
 
-    def get_order(self, **data):
+    def get_order(self, data=None):
         """Get an order of conditions.
 
         This is the method that is called to get an order of conditions. In this case, the conditions are always
@@ -73,8 +73,8 @@ class Ordering():
 
         Arguments
         ---------
-        **data
-            Arbitrary keyword arguments describing the data of the parent section. Unused for atomic orderings.
+        data : dict, optional
+            A dictionary describing the data of the parent section. Unused for atomic orderings.
 
         Returns
         -------
@@ -135,7 +135,7 @@ class Shuffle(Ordering):
     def __repr__(self):
         return '{}(number={}, avoid_repeats={})'.format(self.__class__.__name__, self.number, self.avoid_repeats)
 
-    def get_order(self, **data):
+    def get_order(self, data=None):
         """Order the conditions.
 
         This is the method that is called to get an order of conditions. In this case, a different, random order is
@@ -169,7 +169,7 @@ class NonAtomicOrdering(Ordering):
     avoid name clashes with other IVs.
 
     """
-    iv_name = '_order'
+    iv_name = 'order'
 
     def __init__(self, number=1):
         super().__init__(number=number)
@@ -193,7 +193,7 @@ class NonAtomicOrdering(Ordering):
         else:
             return (), ()
 
-    def get_order(self, **data):
+    def get_order(self, data=None):
         """Order the conditions.
 
         This is the method that is called to get an order of conditions. For non-atomic orderings, the order will depend
@@ -201,9 +201,9 @@ class NonAtomicOrdering(Ordering):
 
         Arguments
         ---------
-        **data
-            Arbitrary keyword arguments describing the data of the parent section. For non-atomic orderings, one of
-            these keyword arguments will determine the order to be used.
+        data : dict
+            A dictionary describing the data of the parent section. For non-atomic orderings, one of its elements will
+            determine the order to be used.
 
         Returns
         -------
@@ -236,7 +236,7 @@ class CompleteCounterbalance(NonAtomicOrdering):
     unique orders.
 
     """
-    iv_name = '_counterbalance_order'
+    iv_name = 'counterbalance_order'
 
     def first_pass(self, conditions):
         """First pass of order.
@@ -292,7 +292,7 @@ class Sorted(NonAtomicOrdering):
     To avoid ambiguity, `Sorted` can only be used at levels containing only one IV.
 
     """
-    iv_name = '_sorted_order'
+    iv_name = 'sorted_order'
 
     def __init__(self, number=1, order='both'):
         super().__init__(number=number)
@@ -339,7 +339,7 @@ class Sorted(NonAtomicOrdering):
         else:
             return (), ()
 
-    def get_order(self, **data):
+    def get_order(self, data=None):
         """Order the conditions.
 
         This is the method that is called to get an order of conditions. In this case, a sorted order is returned. If
@@ -347,9 +347,9 @@ class Sorted(NonAtomicOrdering):
 
         Arguments
         ---------
-        **data
-            Arbitrary keyword arguments describing the data of the parent section. In this case, only the IV
-            ``'_sorted_order'`` is relevant.
+        data : dict
+            A dictionary describing the data of the parent section. In this case, only the key ``'sorted_order'`` is
+            relevant.
 
         Returns
         -------
@@ -398,7 +398,7 @@ class LatinSquare(NonAtomicOrdering):
     details, see `latin_square` and `balanced_latin_square`.
 
     """
-    iv_name = '_latin_square_row'
+    iv_name = 'latin_square_row'
 
     def __init__(self, number=1, balanced=True, uniform=False):
         if balanced and uniform:
