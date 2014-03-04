@@ -250,7 +250,7 @@ class Experiment(ExperimentSection):
                 parent.has_started = True
                 if parent_callbacks:
                     logger.debug('Entering {} with data {}...'.format(parent.level, parent.data))
-                    stack.enter_context(self.context_managers[parent.level](
+                    self.session_data['as'][parent.level] = stack.enter_context(self.context_managers[parent.level](
                         parent.data, session_data=self.session_data, experiment_data=self.experiment_data))
 
             # Back to the regular behavior.
