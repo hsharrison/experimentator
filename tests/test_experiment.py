@@ -52,34 +52,34 @@ def make_manual_exp():
 
 def test_construction():
     exp = make_simple_exp()
-    assert exp.tree.levels_and_designs[0][0] == exp.base_section.level == '_base'
-    assert exp.levels == type(exp.levels)([exp.base_section[1].level, exp.base_section[1][1].level]) \
+    assert exp.tree.levels_and_designs[0][0] == exp.level == '_base'
+    assert exp.levels == type(exp.levels)([exp[1].level, exp[1][1].level]) \
         == type(exp.levels)(['participant', 'trial'])
 
 
 def test_data_before_running():
-    data = make_simple_exp().data
+    data = make_simple_exp().dataframe
     assert data.shape == (2 * 3 * 4 * 10, 2)
     assert set(data.columns.values) == {'a', 'b'}
     assert data.index.names == type(data.index.names)(['participant', 'trial'])
     assert data['a'].sum() == (-data['a']).sum()
     assert sum(data['b']) == 2*10*4*1 + 2*10*4*2
 
-    data = make_blocked_exp().data
+    data = make_blocked_exp().dataframe
     assert data.shape == (2 * 3 * 4 * 6 * 2, 3)
     assert set(data.columns.values) == {'a', 'b', CompleteCounterbalance.iv_name}
     assert data.index.names == type(data.index.names)(['participant', 'block', 'trial'])
     assert data['a'].sum() == (-data['a']).sum()
     assert sum(data['b']) == 2*6*2*4*1 + 2*6*2*4*2
 
-    data = make_standard_exp().data
+    data = make_standard_exp().dataframe
     assert data.shape == (2 * 3 * 4 * 6 * 2, 3)
     assert set(data.columns.values) == {'a', 'b', CompleteCounterbalance.iv_name}
     assert data.index.names == type(data.index.names)(['participant', 'block', 'trial'])
     assert data['a'].sum() == (-data['a']).sum()
     assert sum(data['b']) == 2*6*2*4*1 + 2*6*2*4*2
 
-    data = make_manual_exp().data
+    data = make_manual_exp().dataframe
     assert data.shape == (2 * 3 * 4 * 6 * 2, 3)
     assert set(data.columns.values) == {'a', 'b', CompleteCounterbalance.iv_name}
     assert data.index.names == type(data.index.names)(['participant', 'block', 'trial'])
@@ -89,8 +89,8 @@ def test_data_before_running():
 
 def test_demo_mode():
     exp = make_simple_exp()
-    exp.run_section(exp.base_section, demo=True)
-    data = exp.data
+    exp.run_section(exp, demo=True)
+    data = exp.dataframe
     assert data.shape == (2 * 3 * 4 * 10, 2)
     assert set(data.columns.values) == {'a', 'b'}
     assert data.index.names == type(data.index.names)(['participant', 'trial'])
@@ -104,12 +104,12 @@ def check_trial(row):
 
 def test_data_after_running():
     exp = make_simple_exp()
-    exp.run_section(exp.base_section)
-    for row in exp.data.iterrows():
+    exp.run_section(exp)
+    for row in exp.dataframe.iterrows():
         yield check_trial, row
     exp = make_blocked_exp()
-    exp.run_section(exp.base_section)
-    for row in exp.data.iterrows():
+    exp.run_section(exp)
+    for row in exp.dataframe.iterrows():
         yield check_trial, row
     assert exp.find_first_not_run('trial') is None
 
@@ -117,28 +117,28 @@ def test_data_after_running():
 def test_find_section():
     exp = make_simple_exp()
 
-    some_participant = exp.section(participant=3)
+    some_participant = exp.subsection(participant=3)
     assert not some_participant.is_bottom_level
     assert some_participant.level == 'participant'
 
-    some_trial = exp.section(participant=4, trial=1)
+    some_trial = exp.subsection(participant=4, trial=1)
     assert some_trial.is_bottom_level
     assert some_trial.level == 'trial'
 
-    sections = list(exp.all_sections(trial=1))
+    sections = list(exp.all_subsections(trial=1))
     assert len(sections) == 10
     for section in sections:
         assert section.data['trial'] == 1
         assert section.is_bottom_level
 
     exp = make_standard_exp()
-    some_trials = list(exp.all_sections(block=3, trial=[4, 8]))
+    some_trials = list(exp.all_subsections(block=3, trial=[4, 8]))
     assert len(some_trials) == 2 * 6 * 2
     for section in some_trials:
         assert section.data['block'] == 3
         assert section.data['trial'] in (4, 8)
 
-    some_trials = list(exp.all_sections(participant=3, block=[1, 3], trial=6))
+    some_trials = list(exp.all_subsections(participant=3, block=[1, 3], trial=6))
     assert len(some_trials) == 2
     for section in some_trials:
         assert section.data['participant'] == 3
@@ -148,66 +148,72 @@ def test_find_section():
 
 def test_find_parents():
     exp = make_manual_exp()
-    assert list(exp.parents(exp.section(participant=1))) == []
-    assert list(exp.parents(exp.section(participant=1, block=2))) == [exp.base_section[1]]
-    assert list(exp.parents(exp.section(participant=1, block=2, trial=3))) == \
-        [exp.base_section[1], exp.base_section[1][2]]
+    assert list(exp.parents(exp.subsection(participant=1))) == []
+    assert list(exp.parents(exp.subsection(participant=1, block=2))) == [exp[1]]
+    assert list(exp.parents(exp.subsection(participant=1, block=2, trial=3))) == [exp[1], exp[1][2]]
 
 
 def test_find_first_not_run():
     exp = make_simple_exp()
-    exp.run_section(exp.base_section[1])
-    assert exp.find_first_not_run('participant') is exp.base_section[2]
-    assert exp.find_first_not_run('trial') is exp.base_section[2][1]
-    assert exp.find_first_not_run('trial', starting_at=exp.section(participant=1)) is None
-    assert exp.find_first_not_run('trial', starting_at=exp.section(participant=2)) is exp.base_section[2][1]
-    assert exp.find_first_not_run('trial', starting_at=exp.section(participant=3)) is exp.base_section[3][1]
+    exp.run_section(exp[1])
+    assert exp.find_first_not_run('participant') is exp[2]
+    assert exp.find_first_not_run('trial') is exp[2][1]
+    assert exp.find_first_not_run('trial', starting_at=exp.subsection(participant=1)) is None
+    assert exp.find_first_not_run('trial', starting_at=exp.subsection(participant=2)) is exp[2][1]
+    assert exp.find_first_not_run('trial', starting_at=exp.subsection(participant=3)) is exp[3][1]
+    assert exp[1].find_first_not_run('trial') is None
+    assert exp[2].find_first_not_run('trial') is exp[2][1]
 
 
 def test_run_from():
     exp = make_blocked_exp()
-    exp.run_section(exp.section(participant=1), from_section=[2, 4])
-    assert not exp.section(participant=1, block=1).has_started and not exp.section(participant=1, block=1).has_finished
-    assert not any(exp.section(participant=1, block=2, trial=n).has_started or
-                   exp.section(participant=1, block=2, trial=n).has_finished for n in range(1, 4))
-    assert all(exp.section(participant=1, block=2, trial=n).has_started and
-               exp.section(participant=1, block=2, trial=n).has_finished for n in range(4, 9))
-    assert exp.section(participant=1, block=3).has_started and exp.section(participant=1, block=3).has_finished
-    assert not exp.section(particiapnt=2).has_started
+    exp.run_section(exp.subsection(participant=1), from_section=[2, 4])
+    assert not exp.subsection(participant=1, block=1).has_started and not exp.subsection(participant=1, block=1).has_finished
+    assert not any(exp.subsection(participant=1, block=2, trial=n).has_started or
+                   exp.subsection(participant=1, block=2, trial=n).has_finished for n in range(1, 4))
+    assert all(exp.subsection(participant=1, block=2, trial=n).has_started and
+               exp.subsection(participant=1, block=2, trial=n).has_finished for n in range(4, 9))
+    assert exp.subsection(participant=1, block=3).has_started and exp.subsection(participant=1, block=3).has_finished
+    assert not exp.subsection(particiapnt=2).has_started
 
 
 def test_resume():
     exp = make_standard_exp()
     assert exp.find_first_partially_run('participant') is None
-    exp.run_section(exp.section(participant=1, block=1))
-    assert exp.section(participant=1).has_started and not exp.section(participant=1).has_finished
-    assert exp.section(participant=1, block=1).has_started and exp.section(participant=1, block=1).has_finished
-    assert not exp.section(participant=1, block=2).has_started and not exp.section(participant=1, block=2).has_finished
-    assert exp.find_first_not_run('participant') is exp.section(participant=2)
-    assert exp.find_first_not_run('participant', by_started=False) is exp.section(participant=1)
-    assert exp.find_first_partially_run('participant') is exp.base_section[1]
+    exp.run_section(exp.subsection(participant=1, block=1))
+    assert exp.subsection(participant=1).has_started and not exp.subsection(participant=1).has_finished
+    assert exp.subsection(participant=1, block=1).has_started and exp.subsection(participant=1, block=1).has_finished
+    assert not exp.subsection(participant=1, block=2).has_started and not exp.subsection(participant=1, block=2).has_finished
+    assert exp.find_first_not_run('participant') is exp.subsection(participant=2)
+    assert exp.find_first_not_run('participant', by_started=False) is exp.subsection(participant=1)
+    assert exp.find_first_partially_run('participant') is exp[1]
+    assert exp[1].find_first_partially_run('block') is None
 
     with pytest.raises(ValueError):
-        exp.resume_section(exp.section(participant=1, block=2, trial=1))
+        exp.resume_section(exp.subsection(participant=1, block=2, trial=1))
     with pytest.raises(ValueError):
-        exp.resume_section(exp.section(participant=1, block=1))
+        exp.resume_section(exp.subsection(participant=1, block=1))
     with pytest.raises(ValueError):
-        exp.resume_section(exp.section(participant=1, block=2))
+        exp.resume_section(exp.subsection(participant=1, block=2))
 
-    exp.resume_section(exp.section(participant=1))
-    assert exp.section(participant=1).has_finished
-    assert exp.find_first_not_run('participant') is exp.section(participant=2)
-    assert exp.find_first_not_run('participant', by_started=False) is exp.section(participant=2)
+    exp.resume_section(exp.subsection(participant=1))
+    assert exp.subsection(participant=1).has_finished
+    assert exp.find_first_not_run('participant') is exp.subsection(participant=2)
+    assert exp.find_first_not_run('participant', by_started=False) is exp.subsection(participant=2)
+
+    exp.run_section(exp.subsection(participant=2, block=1))
+    exp.run_section(exp.subsection(participant=2, block=2, trial=1))
+    assert exp[2].find_first_partially_run('block') is exp[2][2]
 
 
 def test_finished_section_detection():
     exp = make_manual_exp()
-    exp.run_section(exp.section(participant=1, block=1))
-    assert exp.section(participant=1).has_started
-    exp.run_section(exp.section(participant=1, block=2))
-    assert not exp.section(participant=1).has_finished
-    exp.run_section(exp.section(participant=1, block=3))
-    assert exp.section(participant=1).has_finished
+    exp.run_section(exp.subsection(participant=1, block=1))
+    assert exp.subsection(participant=1).has_started
+    exp.run_section(exp.subsection(participant=1, block=2))
+    assert not exp.subsection(participant=1).has_finished
+    exp.run_section(exp.subsection(participant=1, block=3))
+    assert exp.subsection(participant=1).has_finished
 
 
 def start_callback(level, data, session_data, experiment_data):
@@ -250,7 +256,7 @@ def test_callbacks_and_data():
         exp.set_context_manager(level, context, level)
 
     exp.experiment_data.update({level: level + 's_seen' for level in ('participant', 'block', 'trial')})
-    exp.run_section(exp.base_section)
+    exp.run_section(exp)
 
     assert exp.session_data['blocks_between'] == 6 * 2 * (3-1)
     assert exp.session_data['trials_between'] == 6 * 2 * 3 * (2*4 - 1)

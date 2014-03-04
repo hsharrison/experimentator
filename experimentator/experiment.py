@@ -78,7 +78,7 @@ def run_experiment_section(experiment, demo=False, resume=False, parent_callback
         exp.experiment_file = experiment
 
     if not section_obj:
-        section_obj = exp.section(**section_numbers)
+        section_obj = exp.subsection(**section_numbers)
 
     try:
         if resume:
@@ -116,11 +116,12 @@ def export_experiment_data(experiment_file, data_file):
     load_experiment(experiment_file).export_data(data_file)
 
 
-class Experiment():
+class Experiment(ExperimentSection):
     """Experiment.
 
     An `Experiment` instance handles all aspects of an experiment. It contains the entire experimental hierarchy and
-    stores the data. It is picklable, to facilitate running an experiment over multiple Python sessions.
+    stores the data. It is picklable, to facilitate running an experiment over multiple Python sessions. `Experiment`
+    is a subclass of `ExperimentSection`, so it can be indexed into, iterated over, etc.
 
     Arguments
     ---------
@@ -136,32 +137,28 @@ class Experiment():
     experiment_file : str
         The file location where the `Experiment` will be pickled.
     levels : list of str
-        The levels of the experiment, as defined in `Experiment.tree`.
-    base_section : ExperimentSection
-        The root of the experiment hierarchy; an `ExperimentSection` instance from which all other `ExperimentSection`s
-        descend.
+        The levels of the experiment, as passed in `tree`.
     run_callback : func
         The function to be run when the bottom of the tree is reached (i.e., the trial function).
     context_managers : dict
         A dictionary, with level names as keys and context managers (e.g., created by `contextlib.contextmanager`) as
         values. Defines behavior to run before and/or after each section at the associated level.
     session_data : dict
-        A dictionary where data can be stored that is persistent between `ExperimentSection`\ s run in the same Python
-        session. This is the first positional argument for every callback, and a good place to store external resources
-        that aren't picklable but can be loaded in a start callback. Anything yielded by a context manager will be saved
-        here, in `session_data['as'][level]`. Note that this dictionary is emptied before pickling the `Experiment`.
-    experiment_dat : dict
+        A dictionary where data can be stored that is persistent only within one session of the Python interpreter. This
+        is a good place to store external resources that aren't picklable; external resources, for example, can be
+        loaded in a context manager callback and stored here. In addition, anything yielded by a context manager will be
+        automatically saved here, in `session_data['as'][level]`. Note that this dictionary is emptied before saving the
+        `Experiment` to disk.
+    experiment_data : dict
         A dictionary where data can be stored that is persistent across Python sessions. Everything here must be
         picklable.
 
     """
     def __init__(self, tree, experiment_file=None):
-        self.tree = tree
-        self.experiment_file = experiment_file
-        self.levels = list(zip(*self.tree.levels_and_designs))[0]
+        tree.add_base_level()
+        super().__init__(tree, ChainMap())
 
-        self.tree.add_base_level()
-        self.base_section = ExperimentSection(self.tree, ChainMap())
+        self.experiment_file = experiment_file
 
         self.context_managers = {level: _dummy_context for level in self.levels}
         self.context_managers['_base'] = _dummy_context
@@ -175,21 +172,6 @@ class Experiment():
 
     def __repr__(self):
         return 'Experiment({}, experiment_file={})'.format(self.tree.__repr__(), self.experiment_file)
-
-    @property
-    def data(self):
-        """Data.
-
-        Returns
-        -------
-        pandas.DataFrame
-            A `DataFrame` containing all of the `Experiment`'s data. The `DataFrame` will be MultiIndexed, with section
-            numbers as indexes. Independent variables will also be included as columns.
-
-        """
-        from pandas import DataFrame
-        data = DataFrame(self.base_section.generate_data()).set_index(list(self.levels))
-        return data
 
     def save(self):
         """Save experiment.
@@ -223,182 +205,7 @@ class Experiment():
 
         """
         with open(filename, 'w') as f:
-            self.data.to_csv(f)
-
-    def section(self, **section_numbers):
-        """Find single section by number.
-
-        Finds an `ExperimentSection` based on section numbers.
-
-        Arguments
-        ---------
-        **section_numbers
-            Keyword arguments describing which section to find. Must include every level higher than the desired
-            section. This method will descend the experimental hierarchy until it can no longer determine how to
-            proceed, at which point it returns the current `ExperimentSection`.
-
-        Returns
-        -------
-        ExperimentSection
-            The specified section.
-
-        See Also
-        --------
-        Experiment.all_sections : find all sections matching a set of criteria
-
-        Examples
-        --------
-        Assuming an `Experiment` named ``exp`` with levels ``['participant', 'session', 'block', 'trial']``:
-
-        >>>some_block = exp.section(participant=2, session=1, block=3)
-
-        """
-        node = self.base_section
-        for level in self.levels:
-            if level in section_numbers:
-                node = node[section_numbers[level]]
-            else:
-                break
-
-        return node
-
-    def all_sections(self, **section_numbers):
-        """Find a set of sections by number.
-
-        Finds all sections in the experiment matching the given section numbers.
-
-        Arguments
-        ---------
-        **section_numbers
-            Keyword arguments describing what sections to find. Keys are level names, values are ints or sequences of
-            ints.
-
-        Yields
-        ------
-        ExperimentSection
-            The specified `ExperimentSection` instances. The returned sections will be at the lowest level given in
-            `section_numbers`. When encountering levels that aren't in `section_numbers` before reaching its lowest
-            level, all sections will be descended into.
-
-        See Also
-        --------
-        Experiment.section : find a single section.
-
-        Examples
-        --------
-        Assuming an `Experiment` named ``exp`` with levels ``['participant', 'session', 'block', 'trial']``:
-
-        >>>all_first_sessions = exp.all_sections(session=1)
-
-        ``all_first_sessions`` will be the first session of every participant.
-
-        >>>trials = exp.all_sections(block=1, trial=2)
-
-        ``trials`` will be the second trial of the first block in every session.
-
-        >>>other_trials = exp.all_sections(session=1, trial=[1, 2, 3])
-
-        ``other_trials`` will be the first three trials of every block in the first session of every participant.
-
-        """
-        # The state of the recursion is passed in the keyword argument '_section'.
-        section = section_numbers.pop('_section', self.base_section)
-
-        if section.tree[1][0] in section_numbers:
-            # Remove the section from section_numbers...it needs to be empty to signal completion.
-            numbers = section_numbers.pop(section.tree[1][0])
-
-            if isinstance(numbers, int):  # Only one number specified.
-                if section_numbers:  # We're not done.
-                    yield from self.all_sections(_section=section[numbers], **section_numbers)
-                else:  # We're done.
-                    yield section[numbers]
-
-            else:  # Multiple numbers specified.
-                if section_numbers:  # We're not done.
-                    for n in numbers:
-                        yield from self.all_sections(_section=section[n], **section_numbers)
-                else:  # We're done.
-                    yield from (section[n] for n in numbers)
-        else:
-            # Section not specified but we're not done; descend into every child.
-            for child in section:
-                yield from self.all_sections(_section=child, **section_numbers)
-
-    def find_first_not_run(self, at_level, by_started=True, starting_at=None):
-        """Find the first section that has not been run.
-
-        Searches the experimental hierarchy, returning the first `ExperimentSection` at `level` that has not been run.
-
-        Arguments
-        ---------
-        at_level : str
-            Which level to search.
-        by_started : bool, optional
-            If true (default), finds the first section that has not been started. Otherwise, finds the first section
-            that has not finished.
-        starting_at : ExperimentSection, optional
-            Starts the search at the given `ExperimentSection`. Allows for finding the first section not run of a
-            particular part of the experiment. For example, the first block not run of the second participant could be
-            found by:
-
-            >>> exp.find_first_not_run('block', starting_at=exp.section(participant=2))
-
-        Returns
-        -------
-        ExperimentSection
-            The first `ExperimentSection` satisfying the specified criteria.
-
-        """
-        if by_started:
-            key = lambda x: not x.has_started
-            descriptor = 'not started'
-        else:
-            key = lambda x: not x.has_finished
-            descriptor = 'not finished'
-
-        return self._find_top_down(at_level, key, starting_at=starting_at, descriptor=descriptor)
-
-    def find_first_partially_run(self, at_level, starting_at=None):
-        """Find the first section that has been partially run.
-
-        Searches the experimental hierarchy, returning the first `ExperimentSection` at `level` that has been started
-        but not finished.
-
-        Arguments
-        ---------
-        at_level : str
-            Which level to search.
-        starting_at : ExperimentSection, optional
-            Starts the search at the given `ExperimentSection`. Allows for finding the first partially-run section of a
-            particular part of the experiment.
-
-        Returns
-        -------
-        ExperimentSection
-            The first `ExperimentSection` satisfying the specified criteria.
-
-        """
-        return self._find_top_down(at_level, lambda x: x.has_started and not x.has_finished,
-                                   starting_at=starting_at, descriptor='partially run')
-
-    def _find_top_down(self, at_level, key, starting_at=None, descriptor=''):
-        node = starting_at or self.base_section
-        while not node.level == at_level:
-            level = node.tree[1][0]
-            logger.debug('Checking all {}s...'.format(level))
-            next_node = None
-            for child in node:
-                if key(child):
-                    next_node = child
-                    break
-
-            if not next_node:
-                logger.warning('Count not find a {} {}'.format(level, descriptor))
-                return
-            node = next_node
-
-        return node
+            self.dataframe.to_csv(f)
 
     def run_section(self, section, demo=False, parent_callbacks=True, from_section=None):
         """Run a section.
@@ -418,7 +225,7 @@ class Experiment():
             Which section to start running from. This makes it possible to resume a session. If a list is passed, it
             specifies where to start running on multiple levels. For example:
 
-            >>> exp.run_section(exp.section(participant=1, session=2), from_section=[3, 5])
+            >>> exp.run_section(exp.subsection(participant=1, session=2), from_section=[3, 5])
 
             Assuming the hierarchy is ``('participant', 'session', 'block', 'trial')``, this would run the first
             participant's second session, starting from the fifth trial of the third block.
@@ -531,7 +338,7 @@ class Experiment():
                 break
 
             parent_section_numbers.update({level: section.data[level]})
-            yield self.section(**parent_section_numbers)
+            yield self.subsection(**parent_section_numbers)
 
     def set_context_manager(self, level, func, *args,
                             func_module=None, func_name=None, already_contextmanager=False, **kwargs):

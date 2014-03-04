@@ -103,3 +103,23 @@ def test_data():
 def test_repr():
     section = ExperimentSection(make_tree(['session', 'block', 'trial'], {}), ChainMap())
     assert section == eval(section.__repr__())
+
+
+def test_find_section():
+    section = ExperimentSection(make_tree(['session', 'block', 'trial'], {}), ChainMap())
+    assert section.subsection(block=1, trial=3) is section[1][3]
+
+
+def test_dataframe():
+    section = ExperimentSection(make_tree(['session', 'block', 'trial'], {}), ChainMap())
+    assert len(section.dataframe) == 3*2*3*2
+    assert set(section.dataframe.columns) == {'a', 'b'}
+
+
+def test_find_all_sections():
+    section = ExperimentSection(make_tree(['session', 'block', 'trial'], {}), ChainMap())
+    sections = list(section.all_subsections(block=[2, 4], trial=[4, 6]))
+    assert len(sections) == 4
+    for subsection in sections:
+        assert subsection.data['block'] in (2, 4)
+        assert subsection.data['trial'] in (4, 6)

@@ -67,6 +67,7 @@ class ExperimentSection():
         self.data = data
         self.tree = tree
         self.level = self.tree[0][0]
+        self.levels = list(zip(*self.tree.levels_and_designs))[0][1:]
         self.is_bottom_level = len(self.tree) == 1
 
         self._children = collections.deque()
@@ -201,6 +202,182 @@ class ExperimentSection():
             else:
                 yield from child.generate_data()
 
+    def subsection(self, **section_numbers):
+        """Find single subsection by numbers.
+
+        Finds a descendant `ExperimentSection` based on section numbers.
+
+        Arguments
+        ---------
+        **section_numbers
+            Keyword arguments describing which subsection to find. Must include every level higher than the desired
+            section. This method will descend the experimental hierarchy until it can no longer determine how to
+            proceed, at which point it returns the current `ExperimentSection`.
+
+        Returns
+        -------
+        ExperimentSection
+            The specified subsection.
+
+        See Also
+        --------
+        Experiment.all_subsections : find all subsections matching a set of criteria
+
+        Examples
+        --------
+        Assuming an `Experiment` named ``exp`` with levels ``['participant', 'session', 'block', 'trial']``:
+
+        >>>some_block = exp.subsection(participant=2, session=1, block=3)
+
+        """
+        node = self
+        for level in self.levels:
+            if level in section_numbers:
+                node = node[section_numbers[level]]
+            else:
+                break
+
+        return node
+
+    def all_subsections(self, **section_numbers):
+        """Find multiple subsections by numbers.
+
+        Finds all subsections in the experiment matching the given section numbers.
+
+        Arguments
+        ---------
+        **section_numbers
+            Keyword arguments describing what subsections to find. Keys are level names, values are ints or sequences of
+            ints.
+
+        Yields
+        ------
+        ExperimentSection
+            The specified `ExperimentSection` instances. The returned sections will be at the lowest level given in
+            `section_numbers`. When encountering levels that aren't in `section_numbers` before reaching its lowest
+            level, all sections will be descended into.
+
+        See Also
+        --------
+        Experiment.subsection : find a single subsection.
+
+        Examples
+        --------
+        Assuming an `Experiment` named ``exp`` with levels ``['participant', 'session', 'block', 'trial']``:
+
+        >>>all_first_sessions = exp.all_subsections(session=1)
+
+        ``all_first_sessions`` will be the first session of every participant.
+
+        >>>trials = exp.all_subsections(block=1, trial=2)
+
+        ``trials`` will be the second trial of the first block in every session.
+
+        >>>other_trials = exp.all_subsections(session=1, trial=[1, 2, 3])
+
+        ``other_trials`` will be the first three trials of every block in the first session of every participant.
+
+        """
+        # The state of the recursion is passed in the keyword argument '_section'.
+        section = section_numbers.pop('_section', self)
+
+        if not section.is_bottom_level and section.tree[1][0] in section_numbers:
+            # Remove the section from section_numbers...it needs to be empty to signal completion.
+            numbers = section_numbers.pop(section.tree[1][0])
+
+            if isinstance(numbers, int):  # Only one number specified.
+                if section_numbers:  # We're not done.
+                    yield from self.all_subsections(_section=section[numbers], **section_numbers)
+                else:  # We're done.
+                    yield section[numbers]
+
+            else:  # Multiple numbers specified.
+                if section_numbers:  # We're not done.
+                    for n in numbers:
+                        yield from self.all_subsections(_section=section[n], **section_numbers)
+                else:  # We're done.
+                    yield from (section[n] for n in numbers)
+        else:
+            # Section not specified but we're not done; descend into every child.
+            for child in section:
+                yield from self.all_subsections(_section=child, **section_numbers)
+
+    def find_first_not_run(self, at_level, by_started=True, starting_at=None):
+        """Find the first subsection that has not been run.
+
+        Searches the experimental hierarchy, returning the first descendant `ExperimentSection` at `level` that has not
+        been run.
+
+        Arguments
+        ---------
+        at_level : str
+            Which level to search.
+        by_started : bool, optional
+            If true (default), finds the first section that has not been started. Otherwise, finds the first section
+            that has not finished.
+        starting_at : ExperimentSection, optional
+            Starts the search at the given `ExperimentSection`. Allows for finding the first section not run of a
+            particular part of the experiment. For example, the first block not run of the second participant could be
+            found by:
+
+            >>> exp.find_first_not_run('block', starting_at=exp.subsection(participant=2))
+
+        Returns
+        -------
+        ExperimentSection
+            The first `ExperimentSection` satisfying the specified criteria.
+
+        """
+        if by_started:
+            key = lambda x: not x.has_started
+            descriptor = 'not started'
+        else:
+            key = lambda x: not x.has_finished
+            descriptor = 'not finished'
+
+        return self._find_top_down(at_level, key, starting_at=starting_at, descriptor=descriptor)
+
+    def find_first_partially_run(self, at_level, starting_at=None):
+        """Find the first subsection that has been partially run.
+
+        Searches the experimental hierarchy, returning the first descendant `ExperimentSection` at `level` that has been
+        started but not finished.
+
+        Arguments
+        ---------
+        at_level : str
+            Which level to search.
+        starting_at : ExperimentSection, optional
+            Starts the search at the given `ExperimentSection`. Allows for finding the first partially-run section of a
+            particular part of the experiment.
+
+        Returns
+        -------
+        ExperimentSection
+            The first `ExperimentSection` satisfying the specified criteria.
+
+        """
+        return self._find_top_down(at_level, lambda x: x.has_started and not x.has_finished,
+                                   starting_at=starting_at, descriptor='partially run')
+
+    def _find_top_down(self, at_level, key, starting_at=None, descriptor=''):
+        node = starting_at or self
+        while not node.level == at_level:
+            level = node.tree[1][0]
+            logger.debug('Checking all {}s...'.format(level))
+            next_node = None
+            for child in node:
+                if key(child):
+                    next_node = child
+                    break
+
+            if not next_node:
+                logger.warning('Count not find a {} {}'.format(level, descriptor))
+                return
+            node = next_node
+
+        return node
+
     @staticmethod
     def _prepare_for_indexing(item):
         """Change an indexing object from using 1-based indexing to using 0-based indexing.
@@ -219,6 +396,21 @@ class ExperimentSection():
 
         else:
             return item - 1
+
+    @property
+    def dataframe(self):
+        """Get data in dataframe format.
+
+        Returns
+        -------
+        pandas.DataFrame
+            A `DataFrame` containing all of the `ExperimentSection`'s data. The `DataFrame` will be MultiIndexed, with
+            section numbers as indexes. Independent variables will also be included as columns.
+
+        """
+        from pandas import DataFrame
+        data = DataFrame(self.generate_data()).set_index(list(self.levels))
+        return data
 
     def __len__(self):
         return len(self._children)
