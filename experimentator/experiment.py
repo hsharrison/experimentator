@@ -374,13 +374,17 @@ class Experiment(ExperimentSection):
 
         Note
         ----
-        In addition to the arguments you set in `*args` and `**kwargs`, two positional arguments will be passed to
-        `func`: `Experiment.session_data` and `Experiment.persistent_data`. Additionally, the items in the dictionary in
-        the section's `ExperimentSection.data` attribute will be passed as keyword arguments. So the context manager
-        should take the form of `(*args, session_data, persistent_data, **kwargs, **data)`, where `*args` and `**kwargs`
-        come from this method, `session_data` and `persistent_data` come from the `Experiment` instance, and `data`
-        comes from the `ExperimentSection` instance. Since the data can have many items, it is best practice to use
-        the keyword argument wildcard `**` in your definition of `func`.
+        In addition to the arguments you set in `*args` and `**kwargs`, one positional argument is passed to `func`,
+        the current section's `ExperimentSection.data` attribute, containing all the IV values and section numbers
+        defining the section. Additionally, two keyword arguments will be passed to
+        `func`: `Experiment.session_data` and `Experiment.experiment_data` as ``session_data`` and ``experiment_data``,
+        respectively. So the context manager should take the form of
+        ``func(*args, section_data, session_data, experiment_data, **kwargs)`` where ``*args`` and ``**kwargs`` come
+        from `Experiment.set_context_manager`, ``section_data`` comes from the `ExperimentSection` being run, and
+        ``session_data`` and ``experiment_data`` come from the `Experiment` instance. Since ``session_data`` and
+        ``experiment_data`` are keyword arguments, and ``*args`` and ``**kwargs`` are optional, the shortest possible
+        formulation of a context manager is ``func(section_data, **_)`` (in which ``session_data`` and
+        ``experiment_data`` are unused).
 
         """
         if not already_contextmanager:
@@ -415,13 +419,17 @@ class Experiment(ExperimentSection):
 
         Note
         ----
-        In addition to the arguments you set in `*args` and `**kwargs`, two positional arguments will be passed to
-        `func`: `Experiment.session_data` and `Experiment.persistent_data`. Additionally, the items in the dictionary in
-        the section's `ExperimentSection.data` attribute will be passed as keyword arguments. So the run callback
-        should take the form of `(*args, session_data, persistent_data, **kwargs, **data)`, where `*args` and
-        `**kwargs` come from this method, `session_data` and `persistent_data` come from the `Experiment` instance, and
-        `data` comes from the `ExperimentSection` instance. Since the data can have many items, it is best practice
-        to use the keyword argument wildcard `**` in your definition of `func`.
+        In addition to the arguments you set in `*args` and `**kwargs`, one positional argument is passed to `func`,
+        the current section's `ExperimentSection.data` attribute, containing all the IV values and section numbers
+        defining the section. Additionally, two keyword arguments will be passed to
+        `func`: `Experiment.session_data` and `Experiment.experiment_data` as ``session_data`` and ``experiment_data``,
+        respectively. So the run callback should take the form of
+        ``func(*args, section_data, session_data, experiment_data, **kwargs)`` where ``*args`` and ``**kwargs`` come
+        from `Experiment.set_context_manager`, ``section_data`` comes from the `ExperimentSection` being run, and
+        ``session_data`` and ``experiment_data`` come from the `Experiment` instance. Since ``session_data`` and
+        ``experiment_data`` are keyword arguments, and ``*args`` and ``**kwargs`` are optional, the shortest possible
+        formulation of a run callback is ``func(section_data, **_)`` (in which ``session_data`` and
+        ``experiment_data`` are unused).
 
         """
         self.run_callback = functools.partial(func, *args, **kwargs)
