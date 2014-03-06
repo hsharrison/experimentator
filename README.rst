@@ -92,6 +92,7 @@ Experimentator requires Python 3.3 or later. It also depends on the following Py
 * `numpy <http://www.numpy.org/>`_ ``v1.8.0`` or later
 * `pandas <http://pandas.pydata.org/>`_ ``v0.13.0`` or later
 * `docopt <http://docopt.org/>`_ ``v0.6.1`` or later
+* `schema <https://github.com/halst/schema>`_ ``v0.2.0`` or later
 
 Version control
 ^^^^^^^^^^^^^^^
