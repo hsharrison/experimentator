@@ -110,3 +110,16 @@ def test_pickle_error():
 
     with pytest.raises(ImportError):
         main(args='exp run test.pkl --next participant'.split()[1:])
+
+
+def context(data, session_data, experiment_data):
+    assert session_data['options'] == 'pass,through,option'
+    yield
+
+
+def test_options():
+    exp = make_blocked_exp()
+    exp.set_context_manager('block', context)
+    exp.experiment_file = 'test.pkl'
+    exp.save()
+    main(args='exp run test.pkl --next participant -o pass,through,option'.split()[1:])

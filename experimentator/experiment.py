@@ -39,7 +39,7 @@ def load_experiment(experiment_file):
 
 
 def run_experiment_section(experiment, demo=False, resume=False, parent_callbacks=True,
-                           section_obj=None, from_section=1, **section_numbers):
+                           section_obj=None, from_section=1, session_options=None, **section_numbers):
     """Run an experiment section.
 
     Runs an experiment instance from a file or an `Experiment` instance, and saves it. If a `QuitSession` exception is
@@ -65,6 +65,8 @@ def run_experiment_section(experiment, demo=False, resume=False, parent_callback
 
             Assuming the hierarchy is ``('participant', 'session', 'block', 'trial')``, this would run the first
             participant's second session, starting from the fifth trial of the third block.
+    session_options : str, optional
+            Pass an experiment-specific options string to be stored in ``Experiment.session_data['options']``.
     **section_numbers
         Keyword arguments describing how to descend the experiment hierarchy to find a section to be run. For example,
         `run_experiment_section(..., participant=3, session=1)` to run the third participant's first session (section
@@ -76,6 +78,7 @@ def run_experiment_section(experiment, demo=False, resume=False, parent_callback
     else:
         exp = load_experiment(experiment)
         exp.experiment_file = experiment
+    exp.session_data['options'] = session_options if session_options else ''
 
     if not section_obj:
         section_obj = exp.subsection(**section_numbers)
@@ -167,7 +170,7 @@ class Experiment(ExperimentSection):
         self.run_callback = _dummy_callback
         self._callback_info = None
 
-        self.session_data = {'as': {}}
+        self.session_data = {'as': {}, 'options': ''}
         self.experiment_data = {}
 
     def __repr__(self):
@@ -443,7 +446,7 @@ class Experiment(ExperimentSection):
     def __getstate__(self):
         state = self.__dict__.copy()
         #  Clear session_data before pickling.
-        state['session_data'] = {'as': {}}
+        state['session_data'] = {'as': {}, 'options': ''}
 
         # Clear functions.
         del state['context_managers']

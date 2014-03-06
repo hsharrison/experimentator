@@ -3,17 +3,18 @@
 Usage:
   exp run [options] <exp-file> (--next <level>  [--not-finished] | (<level> <n>)...)
   exp resume [options] <exp-file> <level> [<n> (<level> <n>)...]
-  exp  export <exp-file> <data-file>
+  exp export <exp-file> <data-file>
   exp -h | --help
   exp --version
 
 Options:
-  --not-finished     Run the first <level> that hasn't finished (rather than first that hasn't started).
-  --demo             Don't save data.
-  --debug            Set logging level to DEBUG.
-  --skip-parents     Don't call start and end callbacks of parent levels.
   -h, --help         Show full help.
   --version          Print the installed version number of experimentator.
+  -d --debug         Set logging level to DEBUG.
+  -o <options>       Pass <options> to the experiment and save it as string in Experiment.session_data['options'].
+  --demo             Don't save data.
+  --not-finished     Run the first <level> that hasn't finished (rather than first that hasn't started).
+  --skip-parents     Don't enter context of parent levels.
 
 Commands:
   run <exp-file> --next <level>        Runs the first <level> that hasn't started. E.g.:
@@ -50,6 +51,7 @@ def main(args=None):
                      Optional('--demo'): bool,
                      Optional('--help'): bool,
                      Optional('--next'): bool,
+                     Optional('-o'): Or(None, str),
                      Optional('--not-finished'): bool,
                      Optional('--skip-parents'): bool,
                      Optional('--version'): bool,
@@ -72,6 +74,7 @@ def main(args=None):
         kwargs = {'demo': options['--demo'],
                   'parent_callbacks': not options['--skip-parents'],
                   'resume': options['resume'],
+                  'session_options': options['-o'],
                   }
 
         if options['--next']:
