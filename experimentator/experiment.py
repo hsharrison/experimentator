@@ -35,7 +35,9 @@ def load_experiment(experiment_file):
 
     """
     with open(experiment_file, 'rb') as f:
-        return pickle.load(f)
+        exp = pickle.load(f)
+    exp.experiment_file = experiment_file
+    return exp
 
 
 def run_experiment_section(experiment, demo=False, resume=False, parent_callbacks=True,
@@ -77,7 +79,6 @@ def run_experiment_section(experiment, demo=False, resume=False, parent_callback
         exp = experiment
     else:
         exp = load_experiment(experiment)
-        exp.experiment_file = experiment
     exp.session_data['options'] = session_options if session_options else ''
 
     if not section_obj:
@@ -91,8 +92,8 @@ def run_experiment_section(experiment, demo=False, resume=False, parent_callback
     except QuitSession as e:
         logger.warning('Quit event detected: {}.'.format(str(e)))
         # Backup experiment file.
-        os.rename(experiment.experiment_file,
-                  experiment.experiment_file + datetime.now().strftime('.%m-%d-%H-%M-backup'))
+        os.rename(exp.experiment_file,
+                  exp.experiment_file + datetime.now().strftime('.%m-%d-%H-%M-backup'))
     finally:
         exp.save()
 
@@ -178,17 +179,23 @@ class Experiment(ExperimentSection):
         self.experiment_data = {}
 
     def __repr__(self):
-        return 'Experiment({}, experiment_file={})'.format(self.tree.__repr__(), self.experiment_file)
+        return "Experiment({}, experiment_file='{}')".format(self.tree.__repr__(), self.experiment_file)
 
-    def save(self):
+    def save(self, filename=None):
         """Save experiment.
 
         Pickles the `Experiment` to the location in `Experiment.experiment_file`.
 
+        Arguments
+        ---------
+        filename | str, optional
+            If specified, overrides `Experiment.experiment_file.
+
         """
-        if self.experiment_file:
-            logger.debug('Saving Experiment instance to {}.'.format(self.experiment_file))
-            with open(self.experiment_file, 'wb') as f:
+        filename = filename or self.experiment_file
+        if filename:
+            logger.debug('Saving Experiment instance to {}.'.format(filename))
+            with open(filename, 'wb') as f:
                 pickle.dump(self, f)
 
         else:

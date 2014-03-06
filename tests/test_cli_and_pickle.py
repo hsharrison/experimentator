@@ -11,7 +11,7 @@ from contextlib import contextmanager
 from numpy import isnan
 import pytest
 
-from experimentator import load_experiment
+from experimentator import load_experiment, run_experiment_section, QuitSession, Experiment, DesignTree, Design
 from experimentator.api import standard_experiment
 from experimentator.cli import main
 from experimentator.order import Ordering
@@ -155,4 +155,33 @@ def test_export():
     assert filecmp.cmp('tests/test_data_skip_order.csv', 'test.csv')
     os.remove('test.csv')
 
+    os.remove('test.pkl')
+
+
+def bad_trial(data, **_):
+    raise QuitSession('Nope!')
+
+
+def test_exception():
+    exp = make_blocked_exp()
+    exp.set_run_callback(bad_trial)
+    exp.save()
+    exp.save('test.pkl')
+    run_experiment_section('test.pkl', participant=1)
+
+    exp = load_experiment('test.pkl')
+    assert exp.subsection(participant=1, block=1, trial=1).has_started
+    assert not exp.subsection(participant=1, block=1, trial=1).has_finished
+    os.remove('test.pkl')
+
+    e = QuitSession('message')
+    assert e.__str__() == 'message'
+    with pytest.raises(QuitSession):
+        raise e
+
+
+def test_exp_repr():
+    make_deterministic_exp()
+    e = load_experiment('test.pkl')
+    assert e == eval(e.__repr__())
     os.remove('test.pkl')
