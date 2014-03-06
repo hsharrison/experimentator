@@ -97,10 +97,10 @@ def run_experiment_section(experiment, demo=False, resume=False, parent_callback
         exp.save()
 
 
-def export_experiment_data(experiment_file, data_file):
+def export_experiment_data(experiment_file, data_file, **kwargs):
     """ Export data.
 
-    Reads a pickled experiment instance and saves its data in `.csv` format.
+    Reads a pickled experiment instance and saves its data in ``.csv`` format.
 
     Arguments
     ---------
@@ -108,15 +108,19 @@ def export_experiment_data(experiment_file, data_file):
         The file location where an `Experiment` instance is pickled.
     data_file : str
         The file location where the data will be written.
+    skip_columns : list of str, optional
+        Columns to skip.
+    **kwargs
+            Arbitrary keyword arguments passed through to `pandas.Dataframe.to_csv`.
 
     Note
     ----
     This shortcut function is not recommended for experiments with compound data types, for example an experiment which
     stores a time series for every trial. In those cases it is recommended to write a custom script that parses the
-    `Experiment.data` attribute as desired.
+    `Experiment.data` attribute as desired or use the `skip_columns` option.
 
     """
-    load_experiment(experiment_file).export_data(data_file)
+    load_experiment(experiment_file).export_data(data_file, **kwargs)
 
 
 class Experiment(ExperimentSection):
@@ -190,25 +194,33 @@ class Experiment(ExperimentSection):
         else:
             logger.warning('Cannot save experiment: No filename provided.')
 
-    def export_data(self, filename):
+    def export_data(self, filename, skip_columns=None, **kwargs):
         """Export data.
 
-        Exports `Experiment.data` in `.csv` format.
+        Exports `Experiment.data` in ``.csv`` format.
 
         Arguments
         ---------
         filename : str
             A file location where the data should be saved.
+        skip_columns : list of str, optional
+            Columns to skip.
+        **kwargs
+            Arbitrary keyword arguments passed through to `pandas.Dataframe.to_csv`.
 
         Note
         ----
         This method is not recommended for experiments with compound data types, for example an experiment
         which stores a time series for every trial. In those cases it is recommended to write a custom script that
-        parses the `Experiment.data` attribute as desired.
+        parses the `Experiment.data` attribute as desired or use the `skip_columns` option.
 
         """
+        df = self.dataframe
+        if skip_columns:
+            kwargs['columns'] = set(df.columns) - set(skip_columns)
+
         with open(filename, 'w') as f:
-            self.dataframe.to_csv(f)
+            df.to_csv(f, **kwargs)
 
     def run_section(self, section, demo=False, parent_callbacks=True, from_section=None):
         """Run a section.

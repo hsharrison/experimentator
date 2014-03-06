@@ -3,18 +3,25 @@
 Usage:
   exp run [options] <exp-file> (--next <level>  [--not-finished] | (<level> <n>)...)
   exp resume [options] <exp-file> <level> [<n> (<level> <n>)...]
-  exp export <exp-file> <data-file>
+  exp export <exp-file> <data-file> [ --no-index-label --delim <sep> --skip <columns> --float <format> --nan <rep>]
   exp -h | --help
   exp --version
 
-Options:
-  -h, --help         Show full help.
-  --version          Print the installed version number of experimentator.
-  -d --debug         Set logging level to DEBUG.
-  -o <options>       Pass <options> to the experiment and save it as string in Experiment.session_data['options'].
-  --demo             Don't save data.
-  --not-finished     Run the first <level> that hasn't finished (rather than first that hasn't started).
-  --skip-parents     Don't enter context of parent levels.
+Run/resume options:
+  -h, --help        Show full help.
+  --version         Print the installed version number of experimentator.
+  -d --debug        Set logging level to DEBUG.
+  -o <options>      Pass <options> to the experiment and save it as string in Experiment.session_data['options'].
+  --demo            Don't save data.
+  --not-finished    Run the first <level> that hasn't finished (rather than first that hasn't started).
+  --skip-parents    Don't enter context of parent levels.
+
+Export options (see pandas.Dataframe.to_csv documentation) :
+  --no-index-label    Don't put column labels on index columns (e.g. participant, trial), for easier importing into R.
+  --delim <sep>       Field delimiter [default: ,].
+  --skip <columns>    Comma-separated list of columns to skip.
+  --float <format>    Format string for floating point numbers.
+  --nan <rep>         Missing data representation.
 
 Commands:
   run <exp-file> --next <level>        Runs the first <level> that hasn't started. E.g.:
@@ -30,8 +37,9 @@ Commands:
                                          exp resume exp1.dat participant 2 session 2
 
   export <exp-file> <data-file>      Export the data in <exp-file> to csv format as <data-file>.
-                                     Note: This will not produce readable csv files for experiments with
-                                           results in multi-element data structures (e.g., timeseries, dicts).
+                                     Note: This will not produce readable csv files for experiments with results as
+                                           collections (e.g., series, dict). Either write a custom export script, or
+                                           skip the problematic column(s) using the --skip <columns> option.
 
 """
 import sys
@@ -48,15 +56,20 @@ def main(args=None):
     sys.path.insert(0, os.getcwd())
 
     scheme = Schema({Optional('--debug'): bool,
+                     Optional('--delim'): str,
                      Optional('--demo'): bool,
                      Optional('--help'): bool,
+                     Optional('--float'): Or(None, str),
                      Optional('--next'): bool,
-                     Optional('-o'): Or(None, str),
+                     Optional('--nan'): Or(None, str),
+                     Optional('--no-index-label'): bool,
                      Optional('--not-finished'): bool,
+                     Optional('-o'): Or(None, str),
+                     Optional('--skip'): Or(None, Use(lambda x: x.split(','))),
                      Optional('--skip-parents'): bool,
                      Optional('--version'): bool,
-                     Optional('<data-file>'): Or(lambda x: x is None, os.path.exists),
-                     Optional('<exp-file>'): Or(lambda x: x is None, os.path.exists),
+                     Optional('<data-file>'): Or(None, str),
+                     Optional('<exp-file>'): Or(lambda x: x is None, os.path.exists, error='Invalid <exp-file>'),
                      Optional('<level>'): [str],
                      Optional('<n>'): [And(Use(int), lambda n: n > 0)],
                      Optional('export'): bool,
@@ -90,4 +103,9 @@ def main(args=None):
         run_experiment_section(exp, **kwargs)
 
     elif options['export']:
-        export_experiment_data(options['<exp-file>'], options['<data-file>'])
+        export_experiment_data(options['<exp-file>'], options['<data-file>'],
+                               float_format=options['--float'],
+                               skip_columns=options['--skip'],
+                               index_label=False if options['--no-index-label'] else None,
+                               na_rep=options['--nan'],
+                               sep=options['--delim'])
