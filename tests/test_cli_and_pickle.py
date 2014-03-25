@@ -7,6 +7,7 @@ it.
 import sys
 import os
 import filecmp
+from glob import glob
 from contextlib import contextmanager
 from numpy import isnan
 import pytest
@@ -106,7 +107,8 @@ def test_cli():
         else:
             assert isnan(row[1]['result'])
 
-    os.remove('test.pkl')
+    for file in glob('test.pkl*'):
+        os.remove(file)
 
 
 def test_pickle_error():
@@ -155,7 +157,8 @@ def test_export():
     assert filecmp.cmp('tests/test_data_skip_order.csv', 'test.csv')
     os.remove('test.csv')
 
-    os.remove('test.pkl')
+    for file in glob('test.pkl*'):
+        os.remove(file)
 
 
 def bad_trial(data, **_):
@@ -185,4 +188,5 @@ def test_exp_repr():
     make_deterministic_exp()
     e = load_experiment('test.pkl')
     assert e == eval(e.__repr__())
-    os.remove('test.pkl')
+    for file in glob('test.pkl*'):
+        os.remove(file)
