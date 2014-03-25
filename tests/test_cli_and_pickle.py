@@ -167,7 +167,8 @@ def test_exception():
     exp.set_run_callback(bad_trial)
     exp.save()
     exp.save('test.pkl')
-    run_experiment_section('test.pkl', participant=1)
+    with pytest.raises(QuitSession):
+        run_experiment_section('test.pkl', participant=1)
 
     exp = load_experiment('test.pkl')
     assert exp.subsection(participant=1, block=1, trial=1).has_started

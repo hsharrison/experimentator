@@ -89,11 +89,14 @@ def run_experiment_section(experiment, demo=False, resume=False, parent_callback
             exp.resume_section(section_obj, demo=demo, parent_callbacks=parent_callbacks)
         else:
             exp.run_section(section_obj, demo=demo, parent_callbacks=parent_callbacks, from_section=from_section)
-    except QuitSession as e:
-        logger.warning('Quit event detected: {}.'.format(str(e)))
+
+    except QuitSession:
+        logger.warning('Quit event detected, saving.')
         # Backup experiment file.
         os.rename(exp.experiment_file,
                   exp.experiment_file + datetime.now().strftime('.%m-%d-%H-%M-backup'))
+        raise
+
     finally:
         exp.save()
 
