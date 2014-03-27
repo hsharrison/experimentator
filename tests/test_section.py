@@ -108,6 +108,10 @@ def test_repr():
 def test_find_section():
     section = ExperimentSection(make_tree(['session', 'block', 'trial'], {}), ChainMap())
     assert section.subsection(block=1, trial=3) is section[1][3]
+    key = lambda sec: all(sec.data.get(level, number) == number for level, number in {'block': 2, 'trial': 3}.items())
+    assert section.find_first_top_down(key) is section[2][3]
+    key = lambda sec: sec.data['block'] == 4 and 'trial' not in sec.data
+    assert section.find_first_top_down(key) is section[4]
 
 
 def test_dataframe():

@@ -335,7 +335,7 @@ class ExperimentSection():
             key = lambda x: not x.has_finished
             descriptor = 'not finished'
 
-        return self._find_top_down(at_level, key, starting_at=starting_at, descriptor=descriptor)
+        return self.find_first_top_down(key, at_level, starting_at=starting_at, descriptor=descriptor)
 
     def find_first_partially_run(self, at_level, starting_at=None):
         """Find the first subsection that has been partially run.
@@ -357,26 +357,45 @@ class ExperimentSection():
             The first `ExperimentSection` satisfying the specified criteria.
 
         """
-        return self._find_top_down(at_level, lambda x: x.has_started and not x.has_finished,
-                                   starting_at=starting_at, descriptor='partially run')
+        return self.find_first_top_down(lambda x: x.has_started and not x.has_finished, at_level,
+                                        starting_at=starting_at, descriptor='partially run')
 
-    def _find_top_down(self, at_level, key, starting_at=None, descriptor=''):
+    def find_first_top_down(self, key, at_level=None, starting_at=None, descriptor=''):
+        """Find first section, top down.
+
+        Returns a section such that ``key(section) == True``. Descends the hierarchy only via sections for which `key`
+        also returns ``True``.
+
+        Arguments
+        ---------
+        key : function
+            A function that returns true or false when passed an `ExperimentSection`.
+        at_level : str, optional
+            Which level to return a section from. If not given, the lowest possible level will be used.
+        start_at : ExperimentSection, optional
+            Where in the tree to start searching.
+        descriptor : str, optional
+            A human-language description of the criterion printed in the log message.
+
+        Returns
+        -------
+        ExperimentSection
+            The first `ExperimentSection` satisfying the specified criterion.
+
+        """
         node = starting_at or self
-        while not node.level == at_level:
-            level = node.tree[1][0]
-            logger.debug('Checking all {}s...'.format(level))
-            next_node = None
-            for child in node:
-                if key(child):
-                    next_node = child
-                    break
+        if node.is_bottom_level or node.level == at_level:
+            return node
 
-            if not next_node:
-                logger.warning('Count not find a {} {}'.format(level, descriptor))
-                return
-            node = next_node
+        logger.info('Checking all children of a {}...'.format(node.level))
+        for child in node:
+            if key(child):
+                return self.find_first_top_down(key, at_level=at_level, starting_at=child, descriptor=descriptor)
 
-        return node
+        logger.warning('Could not find a child {}'.format(descriptor))
+
+        if at_level is None:
+            return node
 
     @staticmethod
     def _prepare_for_indexing(item):
