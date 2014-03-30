@@ -183,9 +183,9 @@ def test_design_tree():
     practice_block_design = Design()
     participant_design = Design(dict(zip(participant_iv_names, participant_iv_values)), ordering=Ordering(10))
 
-    tree = DesignTree([('participant', [participant_design]),
+    tree = DesignTree([('participant', participant_design),
                        ('block', [practice_block_design, block_design]),
-                       ('trial', [trial_design])])
+                       ('trial', trial_design)])
     tree.add_base_level()
 
     levels, designs = zip(*tree.levels_and_designs)

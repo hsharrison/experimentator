@@ -254,6 +254,11 @@ class DesignTree():
 
     """
     def __init__(self, levels_and_designs):
+        # Check for singleton Designs.
+        for i, (level, design) in enumerate(levels_and_designs):
+            if isinstance(design, Design):
+                levels_and_designs[i] = (level, [design])
+
         # Make first pass of all designs, from bottom to top.
         for (level, designs), (level_above, designs_above) in \
                 zip(reversed(levels_and_designs[1:]), reversed(levels_and_designs[:-1])):
