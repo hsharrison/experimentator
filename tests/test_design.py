@@ -6,7 +6,7 @@ import pytest
 import numpy as np
 
 from experimentator import Design, DesignTree
-from experimentator.order import Shuffle, Ordering, CompleteCounterbalance
+from experimentator.order import Shuffle, Ordering, CompleteCounterbalance, Sorted
 
 
 def check_sequences(first, second):
@@ -219,3 +219,39 @@ def test_different_bad_design_matrix():
     d = Design(ivs=zip(iv_names, iv_values), design_matrix=matrix)
     with pytest.raises(ValueError):
         d.first_pass()
+
+
+def test_design_from_spec():
+    spec = {
+        'name': 'test1',
+        'order': 'Shuffle',
+        'n': 2,
+        'ivs': {'a': [True, False], 'b': [1, 2, 3]},
+    }
+    assert Design.from_dict(spec) == ('test1', Design({'a': [True, False], 'b': [1, 2, 3]}, ordering=Shuffle(2)))
+
+    spec = {
+        'name': 'test2',
+        'some_extra_field': ['blah'],
+        'number': 3,
+    }
+    assert Design.from_dict(spec) == ('test2', Design(extra_data={'some_extra_field': ['blah']}, ordering=Ordering(3)))
+
+    spec = {
+        'name': 'test3',
+        'ordering': {
+            'class': 'Sorted',
+            'order': 'ascending',
+        },
+        'ivs': {'a': [1, 2, 3]},
+    }
+    assert Design.from_dict(spec) == ('test3', Design(ivs={'a': [1, 2, 3]}, ordering=Sorted(order='ascending')))
+
+    spec = {
+        'name': 'test4',
+        'order': ['CompleteCounterbalance', 3],
+    }
+    assert Design.from_dict(spec) == ('test4', Design(ordering=CompleteCounterbalance(3)))
+
+    spec.pop('name')
+    assert Design.from_dict(spec) == Design(ordering=CompleteCounterbalance(3))

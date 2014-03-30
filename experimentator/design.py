@@ -5,10 +5,11 @@ are imported in ``__init__.py``.
 
 """
 import itertools
+import collections
 from copy import copy
 import numpy as np
 
-from experimentator.order import Shuffle
+import experimentator.order
 from collections import ChainMap
 
 
@@ -59,10 +60,76 @@ class Design():
         if ordering:
             self.ordering = ordering
         else:
-            self.ordering = Shuffle()
+            self.ordering = experimentator.order.Ordering()
 
         if self.design_matrix is None and any(iv_values is None for iv_values in self.iv_values):
             raise TypeError('Must specify a design matrix if using continuous IVs (values=None)')
+
+    @classmethod
+    def from_dict(cls, spec):
+        """
+        Design from dict.
+
+        Constructs a `Design` instance from a dict (e.g., parsed from a YAML file).
+
+        Arguments
+        ---------
+        spec : dict
+            The fields 'ivs'`, `'design_matrix'`, and `'extra_data'` are interpreted as
+            kwargs to the `Design` constructor.
+            An `Ordering` instance is created from the field `'ordering'` or `'order'`.
+            This field may contain a string, dict, or sequence.
+            A string is interpreted as a class name from `experimentator.order`.
+            If the ordering spec is a dict, then the field `'class'` contains the class name
+            and other fields are interpreted as keyword arguments to the constructor.
+            If the ordering spec is a sequence, then the first element is the class name
+            and any subsequent elements are positional arguments.
+            F or convenience, the `Ordering` argument `number` may be specified in `spec['n']` or `spec['number']`.
+            Finally, any fields not otherwise used
+            are included in the `extra_data` argument to the `Design` constructor.
+
+        Returns
+        -------
+        name : str
+            Only returned if `spec` contains a field `'name'`.
+        design : Design
+
+        """
+        inputs = spec.copy()
+
+        ordering_spec = inputs.pop('ordering', inputs.pop('order', None))
+        ordering_class = 'Ordering'
+        ordering_args = ()
+        number = inputs.pop('number', inputs.pop('n', None))
+        ordering_kwargs = {'number': number} if number else {}
+
+        name = inputs.pop('name', None)
+        design_kwargs = {key: inputs.get(key)
+                         for key in inputs
+                         if key in ('ivs', 'design_matrix', 'extra_data')}
+        inputs.pop('ivs', None)
+        inputs.pop('design_matrix', None)
+        inputs.pop('extra_data', None)
+        design_kwargs['extra_data'] = inputs
+
+        if isinstance(ordering_spec, str):
+            ordering_class = ordering_spec
+
+        elif isinstance(ordering_spec, dict):
+            ordering_class = ordering_spec.pop('class', ordering_class)
+            ordering_kwargs.update(ordering_spec)
+
+        elif isinstance(ordering_spec, collections.Sequence):
+            ordering_class = ordering_spec[0]
+            ordering_args = ordering_spec[1:]
+
+        ordering = getattr(experimentator.order, ordering_class)(*ordering_args, **ordering_kwargs)
+
+        self = cls(ordering=ordering, **design_kwargs)
+        if name:
+            return name, self
+        else:
+            return self
 
     def __repr__(self):
         return 'Design(ivs={}, design_matrix={}, ordering={}, extra_data={})'.format(
