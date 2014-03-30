@@ -43,6 +43,8 @@ class Design():
         `Design`.
 
     """
+    heterogeneous_design_iv_name = 'design'
+
     def __init__(self, ivs=None, design_matrix=None, ordering=None, extra_data=None):
         if isinstance(ivs, dict):
             ivs = list(ivs.items())
@@ -162,8 +164,6 @@ class Design():
 
         """
         if self.design_matrix is not None:
-            print(np.shape(self.design_matrix))
-            print(self.iv_names)
             if not np.shape(self.design_matrix)[1] == len(self.iv_names):
                 raise TypeError("Size of design matrix doesn't match number of IVs")
 
@@ -232,6 +232,31 @@ class Design():
 
         return conditions
 
+    @property
+    def is_heterogeneous(self):
+        """Heterogeneity.
+
+        Returns
+        -------
+        bool
+            True if this `Design` is the last level before the tree structure diverges.
+
+        """
+        return self.heterogeneous_design_iv_name in self.iv_names
+
+    @property
+    def branches(self):
+        """Branches.
+
+        Returns
+        -------
+        list of str
+            The IV names corresponding to named heterogeneous branches
+            in the tree structure following this `Design`, if any.
+
+        """
+        return dict(zip(self.iv_names, self.iv_values)).get(self.heterogeneous_design_iv_name, ())
+
 
 class DesignTree():
     """Hierarchy of experimental designs.
@@ -246,20 +271,94 @@ class DesignTree():
        A list of tuples, each with two elements. The first is a string naming the level, the second is a list of
        `Design` instances to occur at that level.
 
+    **other_designs
+        Named design trees, can be `DesignTree` instances or lists of tuples in the format of `levels_and_designs`.
+        These designs allow for heterogeneous design structures. Whenever an IV is encountered named ``'design'``
+        (the class attribute `Design.heterogeneous_design_iv_name`)
+        in the last element of `levels_and_designs`,
+        the tree continues with ``other_designs[iv_value]``,
+        where ``iv_value`` is the current value of the IV ``'design'``.
+
     Note
     ----
-    This class does not have much functionality. Its only purpose is to handle calling `Design.first_pass` for every
-    `Design` object, in the proper order. This streamlines customizing an experiment with different designs in different
-    places, and prevents errors such as calling `Design.first_pass` methods multiple times or in the wrong order.
+    Calling `next` on the last level of a heterogeneous `DesignTree`
+    will return a dictionary of named `DesignTree` instances rather than a single `DesignTree` instances.
+    The names are the possible values of the IV ``'design'``.
 
     """
-    def __init__(self, levels_and_designs):
+    def __init__(self, levels_and_designs, **other_designs):
+        self.other_designs = other_designs
         # Check for singleton Designs.
         for i, (level, design) in enumerate(levels_and_designs):
             if isinstance(design, Design):
                 levels_and_designs[i] = (level, [design])
+        self.levels_and_designs = levels_and_designs
 
-        # Make first pass of all designs, from bottom to top.
+        # Handle heterogeneous trees.
+        bottom_level_design = levels_and_designs[-1][1][0]
+        if bottom_level_design.is_heterogeneous:
+            self.branches = {name: branch for name, branch in other_designs.items()
+                             if branch in bottom_level_design.branches and isinstance(branch, DesignTree)}
+            for branch_name in bottom_level_design.branches:
+                if branch_name not in self.branches:
+                    designs_to_pass = other_designs.copy()
+                    del designs_to_pass[branch_name]
+                    tree = DesignTree(other_designs[branch_name], **designs_to_pass)
+                    self.branches[branch_name] = tree
+
+        else:
+            self.branches = {}
+
+        top_level_iv_names, _ = self.first_pass(self.levels_and_designs)
+        if top_level_iv_names:
+            raise ValueError('Cannot have a non-atomic ordering at the top level of a DesignTree. ' +
+                             'The recommended workaround is to insert a "dummy level" with no IVs and number=1.')
+
+    def __repr__(self):
+        if self.levels_and_designs[0][0] == '_base':
+            levels_and_designs = self.levels_and_designs[1:]
+        else:
+            levels_and_designs = self.levels_and_designs
+        return 'DesignTree({}{}{})'.format(
+            levels_and_designs, ', ' if self.other_designs else '',
+            ', '.join('{}={}'.format(*other_design) for other_design in self.other_designs.items()))
+
+    def __next__(self):
+        if len(self) == 1:
+            raise StopIteration
+
+        if len(self.levels_and_designs) == 1:
+            return self.branches
+
+        next_design = copy(self)
+        next_design.levels_and_designs = next_design.levels_and_designs[1:]
+        return next_design
+
+    def __len__(self):
+        length = len(self.levels_and_designs)
+        if self.branches:
+            length += len(list(self.branches.values())[0])
+        return length
+
+    def __getitem__(self, item):
+        return self.levels_and_designs[item]
+
+    def __eq__(self, other):
+        if isinstance(other, type(self)):
+            return self.__dict__ == other.__dict__
+
+    @staticmethod
+    def first_pass(levels_and_designs):
+        """First pass.
+
+        Make first pass of all designs in a design tree, from bottom to top.
+
+        Returns
+        -------
+        iv_names, iv_values
+            IVs for a non-atomic sort at the top level of the tree, if any (there shouldn't be).
+
+        """
         for (level, designs), (level_above, designs_above) in \
                 zip(reversed(levels_and_designs[1:]), reversed(levels_and_designs[:-1])):
 
@@ -275,34 +374,11 @@ class DesignTree():
                 design.update(new_iv_names, new_iv_values)
 
         # And call first pass of the top level.
+        iv_names, iv_values = (), ()
         for design in levels_and_designs[0][1]:
-            design.first_pass()
+            iv_names, iv_values = design.first_pass()
 
-        self.levels_and_designs = levels_and_designs
-
-    def __repr__(self):
-        if self.levels_and_designs[0][0] == '_base':
-            levels_and_designs = self.levels_and_designs[1:]
-        else:
-            levels_and_designs = self.levels_and_designs
-        return 'DesignTree({})'.format(levels_and_designs)
-
-    def __next__(self):
-        if len(self.levels_and_designs) == 1:
-            raise StopIteration
-        next_design = copy(self)
-        next_design.levels_and_designs = next_design.levels_and_designs[1:]
-        return next_design
-
-    def __len__(self):
-        return len(self.levels_and_designs)
-
-    def __getitem__(self, item):
-        return self.levels_and_designs[item]
-
-    def __eq__(self, other):
-        if isinstance(other, type(self)):
-            return self.__dict__ == other.__dict__
+        return iv_names, iv_values
 
     def add_base_level(self):
         """Add base level to tree.

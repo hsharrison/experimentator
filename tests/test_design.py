@@ -229,10 +229,14 @@ def check_length(sequence, n):
     assert len(sequence) == n
 
 
+def check_type(object_, type_):
+    assert isinstance(object_, type_)
+
+
 def test_heterogeneous_design_tree():
     main_structure = [
         ('participant', Design(ivs={'a': [1, 2], 'b': [1, 2]}, ordering=Shuffle(3))),
-        ('session', Design(ivs={'structure': ['practice', 'test']}, design_matrix=[[0], [1], [1]])),
+        ('session', Design(ivs={'design': ['practice', 'test']}, design_matrix=[[0], [1], [1]])),
     ]
     other_structures = {
         'practice': [
@@ -248,21 +252,67 @@ def test_heterogeneous_design_tree():
     tree = DesignTree(main_structure, **other_structures)
     try:
         while True:
-            yield check_identity(next(tree), next(tree))
+            yield check_equality, next(tree), next(tree)
             tree = next(tree)
+            if isinstance(tree, dict):
+                tree = list(tree.values())[0]
 
     except StopIteration:
         pass
 
+    tree = DesignTree(main_structure, **other_structures)
+    yield check_length, tree, 4
     participant = next(tree)
-    yield check_length(participant, 1)
-    session = next(tree)
-    yield check_length(session, 1)
-    blocks = next(tree)
-    yield check_length(blocks, 2)
-    practice_block, test_block = blocks
-    yield check_equality(practice_block.levels_and_designs[0][0], 'trial')
-    yield check_equality(test_block.levels_and_designs[0][0], 'trial')
+    yield check_length, participant, 3
+    sessions = next(participant)
+    yield check_type, sessions, dict
+    yield check_length, sessions, 2
+    yield check_length, sessions['practice'], 2
+    yield check_length, sessions['test'], 2
+    yield check_equality, sessions['practice'].levels_and_designs[0][0], 'block'
+    yield check_equality, sessions['test'].levels_and_designs[0][0], 'block'
+    practice_block = next(sessions['practice'])
+    test_block = next(sessions['test'])
+    yield check_equality, practice_block.levels_and_designs[0][0], 'trial'
+    yield check_equality, test_block.levels_and_designs[0][0], 'trial'
+
+
+def test_bad_heterogeneity():
+    main_structure = [
+        ('participant', Design(ivs={'a': [1, 2], 'b': [1, 2]}, ordering=Shuffle(3))),
+        ('session', Design(ivs={'design': ['practice', 'test']}, design_matrix=[[0], [1], [1]])),
+    ]
+    other_structures = {
+        'practice': [
+            ('block', Design()),
+            ('trial', Design(ivs={'difficulty': [1, 2]}, ordering=Shuffle(20))),
+        ],
+        'test': [
+            ('block', Design(ordering=CompleteCounterbalance(2))),
+            ('trial', Design(ivs={'difficulty': [1, 3, 5, 7]}, ordering=Shuffle(5))),
+        ],
+    }
+    with pytest.raises(ValueError):
+        DesignTree(main_structure, **other_structures)
+
+
+def test_repr():
+    main_structure = [
+        ('participant', Design(ivs={'a': [1, 2], 'b': [1, 2]}, ordering=Shuffle(3))),
+        ('session', Design(ivs={'design': ['practice', 'test']}, design_matrix=[[0], [1], [1]])),
+    ]
+    other_structures = {
+        'practice': [
+            ('block', Design()),
+            ('trial', Design(ivs={'difficulty': [1, 2]}, ordering=Shuffle(20))),
+        ],
+        'test': [
+            ('block', Design(ordering=Ordering(2))),
+            ('trial', Design(ivs={'difficulty': [1, 3, 5, 7]}, ordering=Shuffle(5))),
+        ],
+    }
+    tree = DesignTree(main_structure, **other_structures)
+    assert tree == eval(repr(tree))
 
 
 def test_bad_design_matrix():
