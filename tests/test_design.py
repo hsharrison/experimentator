@@ -9,11 +9,22 @@ from experimentator import Design, DesignTree
 from experimentator.order import Shuffle, Ordering, CompleteCounterbalance, Sorted
 
 
+def make_immutable(list_of_dicts):
+    for element in list_of_dicts:
+        yield tuple(element.items())
+
+
+def check_joint(first, second):
+    if isinstance(first[0], dict):
+        first = make_immutable(first)
+        second = make_immutable(second)
+    assert not set(tuple(first)).symmetric_difference(set(tuple(second)))
+
+
 def check_sequences(first, second):
     idx_combinations = set(product(range(len(first)), repeat=2)) - {(i, i) for i in range(len(first))}
     assert not any(first[one_idx] == first[another_idx] for one_idx, another_idx in idx_combinations)
-    assert all(item in second for item in first)
-    assert all(item in first for item in second)
+    check_joint(first, second)
 
 
 def test_factorial():
@@ -73,8 +84,7 @@ def check_design_matrix(order, iv_names, iv_values, matrix):
             new_matrix.append(new_column)
             matrix = np.array(new_matrix).transpose()
 
-    assert all(row in matrix for row in order_array)
-    assert all(row in order_array for row in matrix)
+    yield check_joint, matrix, order_array
 
 
 def test_design_matrix():
@@ -133,6 +143,18 @@ def check_design(design, iv_names, iv_values, n, data, matrix):
                 assert value in ivs[iv]
 
 
+def check_identity(first, second):
+    assert first is second
+
+
+def check_equality(*items):
+    try:
+        first_item = items[0]
+    except TypeError:
+        first_item = next(items)
+    assert all(item == first_item for item in items)
+
+
 def test_design_tree():
     trial_matrix = np.array([[-1, -1],
                              [1, -1],
@@ -168,24 +190,26 @@ def test_design_tree():
 
     levels, designs = zip(*tree.levels_and_designs)
 
-    assert designs[1][0] is participant_design
-    assert designs[2][0] is practice_block_design
-    assert designs[2][1] is block_design
-    assert designs[3][0] is trial_design
+    yield check_identity, designs[1][0], participant_design
+    yield check_identity, designs[2][0], practice_block_design
+    yield check_identity, designs[2][1], block_design
+    yield check_identity, designs[3][0], trial_design
 
-    assert len(tree) == 4
-    assert tree[3] == ('trial', [trial_design])
+    yield check_equality, len(tree), 4
+    yield check_equality, tree[3], ('trial', [trial_design])
 
-    assert next(tree).levels_and_designs == next(tree).levels_and_designs == tree.levels_and_designs[1:]
+    yield check_equality, next(tree).levels_and_designs, next(tree).levels_and_designs, tree.levels_and_designs[1:]
     tree_with_participant_base = next(tree)
     tree_with_block_base = next(tree_with_participant_base)
-    assert tree_with_block_base.levels_and_designs \
-        == next(next(tree)).levels_and_designs\
-        == [('block', [practice_block_design, block_design]), ('trial', [trial_design])]
+    yield (check_equality,
+           tree_with_block_base.levels_and_designs,
+           next(next(tree)).levels_and_designs,
+           [('block', [practice_block_design, block_design]), ('trial', [trial_design])])
     tree_with_trial_base = next(tree_with_block_base)
-    assert tree_with_trial_base.levels_and_designs \
-        == [('trial', [trial_design])] \
-        == next(tree_with_block_base).levels_and_designs
+    yield (check_equality,
+           tree_with_trial_base.levels_and_designs,
+           [('trial', [trial_design])],
+           next(tree_with_block_base).levels_and_designs)
     with pytest.raises(StopIteration):
         next(tree_with_trial_base)
 
