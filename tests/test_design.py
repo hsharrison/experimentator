@@ -225,6 +225,46 @@ def test_design_tree():
     yield check_design_matrix, designs[3][0].get_order(), ['a', 'b'], [None, None], trial_matrix
 
 
+def check_length(sequence, n):
+    assert len(sequence) == n
+
+
+def test_heterogeneous_design_tree():
+    main_structure = [
+        ('participant', Design(ivs={'a': [1, 2], 'b': [1, 2]}, ordering=Shuffle(3))),
+        ('session', Design(ivs={'structure': ['practice', 'test']}, design_matrix=[[0], [1], [1]])),
+    ]
+    other_structures = {
+        'practice': [
+            ('block', Design()),
+            ('trial', Design(ivs={'difficulty': [1, 2]}, ordering=Shuffle(20))),
+        ],
+        'test': [
+            ('block', Design(ordering=Ordering(2))),
+            ('trial', Design(ivs={'difficulty': [1, 3, 5, 7]}, ordering=Shuffle(5))),
+        ],
+    }
+
+    tree = DesignTree(main_structure, **other_structures)
+    try:
+        while True:
+            yield check_identity(next(tree), next(tree))
+            tree = next(tree)
+
+    except StopIteration:
+        pass
+
+    participant = next(tree)
+    yield check_length(participant, 1)
+    session = next(tree)
+    yield check_length(session, 1)
+    blocks = next(tree)
+    yield check_length(blocks, 2)
+    practice_block, test_block = blocks
+    yield check_equality(practice_block.levels_and_designs[0][0], 'trial')
+    yield check_equality(test_block.levels_and_designs[0][0], 'trial')
+
+
 def test_bad_design_matrix():
     with pytest.raises(TypeError):
         design = Design(ivs=[('a', [1]), ('b', [1])], design_matrix=np.ones((3, 3)))
