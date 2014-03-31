@@ -4,8 +4,8 @@ This module contains shortcuts that help to create common experimental designs.
 
 """
 from experimentator.design import Design, DesignTree
-from experimentator.experiment import Experiment
-from experimentator.order import Shuffle
+from experimentator.experiment import Experiment, load_experiment, export_experiment_data, run_experiment_section
+import experimentator.order as order
 
 
 def within_subjects_experiment(ivs, n_participants, design_matrix=None, ordering=None, experiment_file=None):
@@ -36,7 +36,7 @@ def within_subjects_experiment(ivs, n_participants, design_matrix=None, ordering
         The constructed experiment.
 
     """
-    levels_and_designs = [('participant', [Design(ordering=Shuffle(n_participants))]),
+    levels_and_designs = [('participant', [Design(ordering=order.Shuffle(n_participants))]),
                           ('trial', [Design(ivs=ivs, design_matrix=design_matrix, ordering=ordering)])]
 
     experiment = Experiment(DesignTree(levels_and_designs), experiment_file=experiment_file)
@@ -93,7 +93,7 @@ def blocked_experiment(trial_ivs, n_participants,
     if not orderings:
         orderings = {}
 
-    levels_and_designs = [('participant', [Design(ordering=Shuffle(n_participants))]),
+    levels_and_designs = [('participant', [Design(ordering=order.Shuffle(n_participants))]),
                           ('block', [Design(ivs=block_ivs,
                                             design_matrix=design_matrices.get('block'),
                                             ordering=orderings.get('block'))]),

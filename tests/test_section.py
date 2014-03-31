@@ -5,7 +5,8 @@ from collections import ChainMap
 import pandas as pd
 import pytest
 
-from experimentator import Design, DesignTree, ExperimentSection
+from experimentator import Design, DesignTree
+from experimentator.section import ExperimentSection
 from experimentator.order import Ordering
 
 from tests.test_design import make_heterogeneous_tree
