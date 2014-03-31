@@ -8,6 +8,8 @@ import pytest
 from experimentator import Design, DesignTree, ExperimentSection
 from experimentator.order import Ordering
 
+from tests.test_design import make_heterogeneous_tree
+
 
 def make_tree(levels, data):
     designs = [[Design([('a', range(len(levels))), ('b', [False, True])], extra_data=data, ordering=Ordering())]
@@ -127,3 +129,26 @@ def test_find_all_sections():
     for subsection in sections:
         assert subsection.data['block'] in (2, 4)
         assert subsection.data['trial'] in (4, 6)
+
+
+def test_heterogeneous_tree_section():
+    participant = ExperimentSection(make_heterogeneous_tree(), ChainMap())
+    assert participant.level == 'participant'
+    assert len(participant) == 3
+    practice_session = participant[1]
+    test_sessions = participant[2:]
+    assert practice_session.level == test_sessions[0].level == test_sessions[1].level == 'session'
+    assert len(practice_session) == 1
+    assert len(test_sessions[0]) == len(test_sessions[1]) == 2
+    practice_block = practice_session[1]
+    assert practice_block.level == 'block'
+    assert practice_block.data['design'] == 'practice'
+    assert practice_block.data['block'] == 1 and practice_block.data['session'] == 1
+    assert len(practice_block) == 2*20
+    assert all(trial.data['difficulty'] in (1, 2) for trial in practice_block)
+    test_block = test_sessions[1][2]
+    assert test_block.level == 'block'
+    assert test_block.data['design'] == 'test'
+    assert test_block.data['block'] == 2 and test_block.data['session'] == 3
+    assert len(test_block) == 4*5
+    assert all(trial.data['difficulty'] in (1, 3, 5, 7) for trial in test_block)

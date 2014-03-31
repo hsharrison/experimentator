@@ -233,7 +233,7 @@ def check_type(object_, type_):
     assert isinstance(object_, type_)
 
 
-def test_heterogeneous_design_tree():
+def make_heterogeneous_tree():
     main_structure = [
         ('participant', Design(ivs={'a': [1, 2], 'b': [1, 2]}, ordering=Shuffle(3))),
         ('session', Design(ivs={'design': ['practice', 'test']}, design_matrix=[[0], [1], [1]])),
@@ -249,7 +249,11 @@ def test_heterogeneous_design_tree():
         ],
     }
 
-    tree = DesignTree(main_structure, **other_structures)
+    return DesignTree(main_structure, **other_structures)
+
+
+def test_heterogeneous_design_tree():
+    tree = make_heterogeneous_tree()
     try:
         while True:
             yield check_equality, next(tree), next(tree)
@@ -260,7 +264,7 @@ def test_heterogeneous_design_tree():
     except StopIteration:
         pass
 
-    tree = DesignTree(main_structure, **other_structures)
+    tree = make_heterogeneous_tree()
     yield check_length, tree, 4
     participant = next(tree)
     yield check_length, participant, 3

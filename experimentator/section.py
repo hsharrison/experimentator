@@ -76,8 +76,21 @@ class ExperimentSection():
 
         if not self.is_bottom_level:
             # Create the section tree. Creating any section also creates the sections below it.
-            self.append_design_tree(next(self.tree), _renumber=False)
+            self.append_design_tree(self.get_next_tree(), _renumber=False)
             self._number_children()
+
+    @property
+    def heterogeneous_design_iv_name(self):
+        """IV name specifying which heterogeneous design.
+
+        Returns
+        -------
+        iv_name : str
+            If there is heterogeneity in the `DesignTree` (``next(self.tree)`` returns a dict),
+            then which branch to follow will depend on the follow of this IV.
+
+        """
+        return self.tree.levels_and_designs[0][1][0].heterogeneous_design_iv_name
 
     def __repr__(self):
         return 'ExperimentSection({}, {})'.format(self.tree.__repr__(), self.data.__repr__())
@@ -85,6 +98,20 @@ class ExperimentSection():
     def __eq__(self, other):
         if isinstance(other, type(self)):
             return self.__dict__ == other.__dict__
+
+    def get_next_tree(self):
+        """Get next tree.
+
+        Returns
+        -------
+        DesignTree
+            A `DesignTree` instance for creating child `ExperimentSection` instances.
+
+        """
+        next_tree = next(self.tree)
+        if isinstance(next_tree, dict):
+            return next_tree[self.data[self.heterogeneous_design_iv_name]]
+        return next_tree
 
     def append_design_tree(self, tree, to_start=False, _renumber=True):
         """Append sections to this section's children.
@@ -149,7 +176,7 @@ class ExperimentSection():
 
         """
         if not tree:
-            tree = next(self.tree)
+            tree = self.get_next_tree()
 
         child_data = self.data.new_child()
         child_data.update(data)
