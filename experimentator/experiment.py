@@ -14,6 +14,11 @@ from contextlib import contextmanager, ExitStack
 from datetime import datetime
 from collections import ChainMap
 
+try:
+    import yaml
+except ImportError:
+    yaml = None
+
 from experimentator.common import QuitSession
 from experimentator.section import ExperimentSection
 from experimentator.design import DesignTree
@@ -186,7 +191,7 @@ class Experiment(ExperimentSection):
     def from_dict(cls, spec):
         """Experiment from dict.
 
-        Construct an `Experiment` based on a dictionary specification.
+        Constructs an `Experiment` based on a dictionary specification.
 
         Arguments
         ---------
@@ -198,12 +203,50 @@ class Experiment(ExperimentSection):
             is saved in the `experiment_file` attribute.
             Any other fields are saved in the `attribute `experiment_data`.
 
+        Returns
+        -------
+        Experiment
+
+        See Also
+        --------
+        Experiment.from_yaml_file
+        DesignTree.from_spec
+        Design.from_dict
+
         """
         tree = DesignTree.from_spec(spec.pop('design'))
         experiment_file = spec.pop('experiment_file', spec.pop('file', None))
         self = cls(tree, experiment_file)
         self.experiment_data = spec
         return self
+
+    @classmethod
+    def from_yaml_file(cls, filename):
+        """Experiment from YAML file.
+
+        Constructs an `Experiment` based on specification in a YAML file. Requires module `PyYAML`.
+
+        Arguments
+        ---------
+        filename : str
+            YAML file. YAML should specify a dictionary matching the specification of `Experiment.from_dict`.
+
+        Returns
+        -------
+        Experiment
+
+        See Also
+        --------
+        Experiment.from_dict
+        DesignTree.from_spec
+        Design.from_dict
+
+        """
+        if not yaml:
+            raise ImportError('PyYAML is not installed')
+        with open(filename, 'r') as f:
+            spec = yaml.load(f)
+        return cls.from_dict(spec)
 
     def __repr__(self):
         return "Experiment({}, experiment_file='{}')".format(self.tree.__repr__(), self.experiment_file)

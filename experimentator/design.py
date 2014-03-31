@@ -346,7 +346,7 @@ class DesignTree():
                         designs.append(name_and_design)
                     else:
                         if name and name_and_design[0] != name:
-                            raise ValueError('Designs at the same level must have the same name.')
+                            raise ValueError('Designs at the same level must have the same name')
                         name = name_and_design[0]
                         designs.append(name_and_design[1])
 

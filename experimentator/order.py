@@ -325,7 +325,7 @@ class Sorted(NonAtomicOrdering):
 
         """
         if len(conditions[0]) > 1:
-            raise ValueError("Ordering method 'Sorted' only works with one IV.")
+            raise ValueError("Ordering method 'Sorted' only works with one IV")
 
         self.all_conditions = self.number * list(conditions)
         self.order_ivs = {'ascending': sorted(self.all_conditions,
