@@ -314,6 +314,44 @@ class DesignTree():
             raise ValueError('Cannot have a non-atomic ordering at the top level of a DesignTree. ' +
                              'The recommended workaround is to insert a "dummy level" with no IVs and number=1.')
 
+    @classmethod
+    def from_spec(cls, spec):
+        if isinstance(spec, dict):
+            # The normal case.
+            main_tree = list(cls._design_specs_to_designs(spec.pop('main')))
+            other_trees = {name: list(cls._design_specs_to_designs(specs)) for name, specs in spec.items()}
+        else:
+            # Only a main design.
+            main_tree = list(cls._design_specs_to_designs(spec))
+            other_trees = {}
+
+        return cls(main_tree, **other_trees)
+
+    @staticmethod
+    def _design_specs_to_designs(specs):
+        for spec in specs:
+            if isinstance(spec, dict):
+                name_and_design = Design.from_dict(spec)
+                if isinstance(name_and_design, Design):
+                    yield None, name_and_design
+                else:
+                    yield name_and_design
+
+            else:
+                name = None
+                designs = []
+                for design_spec in spec:
+                    name_and_design = Design.from_dict(design_spec)
+                    if isinstance(name_and_design, Design):
+                        designs.append(name_and_design)
+                    else:
+                        if name and name_and_design[0] != name:
+                            raise ValueError('Designs at the same level must have the same name.')
+                        name = name_and_design[0]
+                        designs.append(name_and_design[1])
+
+                yield name, designs
+
     def __repr__(self):
         if self.levels_and_designs[0][0] == '_base':
             levels_and_designs = self.levels_and_designs[1:]

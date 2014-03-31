@@ -373,3 +373,144 @@ def test_design_from_spec():
 
     spec.pop('name')
     assert Design.from_dict(spec) == Design(ordering=CompleteCounterbalance(3))
+
+
+def test_design_tree_from_spec():
+    spec = {
+        'main':
+        [
+            {
+                'name': 'participant',
+                'ivs': {'a': [1, 2], 'b': [1, 2]},
+                'number': 3,
+                'ordering': 'Shuffle',
+            },
+            {
+                'name': 'session',
+                'ivs': {'design': ['practice', 'test']},
+                'design_matrix': [[0], [1], [1]],
+            },
+        ],
+        'practice':
+        [
+            {
+                'name': 'block'
+            },
+            {
+                'name': 'trial',
+                'ivs': {'difficulty': [1, 2]},
+                'n': 2,
+                'order': 'Shuffle',
+            },
+        ],
+        'test':
+        [
+            {
+                'name': 'block',
+                'n': 2,
+            },
+            [
+                {
+                    'name': 'trial',
+                    'ivs': {'difficulty': [1, 3]},
+                    'number': 2,
+                    'order': 'Shuffle',
+                },
+                {
+                    'ivs': {'difficulty': [5, 7]},
+                    'n': 3,
+                    'order': 'Shuffle',
+                },
+            ],
+        ],
+    }
+    tree = DesignTree.from_spec(spec)
+    yield check_length, tree, 4
+    participant = next(tree)
+    yield check_length, participant, 3
+    sessions = next(participant)
+    yield check_type, sessions, dict
+    yield check_length, sessions, 2
+    yield check_length, sessions['practice'], 2
+    yield check_length, sessions['test'], 2
+    yield check_equality, sessions['practice'].levels_and_designs[0][0], 'block'
+    yield check_equality, sessions['test'].levels_and_designs[0][0], 'block'
+    practice_block = next(sessions['practice'])
+    test_block = next(sessions['test'])
+    yield check_equality, practice_block.levels_and_designs[0][0], 'trial'
+    yield check_equality, test_block.levels_and_designs[0][0], 'trial'
+
+
+def test_bad_design_tree_spec():
+    spec = {
+        'main':
+        [
+            {
+                'name': 'participant',
+                'ivs': {'a': [1, 2], 'b': [1, 2]},
+                'number': 3,
+                'ordering': 'Shuffle',
+            },
+            {
+                'name': 'session',
+                'ivs': {'design': ['practice', 'test']},
+                'design_matrix': [[0], [1], [1]],
+            },
+        ],
+        'practice':
+        [
+            {
+                'name': 'block'
+            },
+            {
+                'name': 'trial',
+                'ivs': {'difficulty': [1, 2]},
+                'n': 2,
+                'order': 'Shuffle',
+            },
+        ],
+        'test':
+        [
+            {
+                'name': 'block',
+                'n': 2,
+            },
+            [
+                {
+                    'name': 'trial',
+                    'ivs': {'difficulty': [1, 3]},
+                    'number': 2,
+                    'order': 'Shuffle',
+                },
+                {
+                    'name': 'not-trial',
+                    'ivs': {'difficulty': [5, 7]},
+                    'n': 3,
+                    'order': 'Shuffle',
+                },
+            ],
+        ],
+    }
+    with pytest.raises(ValueError):
+        DesignTree.from_spec(spec)
+
+
+def test_simple_design_tree_spec():
+    spec = [
+        {
+            'name': 'participant',
+            'ivs': {'a': [1, 2], 'b': [1, 2]},
+            'number': 3,
+            'ordering': 'Shuffle',
+        },
+        {
+            'ivs': {'type': ['over', 'under']},
+            'design_matrix': [[0], [1], [1]],
+        },
+    ]
+    tree = DesignTree.from_spec(spec)
+    yield check_length, tree, 2
+    yield check_equality, next(tree), next(tree)
+    participant = next(tree)
+    yield check_length, participant, 1
+    yield check_equality, participant.levels_and_designs[0][0], None
