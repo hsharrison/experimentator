@@ -69,7 +69,7 @@ setup(name='experimentator',
       entry_points={
           'console_scripts': ['exp = experimentator.cli:main'],
       },
-      install_requires=['docopt>=0.6.1'],
+      install_requires=['docopt>=0.6.1', 'schema>=0.2.0'],
       tests_require=['pytest'],
       cmdclass={'test': PyTest},
       package_data={
