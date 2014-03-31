@@ -1,85 +1,135 @@
-==============
-experimentator
-==============
+experimentator: Python experiment builder
+=========================================
+
 .. image:: https://travis-ci.org/hsharrison/experimentator.png?branch=master
     :target: https://travis-ci.org/hsharrison/experimentator
 .. image:: https://coveralls.io/repos/hsharrison/experimentator/badge.png?branch=master
   :target: https://coveralls.io/r/hsharrison/experimentator?branch=master
 
--------------------------
-Python experiment builder
--------------------------
+Do you write code to run experiments?
+If so, you've probably had the experience of sitting down to code an experiment
+but getting side-tracked by all the logistics:
+crossing your independent variables to form conditions,
+repeating your conditions,
+randomization,
+storing intermediate data,
+etc.
+It's frustrating to put all that effort in
+before even getting to what's really unique about your experiment.
+Worse, it encourages bad coding practices
+like copy-pasting boilerplate from someone else's experiment code
+without understanding it.
 
-Do you write code to run experiments? If so, you've probably had the experience of sitting down to code an experiment but getting side-tracked by all the logistics: crossing your independent variables to form conditions, repeating your conditions, randomization, storing intermediate data, etc. It's frustrating to put all that effort in before even getting to what's really unique about your experiment. Worse, it encourages bad coding practices like copy-pasting boilerplate from someone else's experiment code without understanding it.
+The underlying purpose of **experimentator** is
+to handle all the boring logistics of running experiments
+and allow you to get straight to what really interests you, whatever that may be.
+This package was originally intended for behavioral experiments
+in which human participants are interacting with a graphical interface,
+but there is nothing domain-specific about it--it should be useful for anyone running experiments with a computer.
+You might say that **experimentator** is a library for
+'repeatedly calling a function while systematically varying its inputs and saving the data'
+(although that doesn't do it full justice).
 
-The underlying purpose of **experimentator** is to handle all the boring logistics of running experiments and allow you to get straight to what really interests you, whatever that may be. This package was originally designed for behavioral experiments in which human participants are interacting with a graphical interface, but there is nothing domain-specific about it--it should be useful for anyone running experiments with a computer. You might say that **experimentator** is a library for 'repeatedly calling a function while systematically varying its inputs and saving the data', although that doesn't do full justice to its functionality.
+Not handled here
+----------------
 
-What experimentator is not
---------------------------
+.. hlist::
+    :columns: 2
 
-The philosophy of experimentator is to do one thing and do it well. It does not do:
+    * graphics
+    * timing
+    * hardware interfacing
+    * statistics
+    * data processing
 
-* graphics
-* timing
-* hardware interfacing
-* statistics
-* data processing
+The philosophy of experimentator is to do one thing and do it well.
+It is meant to be used with other libraries that handle the above functionality,
+and gives you the freedom to choose which you prefer.
+It is best suited for someone with programming experience and some knowledge of the Python ecosystem,
+who would rather choose the best tool for each aspect of a project than use an all-in-one package.
 
-Experimentator is meant to be used with other libraries that handle the above functionality, and gives you the freedom to choose which you prefer. It is best suited for someone with programming experience and some knowledge of the Python ecosystem, who would rather choose the best tool for each aspect of a project than use an all-in-one package.
-
-Of course, there are alternatives that offer experimental design features along with other capabilities. A selection, as well as recommended complimentary packages are listed at the end of this document.
+Of course, there are alternatives that offer experimental design features along with other capabilities.
+A selection, as well as recommended complimentary packages, are listed later in the documentation.
 
 An example
 ----------
 
-To demonstrate, let's build a 2x3 factorial within-subjects experiment:
+To demonstrate, let's create a simple perceptual experiment.
+For the sake of example, imagine we will present some stimulus
+to either the left or right side of the screen
+for a specified amount of time,
+and ask the participant to identify it.
+We'll use a factorial 2 (side) x 3 (display time) design,
+and have a total of 60 trials per participant (10 per condition).
+Here's how it might look in experimentator:
 
 .. code-block:: python
 
-    from experimentator.api import within_subjects_experiment
-    from experimentator.order import Shuffle
+    import random
+    from time import time
+    from experimentator.api import within_subjects_experiment, order
 
-    def present_stimulus(trial_data, **_):
-        congruent = trial_data['congruent']
-        display_time = trial_data['display_time']
-        # The interesting part goes here.
-        # Let's imagine a stimulus is presented, and a response is collected.
-        return {'reaction_time': rt, 'correct': response==answer}
+
+    def present_stimulus_and_get_response(stimulus, side, duration):
+        # Use your imagination...
+        return random.choice(['yes', 'no'])
+
+
+    def run_trial(trial_data, session_data, experiment_data):
+        stimulus, answer = random.choice(list(experiment_data['stimuli'].items()))
+        start_time = time()
+        response = present_stimulus_and_get_response(trial_data['side'], trial_data['display_time'])
+        result = {
+            'reaction_time': time() - start_time,
+            'correct': response == answer
+        }
+        return result
 
 
     if __name__ == '__main__':
-        independent_variables = {'congruent': [False, True],
-                                 'display_time': [0.1, 0.55, 1]}
-        distractor_experiment = within_subjects_experiment(independent_variables,
-                                                           n_participants=20,
-                                                           ordering=Shuffle(10),
-                                                           experiment_file='distractor.dat')
-        distractor_experiment.set_run_callback(present_stimulus)
-        distractor_experiment.save()
+        independent_variables = {
+            'side': ['left', 'right'],
+            'display_time': [0.1, 0.55, 1],
+        }
+        stimuli_and_answers = {
+            'cat.jpg': 'yes',
+            'dog.jpg': 'no',
+        }
 
-This experiment has two independent variables, ``'congruent'`` with two levels, and ``'display_time'`` with three, for a total of six conditions (ignore, for now, the ``**_`` in the callback's signature). It has 20 participants, though more can be added later. The conditions are shuffled, with each appearing 10 times.
+        experiment = within_subjects_experiment(
+            independent_variables, n_participants=20, ordering=order.Shuffle(10), experiment_file='exp_1.dat')
 
-Running the above script creates ``distractor.dat``. From there, we can run sessions of the experiment straight from the command line, using the entry point ``exp``, automatically installed with experimentator:
+        experiment.experiment_data
+        experiment.set_run_callback(run_trial)
+        experiment.save()
+
+Running this script will create the experiment in the file ``exp_1.dat``.
+We can now run sessions from the command line:
 
 .. code-block:: bash
 
-    exp run distractor.dat --next participant
+    exp run exp_1.dat participant 1
+    exp run exp_1.dat --next participant
 
-Finally, we can export the data to a text file:
+Eventually, we can export the data to a text file:
 
 .. code-block:: bash
 
-    exp export distractor.dat data.csv
+    exp export exp_1.dat exp_1_data.csv
 
 Or, access the data in a Python session:
 
 .. code-block:: python
 
-    from experimentator import load_experiment
+    from experimentator.api import load_experiment
 
-    data = load_experiment('distractor.dat').dataframe
+    data = load_experiment('exp_1.dat').dataframe
 
-In this example the data will have six columns: two index columns with labels ``'participant'`` and ``'trial'``, two columns from the IVs, with labels ``'congruent'`` and ``'display_time'``, and two data columns with labels ``'reaction_time'`` and ``'correct'`` (the keys in the dictionary returned by ``present_stimulus_data``).
+In this example the data will be a pandas ``DataFrame`` with six columns:
+two index columns with labels ``'participant'`` and ``'trial'``,
+two columns from the IVs, with labels ``'side'`` and ``'display_time'``,
+and two data columns with labels ``'reaction_time'`` and ``'correct'``
+(the keys in the dictionary returned by ``run_Trial``).
 
 Installation
 ------------
@@ -87,76 +137,97 @@ Installation
 Dependencies
 ^^^^^^^^^^^^
 
-Experimentator requires Python 3.3 or later. It also depends on the following Python libraries:
+Experimentator requires Python 3.3 or later.
+It also depends on the following Python libraries:
 
-* `numpy <http://www.numpy.org/>`_ ``v1.8.0`` or later
-* `pandas <http://pandas.pydata.org/>`_ ``v0.13.0`` or later
-* `docopt <http://docopt.org/>`_ ``v0.6.1`` or later
-* `schema <https://github.com/halst/schema>`_ ``v0.2.0`` or later
+- `numpy <http://www.numpy.org/>`_  ``>= v1.8.0``
+- `pandas <http://pandas.pydata.org/>`_ ``>= v0.13.1``
+- `docopt <http://docopt.org/>`_ ``>= v0.6.1`` or later
+- `schema <https://github.com/halst/schema>`_ ``>= v0.2.0``
+- `PyYAML <hhttp://pyyaml.org/wiki/PyYAML>`_ ``>= v3.10``
+  (Required only for ``Experiment.from_yaml_file``)
+- `pytest <http://pytest.org/latest/>`_ ``>=2.5.2``
+  (Required only for running tests)
 
-Version control
-^^^^^^^^^^^^^^^
+From source (development version)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Experimentator is hosted on both `GitHub <https://github.com/hsharrison/experimentator>`_ and `BitBucket <https://bitbucket.org/hharrison/experimentator>`_. The Mercurial repository (BitBucket) is considered canonical.
-
-From source
-^^^^^^^^^^^
-
-From a Python 3 virtual environment:
+Experimentator is hosted on both
+`GitHub <https://github.com/hsharrison/experimentator>`_
+and `BitBucket <https://bitbucket.org/hharrison/experimentator>`_.
+The Mercurial repository (BitBucket) is considered canonical.
 
 .. code-block:: bash
 
     hg clone https://bitbucket.org/hharrison/experimentator
-    # or
-    git clone https://github.com/hsharrison/experimentator
-
     cd experimentator
-    python setup.py install
-
-License
--------
-
-Licensed under the MIT License, which may or may not appear below depending on where you're reading this. If not, see ``LICENSE.txt``.
-
-.. include:: LICENSE.txt
-    :literal:
-
+    python setup.py install  # Inside a python3 virtualenv.
 
 Other libraries
 ---------------
 
-Alternatives to experimentator
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+*Please, feel free to submit a pull request to add your software to one of these lists.*
 
-The Python ecosystem offers some wonderful alternatives that *do* handle experimentation logistics in addition to providing other functionality like graphics and input/output.
+Alternatives
+^^^^^^^^^^^^
 
-* `expyriment <https://code.google.com/p/expyriment/>`_: graphics, input/output, hardware interfacing, data preprocessing, experimental design. If you are coming from the Matlab world, this is the closest thing to `Psychtoolbox <http://psychtoolbox.org/HomePage>`_.
-* `OpenSesame <http://www.osdoc.cogsci.nl/>`_: an all-in-one package with a graphical interface to boot. An impressive piece of software.
-* Contact the `author`_ or submit a pull request and I'll add your software to this list.
+The Python ecosystem offers some wonderful alternatives that provide experiment logistics
+in addition to other functionality like graphics and input/output:
+
+- `expyriment <https://code.google.com/p/expyriment/>`_:
+  Graphics, input/output, hardware interfacing, data preprocessing, experimental design.
+  If you are coming from the Matlab world, this is the closest thing to
+  `Psychtoolbox <http://psychtoolbox.org/HomePage>`_.
+- `OpenSesame <http://www.osdoc.cogsci.nl/>`_:
+  An all-in-one package with a graphical interface to boot. An impressive piece of software.
 
 Complimentary libraries
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-What are your options for handling the things that experimentator doesn't do? Here's a short selection. If you're already using Python some of these will go without saying, but they're included here for completeness:
+What about all those important things that experimentator doesn't do?
+Here's a short selection.
+If you're already using Python some of these will go without saying,
+but they're included here for completeness:
 
-* experimental design
-    * `pyDOE <http://pythonhosted.org/pyDOE/>`_: Construct design matrices in a format that experimentator can use to build your experiment.
-* graphics
-    * `Pygame <http://pygame.org/news.html>`_: Very popular but not platform-independent.
-    * `Pyglet <http://www.pyglet.org/>`_: A smaller community than Pygame, but my personal preference. Works with callbacks rather than with an explicit event loop. Platform-independent and includes OpenGL bindings.
-    * `PyOpenGL <http://pyopengl.sourceforge.net/>`_: If all you need is to make OpenGL calls.
-* graphical interfaces
-    * `urwid <http://urwid.org/>`_: Console user interface library, ncurses-style.
-    * `wxPython <http://wxpython.org/>`_: Python bindings for the wxWidgets C++ library.
-    * `PyQT <http://www.riverbankcomputing.com/software/pyqt/intro>`_: QT bindings.
-    * `PySide <http://qt-project.org/wiki/PySide>`_: Another QT option.
-    * `PyGTK <http://www.pygtk.org/>`_: Python bindings for GTK+.
-* statistics and data processing
-    * `pandas <http://pandas.pydata.org/>`_ Convenient data structures. Experimental data in experimentator is stored in a pandas ``DataFrame``.
-    * `NumPy <http://www.numpy.org/>`_ Matrix operations. The core of the Python scientific computing stack.
-    * `SciPy <http://docs.scipy.org/doc/scipy/reference/>`_: A comprehensive scientific computing library.
-    * `Statsmodels <http://statsmodels.sourceforge.net/>`_: Statistical modeling and hypothesis testing.
-    * `scikit-learn <http://scikit-learn.org/stable/>`_: Machine learning in Python.
-    * `rpy2 <http://rpy.sourceforge.net/rpy2.html>`_: Call ``R`` from Python. Because sometimes the model or test you need isn't in statsmodels or scikit-learn.
+- *experimental design*
+    - `pyDOE <http://pythonhosted.org/pyDOE/>`_:
+      Construct design matrices in a format that experimentator can use to build your experiment.
+- *graphics*
+    -  `Pygame <http://pygame.org/news.html>`_:
+       Very popular.
+    - `Pyglet <http://www.pyglet.org/>`_:
+       A smaller community than Pygame, but my personal preference. Includes OpenGL bindings.
+    - `PyOpenGL <http://pyopengl.sourceforge.net/>`_:
+      If all you need is to make OpenGL calls.
+- *graphical interfaces*
+    - `urwid <http://urwid.org/>`_:
+      Console user interface library, ncurses-style.
+    - `wxPython <http://wxpython.org/>`_:
+      Python bindings for the wxWidgets C++ library.
+    - `PyQT <http://www.riverbankcomputing.com/software/pyqt/intro>`_:
+      QT bindings.
+    - `PySide <http://qt-project.org/wiki/PySide>`_:
+      Another QT option.
+    - `PyGTK <http://www.pygtk.org/>`_:
+      Python bindings for GTK+.
+- *statistics and data processing*
+    - `pandas <http://pandas.pydata.org/>`_:
+      Convenient data structures. Experimental data in experimentator is stored in a pandas ``DataFrame``.
+    - `NumPy <http://www.numpy.org/>`_:
+      Matrix operations. The core of the Python scientific computing stack.
+    - `SciPy <http://docs.scipy.org/doc/scipy/reference/>`_:
+      A comprehensive scientific computing library spanning many domains.
+    - `Statsmodels <http://statsmodels.sourceforge.net/>`_:
+      Statistical modeling and hypothesis testing.
+    - `scikit-learn <http://scikit-learn.org/stable/>`_:
+      Machine learning.
+    - `rpy2 <http://rpy.sourceforge.net/rpy2.html>`_:
+      Call ``R`` from Python. Because sometimes the model or test you need isn't in statsmodels or scikit-learn.
 
-.. _author: mailto:henry.schafer.harrison@gmail.com
+License
+-------
+
+**Licensed under the MIT license.**
+
+.. include:: ../LICENSE.txt
+    :start-after: The MIT License (MIT)
