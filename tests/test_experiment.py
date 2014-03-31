@@ -7,6 +7,8 @@ from experimentator.api import within_subjects_experiment, blocked_experiment, s
 from experimentator.order import Shuffle, CompleteCounterbalance
 from experimentator import Design, DesignTree, Experiment
 
+from tests.test_design import check_equality
+
 
 def trial(data, **_):
     a = data['a']
@@ -271,3 +273,82 @@ def test_callbacks_and_data():
         exp.session_data['participants_ended'] == \
         exp.session_data['participants_between'] + 1 == \
         6 * 2
+
+
+def test_experiment_from_spec():
+    spec = {
+        'design':
+        {
+            'main':
+            [
+                {
+                    'name': 'participant',
+                    'ivs': {'a': [1, 2], 'b': [1, 2]},
+                    'number': 3,
+                    'ordering': 'Shuffle',
+                },
+                {
+                    'name': 'session',
+                    'ivs': {'design': ['practice', 'test']},
+                    'design_matrix': [[0], [1], [1]],
+                },
+            ],
+            'practice':
+            [
+                {
+                    'name': 'block'
+                },
+                {
+                    'name': 'trial',
+                    'ivs': {'difficulty': [1, 2]},
+                    'n': 2,
+                    'order': 'Shuffle',
+                },
+            ],
+            'test':
+            [
+                {
+                    'name': 'block',
+                    'n': 2,
+                },
+                [
+                    {
+                        'name': 'trial',
+                        'ivs': {'difficulty': [1, 3]},
+                        'number': 2,
+                        'order': 'Shuffle',
+                    },
+                    {
+                        'ivs': {'difficulty': [5, 7]},
+                        'n': 3,
+                        'order': 'Shuffle',
+                    },
+                ],
+            ],
+        },
+        'data': [1, 2, 3, 4, 5],
+        'file': 'test.dat',
+    }
+    experiment = Experiment.from_dict(spec)
+    yield check_equality, experiment.experiment_file, 'test.dat'
+    yield check_equality, experiment.experiment_data, {'data': [1, 2, 3, 4, 5]}
+    yield check_equality, len(experiment), 2*2*3
+    participant = experiment.subsection(participant=1)
+    yield check_equality, participant.level, 'participant'
+    yield check_equality, len(participant), 3
+    yield check_equality, participant[1].data['design'], 'practice'
+    yield check_equality, participant[2].data['design'], participant[3].data['design'], 'test'
+    practice_session = participant[1]
+    test_session = participant[2]
+    yield check_equality, practice_session.level, test_session.level, 'session'
+    yield check_equality, len(practice_session), 1
+    yield check_equality, len(test_session), 2
+    test_block = test_session[1]
+    yield check_equality, len(test_block), 2*2 + 2*3
+    yield check_in, (trial.data['difficulty'] for trial in test_block[:4]), [1, 3]
+    yield check_in, (trial.data['difficulty'] for trial in test_block[5:]), [5, 7]
+
+
+def check_in(items, collection):
+    assert set(items) - set(collection) == set()
+

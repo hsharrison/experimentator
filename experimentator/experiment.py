@@ -16,6 +16,7 @@ from collections import ChainMap
 
 from experimentator.common import QuitSession
 from experimentator.section import ExperimentSection
+from experimentator.design import DesignTree
 
 logger = getLogger(__name__)
 
@@ -180,6 +181,29 @@ class Experiment(ExperimentSection):
 
         self.session_data = {'as': {}, 'options': ''}
         self.experiment_data = {}
+
+    @classmethod
+    def from_dict(cls, spec):
+        """Experiment from dict.
+
+        Construct an `Experiment` based on a dictionary specification.
+
+        Arguments
+        ---------
+        spec : dict
+            `spec` should have, at minimum, a field named `'design'`.
+            The value of this field specifies the `DesignTree`.
+            See `DesignTree.from_spec` for details.
+            The field `'experiment_file'` or just `'file'`, if it exists,
+            is saved in the `experiment_file` attribute.
+            Any other fields are saved in the `attribute `experiment_data`.
+
+        """
+        tree = DesignTree.from_spec(spec.pop('design'))
+        experiment_file = spec.pop('experiment_file', spec.pop('file', None))
+        self = cls(tree, experiment_file)
+        self.experiment_data = spec
+        return self
 
     def __repr__(self):
         return "Experiment({}, experiment_file='{}')".format(self.tree.__repr__(), self.experiment_file)
