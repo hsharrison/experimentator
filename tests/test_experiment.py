@@ -17,26 +17,26 @@ def trial(data, **_):
 
 def make_simple_exp():
     ivs = {'a': [False, True], 'b': [0, 1, 2]}
-    exp = Experiment.within_subjects_experiment(ivs, 10, ordering=Shuffle(4))
+    exp = Experiment.within_subjects(ivs, 10, ordering=Shuffle(4))
     exp.set_run_callback(trial)
     return exp
 
 
 def make_blocked_exp():
-    exp = Experiment.blocked_experiment({'a': [False, True]}, 2,
-                                        block_ivs={'b': [0, 1, 2]},
-                                        orderings={'trial': Shuffle(4), 'block': CompleteCounterbalance()})
+    exp = Experiment.blocked({'a': [False, True]}, 2,
+                             block_ivs={'b': [0, 1, 2]},
+                             orderings={'trial': Shuffle(4), 'block': CompleteCounterbalance()})
     exp.set_run_callback(trial)
     return exp
 
 
 def make_standard_exp():
-    exp = Experiment.standard_experiment(('participant', 'block', 'trial'),
-                                         {'block': [('b', [0, 1, 2])],
-                                          'trial': [('a', [False, True])]},
-                                         ordering_by_level={'trial': Shuffle(4),
-                                                            'block': CompleteCounterbalance(),
-                                                            'participant': Shuffle(2)})
+    exp = Experiment.basic(('participant', 'block', 'trial'),
+                           {'block': [('b', [0, 1, 2])],
+                            'trial': [('a', [False, True])]},
+                           ordering_by_level={'trial': Shuffle(4),
+                                              'block': CompleteCounterbalance(),
+                                              'participant': Shuffle(2)})
     exp.set_run_callback(trial)
     return exp
 
@@ -329,7 +329,7 @@ def test_experiment_from_spec():
         'file': 'test.dat',
     }
     experiment = Experiment.from_dict(spec)
-    yield check_equality, experiment.experiment_file, 'test.dat'
+    yield check_equality, experiment.filename, 'test.dat'
     yield check_equality, experiment.experiment_data, {'data': [1, 2, 3, 4, 5]}
     yield check_equality, len(experiment), 2*2*3
     participant = experiment.subsection(participant=1)
@@ -354,7 +354,7 @@ def check_in(items, collection):
 
 def test_experiment_from_yaml_file():
     experiment = Experiment.from_yaml_file('tests/test.yml')
-    yield check_equality, experiment.experiment_file, 'test.dat'
+    yield check_equality, experiment.filename, 'test.dat'
     yield check_equality, experiment.experiment_data, {'data': [1, 2, 3, 4, 5]}
     yield check_equality, len(experiment), 2*2*3
     participant = experiment.subsection(participant=1)

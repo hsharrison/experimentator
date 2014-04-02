@@ -41,4 +41,4 @@ design:
 
 data: [1, 2, 3, 4, 5]
 
-experiment_file: test.dat
+filename: test.dat

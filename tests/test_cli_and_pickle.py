@@ -12,7 +12,7 @@ from contextlib import contextmanager
 from numpy import isnan
 import pytest
 
-from experimentator import Experiment, run_experiment_section, QuitSession, Experiment, DesignTree, Design
+from experimentator import run_experiment_section, QuitSession, Experiment, DesignTree, Design
 from experimentator.cli import main
 from experimentator.order import Ordering
 from tests.test_experiment import make_blocked_exp, check_trial
@@ -48,7 +48,7 @@ def test_cli():
     exp = make_blocked_exp()
     exp.set_context_manager('participant', participant_context, already_contextmanager=True)
     exp.set_context_manager('block', block_context)
-    exp.experiment_file = 'test.pkl'
+    exp.filename = 'test.pkl'
     exp.save()
 
     call_cli('exp run test.pkl --next participant')
@@ -113,7 +113,7 @@ def test_cli():
 def test_pickle_error():
     exp = make_blocked_exp()
     exp.set_context_manager('block', block_context, func_module='not_a_module')
-    exp.experiment_file = 'test.pkl'
+    exp.filename = 'test.pkl'
     exp.save()
 
     with pytest.raises(ImportError):
@@ -128,18 +128,18 @@ def context(data, session_data, experiment_data):
 def test_options():
     exp = make_blocked_exp()
     exp.set_context_manager('block', context)
-    exp.experiment_file = 'test.pkl'
+    exp.filename = 'test.pkl'
     exp.save()
     call_cli('exp run test.pkl --next participant -o pass,through,option')
 
 
 def make_deterministic_exp():
-    Experiment.standard_experiment(('participant', 'block', 'trial'),
-                                   {'block': {'b': [0, 1, 2]}, 'trial': {'a': [False, True]}},
-                                   ordering_by_level={'trial': Ordering(4),
-                                                      'block': Ordering(4),
-                                                      'participant': Ordering()},
-                                   experiment_file='test.pkl').save()
+    Experiment.basic(('participant', 'block', 'trial'),
+                     {'block': {'b': [0, 1, 2]}, 'trial': {'a': [False, True]}},
+                     ordering_by_level={'trial': Ordering(4),
+                                        'block': Ordering(4),
+                                        'participant': Ordering()},
+                     filename='test.pkl').save()
 
 
 def test_export():

@@ -67,7 +67,7 @@ Here's how it might look in experimentator:
 
     import random
     from time import time
-    from experimentator.api import within_subjects_experiment, order
+    from experimentator import Experiment, order
 
 
     def present_stimulus_and_get_response(stimulus, side, duration):

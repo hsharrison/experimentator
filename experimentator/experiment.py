@@ -80,22 +80,22 @@ def run_experiment_section(experiment, demo=False, resume=False, parent_callback
     except QuitSession:
         logger.warning('Quit event detected, saving.')
         # Backup experiment file.
-        os.rename(exp.experiment_file,
-                  exp.experiment_file + datetime.now().strftime('.%m-%d-%H-%M-backup'))
+        os.rename(exp.filename,
+                  exp.filename + datetime.now().strftime('.%m-%d-%H-%M-backup'))
         raise
 
     finally:
         exp.save()
 
 
-def export_experiment_data(experiment_file, data_file, **kwargs):
+def export_experiment_data(filename, data_file, **kwargs):
     """ Export data.
 
     Reads a pickled experiment instance and saves its data in ``.csv`` format.
 
     Arguments
     ---------
-    experiment_file : str
+    filename : str
         The file location where an `Experiment` instance is pickled.
     data_file : str
         The file location where the data will be written.
@@ -111,7 +111,7 @@ def export_experiment_data(experiment_file, data_file, **kwargs):
     `Experiment.data` attribute as desired or use the `skip_columns` option.
 
     """
-    Experiment.load(experiment_file).export_data(data_file, **kwargs)
+    Experiment.load(filename).export_data(data_file, **kwargs)
 
 
 class Experiment(ExperimentSection):
@@ -125,14 +125,14 @@ class Experiment(ExperimentSection):
     ---------
     tree : DesignTree
         A `DesignTree` instance defining the experiment hierarchy.
-    experiment_file : str, optional
+    filename : str, optional
         A file location where the `Experiment` will be pickled.
 
     Attributes
     ----------
     tree : DesignTree
         The `DesignTree` instance defining the experiment's hierarchy.
-    experiment_file : str
+    filename : str
         The file location where the `Experiment` will be pickled.
     levels : list of str
         The levels of the experiment, as passed in `tree`.
@@ -152,11 +152,11 @@ class Experiment(ExperimentSection):
         picklable.
 
     """
-    def __init__(self, tree, experiment_file=None):
+    def __init__(self, tree, filename=None):
         tree.add_base_level()
         super().__init__(tree, ChainMap())
 
-        self.experiment_file = experiment_file
+        self.filename = filename
 
         self.context_managers = {level: _dummy_context for level in self.levels}
         self.context_managers['_base'] = _dummy_context
@@ -185,7 +185,7 @@ class Experiment(ExperimentSection):
         """
         with open(filename, 'rb') as f:
             self = pickle.load(f)
-        self.experiment_file = filename
+        self.filename = filename
         return self
 
     @classmethod
@@ -200,8 +200,8 @@ class Experiment(ExperimentSection):
             `spec` should have, at minimum, a field named `'design'`.
             The value of this field specifies the `DesignTree`.
             See `DesignTree.from_spec` for details.
-            The field `'experiment_file'` or just `'file'`, if it exists,
-            is saved in the `experiment_file` attribute.
+            The field `'filename'` or just `'file'`, if it exists,
+            is saved in the `filename` attribute.
             Any other fields are saved in the `attribute `experiment_data`.
 
         Returns
@@ -216,8 +216,8 @@ class Experiment(ExperimentSection):
 
         """
         tree = DesignTree.from_spec(spec.pop('design'))
-        experiment_file = spec.pop('experiment_file', spec.pop('file', None))
-        self = cls(tree, experiment_file)
+        filename = spec.pop('filename', spec.pop('file', None))
+        self = cls(tree, filename=filename)
         self.experiment_data = spec
         return self
 
@@ -250,7 +250,7 @@ class Experiment(ExperimentSection):
         return cls.from_dict(spec)
 
     @classmethod
-    def within_subjects_experiment(cls, ivs, n_participants, design_matrix=None, ordering=None, experiment_file=None):
+    def within_subjects(cls, ivs, n_participants, design_matrix=None, ordering=None, filename=None):
         """Construct a within-subjects experiment.
 
         This function creates a within-subjects experiment, in which all the IVs are at the trial level.
@@ -258,18 +258,19 @@ class Experiment(ExperimentSection):
         Arguments
         ---------
         ivs : list or dict
-            A list of the experiment's IVs, specified in the form of tuples with the first element being the
-            IV name and the second element a list of its possible values. Alternatively, the IVs at each level can be
-            specified in a dictionary. See documentation for `Design` for more information on specifying IVs.
+            A list of the experiment's IVs, specified in the form of tuples
+            with the first element being the IV name and the second element a list of its possible values.
+            Alternatively, the IVs at each level can be specified in a dictionary.
+            See documentation for `Design` for more information on specifying IVs.
         n_participants : int
             Number of participants to initialize.
         design_matrix : array-like, optional
-            Design matrix for the experiment. If not specified, IVs will be fully crossed. See documentation for `Design`
-            for more on design matrices.
+            Design matrix for the experiment. If not specified, IVs will be fully crossed.
+            See documentation for `Design` for more on design matrices.
         ordering : Ordering, optional
-            An instance of the class `Ordering` or one of its descendants, specifying how the trials will be ordered. If not
-            specified, `Shuffle` will be used.
-        experiment_file : str, optional
+            An instance of the class `Ordering` or one of its descendants, specifying how the trials will be ordered.
+            If not specified, `Shuffle` will be used.
+        filename : str, optional
             File location to save the experiment.
 
         Returns
@@ -281,46 +282,48 @@ class Experiment(ExperimentSection):
         levels_and_designs = [('participant', [Design(ordering=order.Shuffle(n_participants))]),
                               ('trial', [Design(ivs=ivs, design_matrix=design_matrix, ordering=ordering)])]
 
-        return cls(DesignTree(levels_and_designs), experiment_file=experiment_file)
+        return cls(DesignTree(levels_and_designs), filename=filename)
 
     @classmethod
-    def blocked_experiment(cls, trial_ivs, n_participants,
-                           design_matrices=None,
-                           orderings=None,
-                           block_ivs=None,
-                           experiment_file=None):
+    def blocked(cls, trial_ivs, n_participants, design_matrices=None, orderings=None, block_ivs=None, filename=None):
         """Construct a within-subjects experiment.
 
-        This function creates a blocked within-subjects experiment, in which all the IVs are at either the trial level or
-        the block level.
+        This function creates a blocked within-subjects experiment,
+        in which all the IVs are at either the trial level or the block level.
 
         Arguments
         ---------
         trial_ivs : list or dict
-            A list of the IVs to define at the trial level, specified in the form of tuples with the first element being the
-            IV name and the second element a list of its possible values. Alternatively, the IVs at each level can be
-            specified in a dictionary. See documentation for `Design` for more information on specifying IVs.
+            A list of the IVs to define at the trial level, specified in the form of tuples
+            with the first element being the IV name and the second element a list of its possible values.
+            Alternatively, the IVs at each level can be specified in a dictionary.
+            See documentation for `Design` for more information on specifying IVs.
         n_participants : int
-            Number of participants to initialize. If a non-atomic block ordering is used, this is the number of participants
-            per ordering condition.
+            Number of participants to initialize.
+            If a non-atomic block ordering is used, this is the number of participants per ordering condition.
         design_matrices : dict, optional
-            Design matrices for the experiment. Keys are ``'trial'`` and ``'block'``; values are the respective design
-            matrices (if any). If not specified, IVs will be fully crossed. See documentation for `Design` for more on
-            design matrices.
+            Design matrices for the experiment.
+            Keys are ``'trial'`` and ``'block'``; values are the respective design matrices (if any).
+            If not specified, IVs will be fully crossed.
+            See documentation for `Design` for more on design matrices.
         orderings : dict, optional
-            Dictionary with keys of ``'trial'`` and ``'block'``. Each value should be an instance of the class `Ordering` or
-            one of its descendants, specifying how the trials will be ordered. If not specified, `Shuffle` will be used.
+            Dictionary with keys of ``'trial'`` and ``'block'``.
+            Each value should be an instance of the class `Ordering` or one of its descendants,
+            specifying how the trials will be ordered
+            If not specified, `Shuffle` will be used.
         block_ivs : list or dict, optional
-            IVs to define at the block level. See documentation for `Design` for more information on specifying IVs.
-        experiment_file : str, optional
+            IVs to define at the block level.
+            See documentation for `Design` for more information on specifying IVs.
+        filename : str, optional
             File location to save the experiment.
 
         Note
         ----
-        For blocks to have any effect, you should either define at least one IV at the block level (for non-identical
-        blocks), or use the ordering ``Ordering(n)`` to create ``n`` identical blocks for every participant (Identical in
-        the design sense; the order of trials will depend on the trial ordering and will probably not be identical between
-        blocks).
+        For blocks to have any effect,
+        you should either define at least one IV at the block level (for non-identical blocks),
+        or use the ordering ``Ordering(n)`` to create ``n`` identical blocks for every participant
+        (identical in the design sense;
+        the order of trials will depend on the trial ordering and will probably not be identical between blocks).
 
         Returns
         -------
@@ -341,34 +344,39 @@ class Experiment(ExperimentSection):
                                                 design_matrix=design_matrices.get('trial'),
                                                 ordering=orderings.get('trial'))])]
 
-        return cls(DesignTree(levels_and_designs), experiment_file=experiment_file)
+        return cls(DesignTree(levels_and_designs), filename=filename)
 
     @classmethod
-    def standard_experiment(cls, levels, ivs_by_level,
-                            design_matrices_by_level=None,
-                            ordering_by_level=None,
-                            experiment_file=None):
-        """Construct a standard experiment.
+    def basic(cls, levels, ivs_by_level, design_matrices_by_level=None, ordering_by_level=None, filename=None):
+        """Construct a basic, homogeneously-organized experiment.
 
-        This function builds a standard experiment, which is to say an experiment that has arbitrary levels but only one
-        design at each level, and the same structure everywhere in the hierarchy.
+        This function builds a basic experiment,
+        which is to say an experiment that has arbitrary levels
+        but only one design at each level,
+        and the same structure everywhere in the hierarchy.
 
         Arguments
         ---------
         levels : sequence of str
             Names of the levels of the experiment
         ivs_by_level : dict
-            Dictionary specifying the IVs and their possible values at every level. The keys are be the level names, and the
-            values are lists of the IVs at that level, specified in the form of tuples with the first element being the IV
-            name and the second element a list of its possible values. Alternatively, the IVs at each level can be
-            specified in a dictionary. See documentation for `Design` for more information on specifying IVs.
+            Dictionary specifying the IVs and their possible values at every level.
+            The keys are be the level names,
+            and the values are lists of the IVs at that level,
+            specified in the form of tuples
+            with the first element being the IV name and the second element a list of its possible values.
+            Alternatively, the IVs at each level can be specified in a dictionary.
+            See documentation for `Design` for more information on specifying IVs.
         design_matrices_by_level : dict, optional
-            Specify the design matrix for any levels. Keys are level names; values are design matrices. Any levels without
-            a design matrix will be fully crossed. See `Design` for more on design matrices.
+            Specify the design matrix for any levels.
+            Keys are level names; values are design matrices.
+            Any levels without a design matrix will be fully crossed.
+            See `Design` for more on design matrices.
         ordering_by_level : dict, optional
-            Specify the ordering for each level. Keys are level names; values are instance objects from
-            `experimentator.order`. For ny levels without an order specified, `Shuffle` will be used.
-        experiment_file : str, optional
+            Specify the ordering for each level.
+            Keys are level names; values are instance objects from `experimentator.order`.
+            For ny levels without an order specified, `Shuffle` will be used.
+        filename : str, optional
             File location to save the experiment.
 
         Returns
@@ -387,23 +395,23 @@ class Experiment(ExperimentSection):
                                        ordering=ordering_by_level.get(level))])
                               for level in levels]
 
-        return cls(DesignTree(levels_and_designs), experiment_file=experiment_file)
+        return cls(DesignTree(levels_and_designs), filename=filename)
 
     def __repr__(self):
-        return "Experiment({}, experiment_file='{}')".format(self.tree.__repr__(), self.experiment_file)
+        return "Experiment({}, filename='{}')".format(self.tree.__repr__(), self.filename)
 
     def save(self, filename=None):
         """Save experiment.
 
-        Pickles the `Experiment` to the location in `Experiment.experiment_file`.
+        Pickles the `Experiment` to the location in `Experiment.filename`.
 
         Arguments
         ---------
         filename | str, optional
-            If specified, overrides `Experiment.experiment_file.
+            If specified, overrides `Experiment.filename.
 
         """
-        filename = filename or self.experiment_file
+        filename = filename or self.filename
         if filename:
             logger.debug('Saving Experiment instance to {}.'.format(filename))
             with open(filename, 'wb') as f:
