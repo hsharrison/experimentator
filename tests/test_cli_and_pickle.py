@@ -13,7 +13,6 @@ from numpy import isnan
 import pytest
 
 from experimentator import load_experiment, run_experiment_section, QuitSession, Experiment, DesignTree, Design
-from experimentator.api import standard_experiment
 from experimentator.cli import main
 from experimentator.order import Ordering
 from tests.test_experiment import make_blocked_exp, check_trial
@@ -135,12 +134,12 @@ def test_options():
 
 
 def make_deterministic_exp():
-    standard_experiment(('participant', 'block', 'trial'),
-                        {'block': {'b': [0, 1, 2]}, 'trial': {'a': [False, True]}},
-                        ordering_by_level={'trial': Ordering(4),
-                                           'block': Ordering(4),
-                                           'participant': Ordering()},
-                        experiment_file='test.pkl').save()
+    Experiment.standard_experiment(('participant', 'block', 'trial'),
+                                   {'block': {'b': [0, 1, 2]}, 'trial': {'a': [False, True]}},
+                                   ordering_by_level={'trial': Ordering(4),
+                                                      'block': Ordering(4),
+                                                      'participant': Ordering()},
+                                   experiment_file='test.pkl').save()
 
 
 def test_export():

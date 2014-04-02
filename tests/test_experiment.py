@@ -3,7 +3,6 @@
 """
 import pytest
 
-from experimentator.api import within_subjects_experiment, blocked_experiment, standard_experiment
 from experimentator.order import Shuffle, CompleteCounterbalance
 from experimentator import Design, DesignTree, Experiment
 
@@ -18,26 +17,26 @@ def trial(data, **_):
 
 def make_simple_exp():
     ivs = {'a': [False, True], 'b': [0, 1, 2]}
-    exp = within_subjects_experiment(ivs, 10, ordering=Shuffle(4))
+    exp = Experiment.within_subjects_experiment(ivs, 10, ordering=Shuffle(4))
     exp.set_run_callback(trial)
     return exp
 
 
 def make_blocked_exp():
-    exp = blocked_experiment({'a': [False, True]}, 2,
-                             block_ivs={'b': [0, 1, 2]},
-                             orderings={'trial': Shuffle(4), 'block': CompleteCounterbalance()})
+    exp = Experiment.blocked_experiment({'a': [False, True]}, 2,
+                                        block_ivs={'b': [0, 1, 2]},
+                                        orderings={'trial': Shuffle(4), 'block': CompleteCounterbalance()})
     exp.set_run_callback(trial)
     return exp
 
 
 def make_standard_exp():
-    exp = standard_experiment(('participant', 'block', 'trial'),
-                              {'block': [('b', [0, 1, 2])],
-                               'trial': [('a', [False, True])]},
-                              ordering_by_level={'trial': Shuffle(4),
-                                                 'block': CompleteCounterbalance(),
-                                                 'participant': Shuffle(2)})
+    exp = Experiment.standard_experiment(('participant', 'block', 'trial'),
+                                         {'block': [('b', [0, 1, 2])],
+                                          'trial': [('a', [False, True])]},
+                                         ordering_by_level={'trial': Shuffle(4),
+                                                            'block': CompleteCounterbalance(),
+                                                            'participant': Shuffle(2)})
     exp.set_run_callback(trial)
     return exp
 
