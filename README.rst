@@ -96,8 +96,10 @@ Here's how it might look in experimentator:
             'dog.jpg': 'no',
         }
 
-        experiment = within_subjects_experiment(
-            independent_variables, n_participants=20, ordering=order.Shuffle(10), experiment_file='exp_1.dat')
+        experiment = Experiment.within_subjects(independent_variables,
+                                                n_participants=20,
+                                                ordering=order.Shuffle(10),
+                                                filename='exp_1.dat')
 
         experiment.experiment_data
         experiment.set_run_callback(run_trial)
@@ -121,9 +123,9 @@ Or, access the data in a Python session:
 
 .. code-block:: python
 
-    from experimentator.api import load_experiment
+    from experimentator import Experiment
 
-    data = load_experiment('exp_1.dat').dataframe
+    data = Experiment.load('exp_1.dat').dataframe
 
 In this example the data will be a pandas ``DataFrame`` with six columns:
 two index columns with labels ``'participant'`` and ``'trial'``,
