@@ -150,8 +150,10 @@ It also depends on the following Python libraries:
   (Required only for ``Experiment.from_yaml_file``)
 - `pytest <http://pytest.org/latest/>`_ ``>=2.5.2``
   (Required only for running tests)
-- `Sphinx <http://sphinx-doc.org/>`_ ``>=1.3.0``
-  (Required only for generating docs; docs generated using development version of Sphinx)
+- `Sphinx <http://sphinx-doc.org/>`_ ``>=1.2.2``
+  (Required only for generating docs)
+- `numpydoc <https://github.com/numpy/numpydoc>`_
+  (Required only for generating docs)
 
 From source (development version)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -231,7 +233,7 @@ but they're included here for completeness:
 License
 -------
 
-**Licensed under the MIT license.**
+*Licensed under the MIT license.*
 
 .. include:: ../LICENSE.txt
     :start-after: The MIT License (MIT)

@@ -31,8 +31,8 @@ class ExperimentSection():
 
     When creating a new `ExperimentSection`, its descendants are automatically created as well.
 
-    Arguments
-    ---------
+    Parameters
+    ----------
     tree : DesignTree
         A `DesignTree` object, describing the design of the experiment hierarchy (containing the `Design` at the current
         level all levels below).
@@ -56,11 +56,11 @@ class ExperimentSection():
     has_finished : bool
         Whether this section has finished running.
 
-    Warning
+    Notes
     -------
     Use 1-based indexing to refer to `ExperimentSection` children, both when identifying sections in keyword arguments
     to certain methods (e.g., `Experiment.section`) and when using the sequence protocol on an `ExperimentSection`
-    instance.
+    instance. This better corresponds to the everyday language used by scientists to identify participants, trials, etc.
 
     """
     def __init__(self, tree, data):
@@ -119,16 +119,16 @@ class ExperimentSection():
         This method appends all sections associated with the top level of a `DesignTree` instance (and therefore also
         creates descendant sections as well) to the `ExperimentSection` instance.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         tree : DesignTree
             The `DesignTree` instance to append.
         to_start : bool, optional
             If true, the sections will be appended to the beginning of the section. If False (the default), they will be
             appended to the end.
 
-        Note
-        ----
+        Notes
+        -----
         After calling `ExperimentSection.append_design_tree`, the section numbers in the data of the child sections
         will be automatically replaced with the correct numbers.
 
@@ -157,8 +157,8 @@ class ExperimentSection():
         This method appends a single section to the `ExperimentSection` instance. In the process, its children are
         created as well.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         data : dict
             Data to be included in the new section's `ExperimentSection.data` `ChainMap`. Should include values of IVs
             at the section's level, for example.
@@ -169,8 +169,8 @@ class ExperimentSection():
             If true, the section will be appended to the beginning of the section. If False (the default), it will be
             appended to the end.
 
-        Note
-        ----
+        Notes
+        -----
         After calling `ExperimentSection.append_child`, the section numbers in the data of the child sections will
         be automatically replaced with the correct numbers.
 
@@ -206,8 +206,8 @@ class ExperimentSection():
         example, to define data to apply to this section and all child sections, for example to record a participant's
         age.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         data : dict
             Elements to be included in the `ExperimentSection.data` `ChainMap`.
 
@@ -217,10 +217,7 @@ class ExperimentSection():
     def generate_data(self):
         """Generate data.
 
-        Yields
-        ------
-        ChainMap
-            data of all bottom-level sections that are descendants of this section.
+        Yields the `Section.data` attribute from all bottom-level sections that are descendants of this section.
 
         """
         for child in self:
@@ -234,8 +231,8 @@ class ExperimentSection():
 
         Finds a descendant `ExperimentSection` based on section numbers.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         **section_numbers
             Keyword arguments describing which subsection to find. Must include every level higher than the desired
             section. This method will descend the experimental hierarchy until it can no longer determine how to
@@ -271,18 +268,16 @@ class ExperimentSection():
 
         Finds all subsections in the experiment matching the given section numbers.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         **section_numbers
             Keyword arguments describing what subsections to find. Keys are level names, values are ints or sequences of
             ints.
 
-        Yields
-        ------
-        ExperimentSection
-            The specified `ExperimentSection` instances. The returned sections will be at the lowest level given in
-            `section_numbers`. When encountering levels that aren't in `section_numbers` before reaching its lowest
-            level, all sections will be descended into.
+        Yields the specified `ExperimentSection` instances.
+        The yielded sections will be at the lowest level given in `section_numbers`.
+        If levels not in `section_numbers` are encountered before reaching its lowest level,
+        all sections will be descended into.
 
         See Also
         --------
@@ -335,8 +330,8 @@ class ExperimentSection():
         Searches the experimental hierarchy, returning the first descendant `ExperimentSection` at `level` that has not
         been run.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         at_level : str
             Which level to search.
         by_started : bool, optional
@@ -370,8 +365,8 @@ class ExperimentSection():
         Searches the experimental hierarchy, returning the first descendant `ExperimentSection` at `level` that has been
         started but not finished.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         at_level : str
             Which level to search.
         starting_at : ExperimentSection, optional
@@ -393,8 +388,8 @@ class ExperimentSection():
         Returns a section such that ``key(section) == True``. Descends the hierarchy only via sections for which `key`
         also returns ``True``.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         key : function
             A function that returns true or false when passed an `ExperimentSection`.
         at_level : str, optional

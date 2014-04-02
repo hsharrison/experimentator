@@ -353,7 +353,7 @@ def test_design_from_spec():
         'some_extra_field': ['blah'],
         'number': 3,
     }
-    assert Design.from_dict(spec) == ('test2', Design(extra_data={'some_extra_field': ['blah']}, ordering=Ordering(3)))
+    assert Design.from_dict(spec) == ('test2', Design(extra_data={'some_extra_field': ['blah']}, ordering=Shuffle(3)))
 
     spec = {
         'name': 'test3',

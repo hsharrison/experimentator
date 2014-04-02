@@ -6,7 +6,7 @@ from itertools import product
 import numpy as np
 import pytest
 
-from experimentator import latin_square, balanced_latin_square
+from experimentator.order import latin_square, balanced_latin_square
 
 REPEATS = 2
 MAX_ORDER_FOR_UNIFORM = 4
