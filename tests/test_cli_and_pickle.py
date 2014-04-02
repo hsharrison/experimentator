@@ -12,7 +12,7 @@ from contextlib import contextmanager
 from numpy import isnan
 import pytest
 
-from experimentator import load_experiment, run_experiment_section, QuitSession, Experiment, DesignTree, Design
+from experimentator import Experiment, run_experiment_section, QuitSession, Experiment, DesignTree, Design
 from experimentator.cli import main
 from experimentator.order import Ordering
 from tests.test_experiment import make_blocked_exp, check_trial
@@ -52,7 +52,7 @@ def test_cli():
     exp.save()
 
     call_cli('exp run test.pkl --next participant')
-    exp = load_experiment('test.pkl')
+    exp = Experiment.load('test.pkl')
     for row in exp.dataframe.iterrows():
         if row[0][0] == 1:
             yield check_trial, row
@@ -67,7 +67,7 @@ def test_cli():
             assert isnan(row[1]['result'])
 
     call_cli('exp run test.pkl participant 2 block 1')
-    exp = load_experiment('test.pkl')
+    exp = Experiment.load('test.pkl')
     for row in exp.dataframe.iterrows():
         if row[0][0] == 1 or (row[0][0] == 2 and row[0][1] == 1):
             yield check_trial, row
@@ -75,7 +75,7 @@ def test_cli():
             assert isnan(row[1]['result'])
 
     call_cli('exp resume test.pkl participant')
-    exp = load_experiment('test.pkl')
+    exp = Experiment.load('test.pkl')
     for row in exp.dataframe.iterrows():
         if row[0][0] <= 2:
             yield check_trial, row
@@ -83,7 +83,7 @@ def test_cli():
             assert isnan(row[1]['result'])
 
     call_cli('exp run test.pkl --next trial')
-    exp = load_experiment('test.pkl')
+    exp = Experiment.load('test.pkl')
     for row in exp.dataframe.iterrows():
         if row[0][0] <= 2 or row[0] == (3, 1, 1):
             yield check_trial, row
@@ -91,7 +91,7 @@ def test_cli():
             assert isnan(row[1]['result'])
 
     call_cli('exp resume test.pkl participant 3 block 1 --demo')
-    exp = load_experiment('test.pkl')
+    exp = Experiment.load('test.pkl')
     for row in exp.dataframe.iterrows():
         if row[0][0] <= 2 or row[0] == (3, 1, 1):
             yield check_trial, row
@@ -99,7 +99,7 @@ def test_cli():
             assert isnan(row[1]['result'])
 
     call_cli('exp --debug resume test.pkl participant 3 block 1')
-    exp = load_experiment('test.pkl')
+    exp = Experiment.load('test.pkl')
     for row in exp.dataframe.iterrows():
         if row[0][0] <= 2 or row[0][:2] == (3, 1):
             yield check_trial, row
@@ -172,7 +172,7 @@ def test_exception():
     with pytest.raises(QuitSession):
         run_experiment_section('test.pkl', participant=1)
 
-    exp = load_experiment('test.pkl')
+    exp = Experiment.load('test.pkl')
     assert exp.subsection(participant=1, block=1, trial=1).has_started
     assert not exp.subsection(participant=1, block=1, trial=1).has_finished
     os.remove('test.pkl')
@@ -185,7 +185,7 @@ def test_exception():
 
 def test_exp_repr():
     make_deterministic_exp()
-    e = load_experiment('test.pkl')
+    e = Experiment.load('test.pkl')
     assert e == eval(e.__repr__())
     for file in glob('test.pkl*'):
         os.remove(file)

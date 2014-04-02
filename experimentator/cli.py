@@ -48,7 +48,7 @@ import logging
 from docopt import docopt
 from schema import Schema, Use, And, Or, Optional
 
-from experimentator import __version__, load_experiment, run_experiment_section, export_experiment_data
+from experimentator import __version__, Experiment, run_experiment_section, export_experiment_data
 
 
 def main(args=None):
@@ -83,7 +83,7 @@ def main(args=None):
         logging.basicConfig(level=logging.DEBUG)
 
     if options['run'] or options['resume']:
-        exp = load_experiment(options['<exp-file>'])
+        exp = Experiment.load(options['<exp-file>'])
         kwargs = {'demo': options['--demo'],
                   'parent_callbacks': not options['--skip-parents'],
                   'resume': options['resume'],
