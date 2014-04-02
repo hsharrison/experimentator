@@ -150,6 +150,8 @@ It also depends on the following Python libraries:
   (Required only for ``Experiment.from_yaml_file``)
 - `pytest <http://pytest.org/latest/>`_ ``>=2.5.2``
   (Required only for running tests)
+- `Sphinx <http://sphinx-doc.org/>`_ ``>=1.3.0``
+  (Required only for generating docs; docs generated using development version of Sphinx)
 
 From source (development version)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
