@@ -58,7 +58,7 @@ def latin_square(order, reduced=False, uniform=True, shuffle=False):
     --------
     balanced_latin_square : Balanced Latin square.
 
-    Note
+    Notes
     -----
     This function uses a naive algorithm to construct latin squares, randomly generating elements and starting over
     whenever a collision is encountered. It will take a long time to construct Latin squares of order 5, when sampling
