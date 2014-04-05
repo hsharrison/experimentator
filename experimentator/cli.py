@@ -92,7 +92,7 @@ def main(args=None):
 
         if options['--next']:
             kwargs.update(section_obj=exp.find_first_not_run(
-                options['<level>'][0], by_started=options['--not-finished']))
+                options['<level>'][0], by_started=not options['--not-finished']))
 
         elif options['resume'] and not options['<n>']:
             kwargs.update(section_obj=exp.find_first_partially_run(options['<level>'][0]))
