@@ -43,13 +43,13 @@ class Design:
                If they are ``0`` and ``1``, they are associated with ``True`` and ``False``, respectively.
                Similarly, they could be ``1`` and ``2``, or any two non-equal values.
         Note that a design matrix also specifies the order of the conditions.
-        For this reason, the default `ordering` changes from ``order.Shuffle()`` to ``order.Ordering(),
+        For this reason, the default `ordering` changes from :class:`order.Shuffle` to :class:`order.Ordering`,
         preserving the order of the conditions.
         When no `design_matrix` is passed, IVs are fully crossed.
     ordering : Ordering, optional
         An instance of an :class:`order.Ordering <experimentator.order.Ordering>` subclass
         defining the behavior for duplicating and ordering the conditions of the :class:`Design`.
-        The default is ``order.Shuffle()`` unless a `design_matrix` is passed..
+        The default is :class:`order.Shuffle` unless a `design_matrix` is passed.
     extra_data : dict, optional
         Items from this dictionary will be included in the ``data`` attribute
         of any :class:`ExperimentSection <experimentator.section.ExperimentSection>` instances
@@ -145,7 +145,11 @@ class Design:
         -------
         name : str
             Only returned if `spec` contains a field ``'name'``.
-        design : :class:`Design`
+        design : Design
+
+        See Also
+        --------
+        DesignTree.from_spec
 
         Examples
         --------
@@ -341,18 +345,24 @@ class DesignTree:
         in the form of either a :class:`Design` instance, or a list of :class:`Design` instances to occur in sequence.
 
     **other_designs
-        Named design trees, can be `DesignTree` instances or lists of tuples in the format of `levels_and_designs`.
-        These designs allow for heterogeneous design structures. Whenever an IV is encountered named ``'design'``
-        (the class attribute `Design.heterogeneous_design_iv_name`)
-        in the last element of `levels_and_designs`,
-        the tree continues with ``other_designs[iv_value]``,
-        where ``iv_value`` is the current value of the IV ``'design'``.
+        Named design trees, can be other :class:`DesignTree` instances
+        or suitable `levels_and_designs` inputs (i.e., :class:`collections.OrderedDict` or list of tuples).
+        These designs allow for heterogeneous design structures
+        (i.e. not every section at the same level has the same :class:`Design`).
+        To make a heterogeneous :class:`DesignTree`,
+        use an IV named ``'design'`` at the level where the heterogeneity should occur.
+        Values of this IV should be strings,
+        each corresponding to the name of a :class:`DesignTree` from` other_designs`.
+        The value of the IV ``'design'`` at each section
+        determines which :class:`DesignTree` is used for children of that section.
 
     Notes
     -----
-    Calling `next` on the last level of a heterogeneous `DesignTree`
-    will return a dictionary of named `DesignTree` instances rather than a single `DesignTree` instances.
-    The names are the possible values of the IV ``'design'``.
+    Calling ``next`` on the last level of a heterogeneous :class:`DesignTree`
+    will return a dictionary of named :class:`DesignTree` instances
+    (rather than a single :class:`DesignTree` instance).
+    The keys are the possible values of the IV ``'design'``
+    and the values are the corresponding :class:`DesignTree` instances.
 
     """
     def __init__(self, levels_and_designs, **other_designs):
@@ -389,6 +399,25 @@ class DesignTree:
 
     @classmethod
     def from_spec(cls, spec):
+        """DesignTree from specification.
+
+        Constructs a :class:`DesignTree` instance from a specification (e.g., parsed from a YAML file).
+
+        spec : dict or list
+            The :class:`DesignTree` specification.
+            A dictionary with keys as tree names and values as lists of dictionaries.
+            Each dictionary should specify a :class:`Design` according to :meth:`Design.from_dict`.
+            The main tree should be named ``'main'``.
+            Other names are used for generating heterogeneous trees
+            (see :class:`DesignTree` docs).
+            A homogeneous tree can be specified as a dictionary with only a single key ``'main'``,
+            or directly as a list of dictionaries
+
+        Returns
+        -------
+        DesignTree
+
+        """
         if isinstance(spec, dict):
             # The normal case.
             main_tree = list(cls._design_specs_to_designs(spec.pop('main')))
@@ -463,6 +492,10 @@ class DesignTree:
         """First pass.
 
         Make first pass of all designs in a design tree, from bottom to top.
+        This calls :meth:`Design.first_pass` on every :class:`Design` instance in the tree,
+        in the proper order, updating designs when a new IV is returned.
+        This is necessary for non-atomic orderings,
+        which create an additional IV for the :class:`Design` one level up.
 
         Returns
         -------
@@ -494,13 +527,14 @@ class DesignTree:
     def add_base_level(self):
         """Add base level to tree.
 
-        Adds a section to the top of the tree called ``'_base'``. This makes the `DesignTree` suitable for constructing
-        an `Experiment`.
+        Adds a section to the top of the tree called ``'_base'``.
+        This makes the `DesignTree` suitable for constructing an `Experiment`.
 
         Notes
         -----
-        The `Experiment` constructor calls this automatically, and this shouldn't be called when appending a tree to an
-        existing `Experiment`, so there are no real reasons to call this in client code.
+        The :class:`Experiment` constructor calls this automatically,
+        and this shouldn't be called when appending a tree to an existing :class:`Experiment`,
+        so there is no reason to manually call this method.
 
         """
         levels_and_designs = [('_base', Design())]
