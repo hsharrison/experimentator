@@ -33,11 +33,11 @@ You might say that **experimentator** is a library for
 Not handled here
 ----------------
 
-    * graphics
-    * timing
-    * hardware interfacing
-    * statistics
-    * data processing
+* graphics
+* timing
+* hardware interfacing
+* statistics
+* data processing
 
 The philosophy of experimentator is to do one thing and do it well.
 It is meant to be used with other libraries that handle the above functionality,
