@@ -1,6 +1,7 @@
 """Tests for Experiment object.
 
 """
+from contextlib import contextmanager
 import pytest
 
 from experimentator.order import Shuffle, CompleteCounterbalance
@@ -244,6 +245,7 @@ def inter_callback(level, data, session_data, **_):
         session_data[level + 's_between'] = 1
 
 
+@contextmanager
 def context(level, data, **kwargs):
     start_callback(level, data, **kwargs)
     if data[level] > 1:

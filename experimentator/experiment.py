@@ -576,18 +576,22 @@ class Experiment(ExperimentSection):
             parent_section_numbers.update({level: section.data[level]})
             yield self.subsection(**parent_section_numbers)
 
-    def set_context_manager(self, level, func, *args,
-                            func_module=None, func_name=None, already_contextmanager=False, **kwargs):
+    def set_context_manager(self, level, manager, *args,
+                            func_module=None, func_name=None, **kwargs):
         """Set a context manager to run at a certain level.
 
-        Defines a context manager to run at every section at a particular level. This is an alternative to start and end
-        callbacks, to define behavior to occur at the beginning and end of every section. `func` should be a function
-        that contains code to be run at the beginning of every section, followed by a ``yield`` statement, and then code
-        to be run at the end of every section. Any return value from the ``yield`` statement will be saved in
-        ``exp.session_data[level]``.
+        Define a context manager `manager` to run at every section at a particular level.
+        A context manager is a convenient way to define behavior to occur at the beginning and end of every section
+        at a particular level.
+        See :mod:`contextlib` for more information on creating context managers.
+        The easiest way is to use :func:`contextlib.contextmanager` to decorate a function.
+        The function should contain code to run at the beginning of every section,
+        followed by a ``yield`` statement,
+        and then code to run at the end of every section.
 
-        Alternatively, `func` can be a  contextmanager object (see the documentation for `contextlib`), in which case
-        the flag ``already_contextmanager=True`` should be passed.
+        Any value returned by the ``__exit__`` method of `manager`
+        (equivalently, yielded by a function decorated with :func:`contextlib.contextmanager`)
+        will be stored in :attr:`session_data` under the key `level`.
 
         Parameters
         ----------
@@ -602,9 +606,6 @@ class Experiment(ExperimentSection):
             These two arguments specify where the given function should be imported from in future Python sessions
             (i.e., ``from func_module import func_name``). Usually, this is figured out automatically by introspection,
             but these arguments are provided for the rare situation where introspection fails.
-        already_contextmanager : bool, optional
-           Pass True if `func` is already a contextmanager. Otherwise, it is assumed to be a generator function in the
-           form required by `contextmanager`.
         **kwargs
             Any arbitrary keyword arguments to be passed to `func`.
 
@@ -623,11 +624,8 @@ class Experiment(ExperimentSection):
         ``experiment_data`` are unused).
 
         """
-        if not already_contextmanager:
-            func = contextmanager(func)
-
-        self.context_managers[level] = functools.partial(func, *args, **kwargs)
-        self._context_info[level] = [list(_get_func_reference(func)), args, kwargs, already_contextmanager]
+        self.context_managers[level] = functools.partial(manager, *args, **kwargs)
+        self._context_info[level] = [list(_get_func_reference(manager)), args, kwargs]
 
         if func_module:
             self._context_info[level][0][0] = func_module
@@ -697,11 +695,8 @@ class Experiment(ExperimentSection):
         self.context_managers = {'_base': _dummy_context}
         for level in self.levels:
             if self._context_info[level]:
-                func_info, func_args, func_kwargs, already_contextmanager = self._context_info[level]
+                func_info, func_args, func_kwargs = self._context_info[level]
                 func = _load_func_reference(*func_info)
-
-                if not already_contextmanager:
-                    func = contextmanager(func)
 
                 self.context_managers[level] = functools.partial(func, *func_args, **func_kwargs)
 

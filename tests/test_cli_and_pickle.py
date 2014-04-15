@@ -38,6 +38,7 @@ def participant_context(data, session_data, **_):
     yield
 
 
+@contextmanager
 def block_context(data, session_data, **_):
     if data['block'] > 1:
         assert session_data['test']
@@ -46,7 +47,7 @@ def block_context(data, session_data, **_):
 
 def test_cli():
     exp = make_blocked_exp()
-    exp.set_context_manager('participant', participant_context, already_contextmanager=True)
+    exp.set_context_manager('participant', participant_context)
     exp.set_context_manager('block', block_context)
     exp.filename = 'test.pkl'
     exp.save()
@@ -120,6 +121,7 @@ def test_pickle_error():
         call_cli('exp run test.pkl --next participant')
 
 
+@contextmanager
 def context(data, session_data, experiment_data):
     assert session_data['options'] == 'pass,through,option'
     yield
