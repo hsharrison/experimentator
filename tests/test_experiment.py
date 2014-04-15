@@ -237,6 +237,7 @@ def end_callback(level, data, session_data, **_):
 
 
 def inter_callback(level, data, session_data, **_):
+    assert session_data[level] == level
     if level + 's_between' in session_data:
         session_data[level + 's_between'] += 1
     else:
@@ -247,7 +248,7 @@ def context(level, data, **kwargs):
     start_callback(level, data, **kwargs)
     if data[level] > 1:
         inter_callback(level, data, **kwargs)
-    yield
+    yield level
     end_callback(level, data, **kwargs)
 
 
