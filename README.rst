@@ -33,9 +33,6 @@ You might say that **experimentator** is a library for
 Not handled here
 ----------------
 
-.. hlist::
-    :columns: 2
-
     * graphics
     * timing
     * hardware interfacing
