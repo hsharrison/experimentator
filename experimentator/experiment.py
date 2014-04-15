@@ -144,7 +144,7 @@ class Experiment(ExperimentSection):
         A dictionary where data can be stored that is persistent only within one session of the Python interpreter. This
         is a good place to store external resources that aren't picklable; external resources, for example, can be
         loaded in a context manager callback and stored here. In addition, anything yielded by a context manager will be
-        automatically saved here, in `session_data['as'][level]`. Note that this dictionary is emptied before saving the
+        automatically saved here, in `session_data[level]`. Note that this dictionary is emptied before saving the
         `Experiment` to disk.
     experiment_data : dict
         A dictionary where data can be stored that is persistent across Python sessions. Everything here must be
@@ -164,7 +164,7 @@ class Experiment(ExperimentSection):
         self.run_callback = _dummy_callback
         self._callback_info = None
 
-        self.session_data = {'as': {}, 'options': ''}
+        self.session_data = {}
         self.experiment_data = {}
 
     @staticmethod
@@ -491,13 +491,13 @@ class Experiment(ExperimentSection):
                 parent.has_started = True
                 if parent_callbacks:
                     logger.debug('Entering {} with data {}...'.format(parent.level, parent.data))
-                    self.session_data['as'][parent.level] = stack.enter_context(self.context_managers[parent.level](
+                    self.session_data[parent.level] = stack.enter_context(self.context_managers[parent.level](
                         parent.data, session_data=self.session_data, experiment_data=self.experiment_data))
 
             # Back to the regular behavior.
             with self.context_managers[section.level](
                     section.data, session_data=self.session_data, experiment_data=self.experiment_data) as \
-                    self.session_data['as'][section.level]:
+                    self.session_data[section.level]:
 
                 if not demo:
                     section.has_started = True
@@ -584,7 +584,7 @@ class Experiment(ExperimentSection):
         callbacks, to define behavior to occur at the beginning and end of every section. `func` should be a function
         that contains code to be run at the beginning of every section, followed by a ``yield`` statement, and then code
         to be run at the end of every section. Any return value from the ``yield`` statement will be saved in
-        ``exp.session_data['as'][level]``.
+        ``exp.session_data[level]``.
 
         Alternatively, `func` can be a  contextmanager object (see the documentation for `contextlib`), in which case
         the flag ``already_contextmanager=True`` should be passed.
@@ -679,7 +679,7 @@ class Experiment(ExperimentSection):
     def __getstate__(self):
         state = self.__dict__.copy()
         #  Clear session_data before pickling.
-        state['session_data'] = {'as': {}, 'options': ''}
+        state['session_data'] = {}
 
         # Clear functions.
         del state['context_managers']
