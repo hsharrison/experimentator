@@ -1,6 +1,7 @@
 """Tests for objects in experimentator/design.py
 
 """
+from collections import OrderedDict
 from itertools import product
 import pytest
 import numpy as np
@@ -183,9 +184,11 @@ def test_design_tree():
     practice_block_design = Design()
     participant_design = Design(dict(zip(participant_iv_names, participant_iv_values)), ordering=Ordering(10))
 
-    tree = DesignTree([('participant', participant_design),
-                       ('block', [practice_block_design, block_design]),
-                       ('trial', trial_design)])
+    levels_and_designs = OrderedDict([('participant', participant_design),
+                                      ('block', [practice_block_design, block_design]),
+                                      ('trial', trial_design)])
+
+    tree = DesignTree(levels_and_designs)
     tree.add_base_level()
 
     levels, designs = zip(*tree.levels_and_designs)

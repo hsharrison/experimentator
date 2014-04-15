@@ -323,7 +323,7 @@ class Design:
         return dict(zip(self.iv_names, self.iv_values)).get(self.heterogeneous_design_iv_name, ())
 
 
-class DesignTree():
+class DesignTree:
     """
     A container for :class:`Design` instances, describing the entire hierarchy of a basic
     :class:`Experiment <experimentator.experiment.Experiment>`.
@@ -333,9 +333,12 @@ class DesignTree():
 
     Parameters
     ----------
-    levels_and_design : list of tuple
-       A list of tuples, each with two elements. The first is a string naming the level, the second is a list of
-       `Design` instances to occur at that level.
+    levels_and_design : OrderedDict or list of tuple
+        This input defines the structure of the tree,
+        and is either an :class:`OrderedDict <collections.OrderedDict>` or a list of 2-tuples.
+        Keys (or first element of each tuple) are level names.
+        Values (or second element of each tuple) are design specifications,
+        in the form of either a :class:`Design` instance, or a list of :class:`Design` instances to occur in sequence.
 
     **other_designs
         Named design trees, can be `DesignTree` instances or lists of tuples in the format of `levels_and_designs`.
@@ -354,6 +357,10 @@ class DesignTree():
     """
     def __init__(self, levels_and_designs, **other_designs):
         self.other_designs = other_designs
+
+        if isinstance(levels_and_designs, collections.OrderedDict):
+            levels_and_designs = list(levels_and_designs.items())
+
         # Check for singleton Designs.
         for i, (level, design) in enumerate(levels_and_designs):
             if isinstance(design, Design):
