@@ -1,7 +1,6 @@
-"""Experiment module.
-
-This module contains the `Experiment` class and associated helper functions. This is a private module, its public
-objects are imported in `__init__.py`.
+"""
+This module contains the :class:`Experiment` class and associated helper functions.
+Public objects are imported in ``__init__.py``.
 
 """
 import os
@@ -26,46 +25,65 @@ import experimentator.order as order
 logger = getLogger(__name__)
 
 
-def run_experiment_section(experiment, demo=False, resume=False, parent_callbacks=True,
-                           section_obj=None, from_section=1, session_options=None, **section_numbers):
+def run_experiment_section(experiment, section_obj=None, demo=False, resume=False, parent_callbacks=True,
+                           from_section=1, session_options='', **section_numbers):
     """Run an experiment section.
 
-    Runs an experiment instance from a file or an `Experiment` instance, and saves it. If a `QuitSession` exception is
-    encountered, the `Experiment` will be backed up and saved before exiting the session.
+    Run an experiment from a file or an :class:`Experiment` instance, and save it.
+    If an exception is encountered, the :class:`Experiment` will be backed up and saved.
 
     Parameters
     ----------
-    experiment : str or Experiment
-        File location where an `Experiment` instance is pickled, or an Experiment instance.
+    experiment : str or :class:`Experiment`
+        File location where an :class:`Experiment` instance is pickled,
+        or an :class:`Experiment` instance.
     demo : bool, optional
         If True, data will not be saved and sections will not be marked as run.
     resume: bool, optional
-        If True, the specified section will be resumed (as opposed to starting at the beginning).
+        If True, the specified section will be resumed
+        (started automatically where it left off).
     parent_callbacks : bool, optional
-            If True (the default), all parent callbacks will be called.
-    section_obj : ExperimentSection, optional
-        The section of the experiment to run. Alternatively, the section can be specified in the keyword arguments.
+        If True (the default), all parent callbacks will be called.
+    section_obj : :class:`ExperimentSection`, optional
+        The section of the experiment to run.
+        Alternatively, the section can be specified in the keyword arguments.
     from_section : int or list of int, optional
-            Which section to start running from. This makes it possible to resume a session. If a list is passed, it
-            specifies where to start running on multiple levels. For example:
-
-            >>> run_experiment_section(exp, participant=1, session=2, from_section=[3, 5])
-
-            Assuming the hierarchy is ``('participant', 'session', 'block', 'trial')``, this would run the first
-            participant's second session, starting from the fifth trial of the third block.
+        Which section to start running from.
+        If a list is passed, it specifies where to start running on multiple levels.
+        See the example below.
     session_options : str, optional
-            Pass an experiment-specific options string to be stored in ``Experiment.session_data['options']``.
+        Pass an experiment-specific options string to be stored in :attr:`Experiment.session_data`
+        under the key ``'options'``.
     **section_numbers
-        Keyword arguments describing how to descend the experiment hierarchy to find a section to be run. For example,
-        `run_experiment_section(..., participant=3, session=1)` to run the third participant's first session (section
-        numbers are indexed by 1s).
+        Keyword arguments describing how to descend the experiment hierarchy to find the section to run.
+        See the example below.
+
+    Examples
+    --------
+    A simple example:
+        >>> exp = Experiment.load('example.exp')
+        >>> run_experiment_section(exp, exp.subsection(participant=1, session=2))
+
+    Equivalently:
+
+        >>> run_experiment_section(exp, participant=1, session=2)
+
+    To demonstrate `from_section`,
+    assuming the experiment hierarchy is ``('participant', 'session', 'block', 'trial')``,
+    this would start from the second block:
+
+        >>> run_experiment_section(exp, participant=1, session=2, from_section=2)
+
+    To start from the fifth trial of the second block:
+
+        >>> run_experiment_section(exp, participant=1, session=2, from_section=[2, 5])
 
     """
     if isinstance(experiment, Experiment):
         exp = experiment
     else:
         exp = Experiment.load(experiment)
-    exp.session_data['options'] = session_options if session_options else ''
+    exp.session_data['options'] = session_options
 
     if not section_obj:
         section_obj = exp.subsection(**section_numbers)
@@ -77,7 +95,7 @@ def run_experiment_section(experiment, demo=False, resume=False, parent_callback
             exp.run_section(section_obj, demo=demo, parent_callbacks=parent_callbacks, from_section=from_section)
 
     except:
-        logger.warning('Quit event detected, saving.')
+        logger.warning('Exception occurred saving.')
         # Backup experiment file.
         os.rename(exp.filename,
                   exp.filename + datetime.now().strftime('.%m-%d-%H-%M-backup'))
@@ -87,68 +105,75 @@ def run_experiment_section(experiment, demo=False, resume=False, parent_callback
         exp.save()
 
 
-def export_experiment_data(filename, data_file, **kwargs):
+def export_experiment_data(exp_filename, data_filename, **kwargs):
     """ Export data.
 
-    Reads a pickled experiment instance and saves its data in ``.csv`` format.
+    Reads a pickled :class:`Experiment` instance and saves its data in ``.csv`` format.
 
     Parameters
      ----------
-    filename : str
-        The file location where an `Experiment` instance is pickled.
-    data_file : str
+    exp_filename : str
+        The file location where an :class:`Experiment` instance is pickled.
+    data_filename : str
         The file location where the data will be written.
     skip_columns : list of str, optional
-        Columns to skip.
+        Data columns to skip.
     **kwargs
-            Arbitrary keyword arguments passed through to `pandas.Dataframe.to_csv`.
+        Arbitrary keyword arguments passed through to :meth:`pandas.Dataframe.to_csv`.
 
     Notes
     -----
-    This shortcut function is not recommended for experiments with compound data types, for example an experiment which
-    stores a time series for every trial. In those cases it is recommended to write a custom script that parses the
-    `Experiment.data` attribute as desired or use the `skip_columns` option.
+    This shortcut function is not recommended for experiments with compound data types,
+    for example an experiment which stores a time series for every trial.
+    In such cases it is recommended to write a custom script
+    that parses :attr:`Experiment.dataframe` as desired
+    (or use the `skip_columns` option to ignore the compound data).
 
     """
-    Experiment.load(filename).export_data(data_file, **kwargs)
+    Experiment.load(exp_filename).export_data(data_filename, **kwargs)
 
 
 class Experiment(ExperimentSection):
-    """Experiment.
-
-    An `Experiment` instance handles all aspects of an experiment. It contains the entire experimental hierarchy and
-    stores the data. It is picklable, to facilitate running an experiment over multiple Python sessions. `Experiment`
-    is a subclass of `ExperimentSection`, so it can be indexed into, iterated over, etc.
+    """
+    An :class:`~experimentator.section.ExperimentSection` subclass
+    that represents the largest 'section' of the experiment;
+    that is, the entire experiment.
+    Functionality added on top of :class:`~experimentator.section.ExperimentSection` includes
+    various constructors,
+    saving to disk, and
+    management of callbacks.
 
     Parameters
     ----------
-    tree : DesignTree
-        A `DesignTree` instance defining the experiment hierarchy.
+    tree : :class:`~experimentator.design.DesignTree`
+        A :class:`~experimentator.design.DesignTree` instance defining the experiment hierarchy.
     filename : str, optional
-        A file location where the `Experiment` will be pickled.
+        A file location where the :class:`Experiment` will be saved.
 
     Attributes
     ----------
-    tree : DesignTree
-        The `DesignTree` instance defining the experiment's hierarchy.
+    tree : :class:`~experimentator.design.DesignTree`
+        The :class:`~experimentator.design.DesignTree` instance defining the experiment's hierarchy.
     filename : str
-        The file location where the `Experiment` will be pickled.
-    levels : list of str
-        The levels of the experiment, as passed in `tree`.
+        The file location where the :class:`Experiment` will be pickled.
     run_callback : func
         The function to be run when the bottom of the tree is reached (i.e., the trial function).
     context_managers : dict
-        A dictionary, with level names as keys and context managers (e.g., created by `contextlib.contextmanager`) as
-        values. Defines behavior to run before and/or after each section at the associated level.
+        A dictionary, mapping level names to :std:label:`context-managers`
+        (e.g., generator functions decorated with :func:`contextlib.contextmanager`).
+        Defines behavior to run before and/or after each section at the associated level.
     session_data : dict
-        A dictionary where data can be stored that is persistent only within one session of the Python interpreter. This
-        is a good place to store external resources that aren't picklable; external resources, for example, can be
-        loaded in a context manager callback and stored here. In addition, anything yielded by a context manager will be
-        automatically saved here, in `session_data[level]`. Note that this dictionary is emptied before saving the
-        `Experiment` to disk.
+        A dictionary where temporary data can be stored,
+        persistent only within one session of the Python interpreter.
+        This is a good place to store external resources that aren't :ref:`picklable <pickle-picklable>`;
+        external resources, for example, can be loaded in a
+        :ref:`context-manager <typecontextmanager>` callback and stored here.
+        In addition, anything returned by the ``__exit__`` method of a context-manager callback
+        will be stored here, with the callback's level name as the key.
+        This dictionary is emptied before saving the :class:`Experiment` to disk.
     experiment_data : dict
-        A dictionary where data can be stored that is persistent across Python sessions. Everything here must be
-        picklable.
+        A dictionary where data can be stored that is persistent across Python sessions.
+        Everything here must be :ref:`picklable <pickle-picklable>`.
 
     """
     def __init__(self, tree, filename=None):
@@ -174,12 +199,11 @@ class Experiment(ExperimentSection):
         Parameters
         ----------
         filename : str
-            Path to a file generated by `Experiment.save`.
+            Path to a file generated by :attr:`Experiment.save`.
 
         Returns
         -------
-        Experiment
-            The saved `Experiment`.
+        :class:`Experiment`
 
         """
         with open(filename, 'rb') as f:
@@ -191,21 +215,21 @@ class Experiment(ExperimentSection):
     def from_dict(cls, spec):
         """Experiment from dict.
 
-        Constructs an `Experiment` based on a dictionary specification.
+        Constructs an :class:`Experiment` based on a dictionary specification.
 
         Parameters
         ----------
         spec : dict
-            `spec` should have, at minimum, a field named `'design'`.
-            The value of this field specifies the `DesignTree`.
-            See `DesignTree.from_spec` for details.
-            The field `'filename'` or just `'file'`, if it exists,
-            is saved in the `filename` attribute.
-            Any other fields are saved in the `attribute `experiment_data`.
+            `spec` should have, at minimum, a key named ``'design'``.
+            The value of this key specifies the :class:`~experimentator.design.DesignTree`.
+            See :meth:`DesignTree.from_spec() <experimentator.design.DesignTree.from_spec>` for details.
+            The value of the key ``'filename'`` or ``'file'``, if one exists,
+            is saved in  :attr:`Experiment.filename`
+            All other fields are saved in the :attr:`Experiment.experiment_data`.
 
         Returns
         -------
-        Experiment
+        :class:`Experiment`
 
         See Also
         --------
@@ -224,16 +248,18 @@ class Experiment(ExperimentSection):
     def from_yaml_file(cls, filename):
         """Experiment from YAML file.
 
-        Constructs an `Experiment` based on specification in a YAML file. Requires module `PyYAML`.
+        Constructs an :class:`Experiment` based on specification in a YAML file.
+        Requires module `PyYAML <http://pyyaml.org/wiki/PyYAML>`_.
 
         Parameters
         ----------
         filename : str
-            YAML file. YAML should specify a dictionary matching the specification of `Experiment.from_dict`.
+            YAML file location.
+            The YAML should specify a dictionary matching the specification of :meth:`Experiment.from_dict`.
 
         Returns
         -------
-        Experiment
+        :class:`Experiment`
 
         See Also
         --------
@@ -252,7 +278,8 @@ class Experiment(ExperimentSection):
     def within_subjects(cls, ivs, n_participants, design_matrix=None, ordering=None, filename=None):
         """Construct a within-subjects experiment.
 
-        This function creates a within-subjects experiment, in which all the IVs are at the trial level.
+        This function creates a within-subjects :class:`Experiment`,
+        in which all the IVs are at the trial level.
 
         Parameters
         ----------
@@ -260,22 +287,22 @@ class Experiment(ExperimentSection):
             A list of the experiment's IVs, specified in the form of tuples
             with the first element being the IV name and the second element a list of its possible values.
             Alternatively, the IVs at each level can be specified in a dictionary.
-            See documentation for `Design` for more information on specifying IVs.
+            See documentation for :class:`~experimentator.design.Design` for more information on specifying IVs.
         n_participants : int
             Number of participants to initialize.
         design_matrix : array-like, optional
             Design matrix for the experiment. If not specified, IVs will be fully crossed.
-            See documentation for `Design` for more on design matrices.
+            See documentation for :class:`~experimentator.design.Design` for more on design matrices.
         ordering : Ordering, optional
-            An instance of the class `Ordering` or one of its descendants, specifying how the trials will be ordered.
-            If not specified, `Shuffle` will be used.
+            An instance of the class :class:`~experimentator.order.Ordering` or one of its subclasses,
+            specifying how the trials will be ordered.
+            If not specified, :class:`~experimentator.order.Shuffle` will be used.
         filename : str, optional
             File location to save the experiment.
 
         Returns
         -------
-        Experiment
-            The constructed experiment.
+        :class:`Experiment`
 
         """
         levels_and_designs = [('participant', [Design(ordering=order.Shuffle(n_participants))]),
@@ -287,7 +314,7 @@ class Experiment(ExperimentSection):
     def blocked(cls, trial_ivs, n_participants, design_matrices=None, orderings=None, block_ivs=None, filename=None):
         """Construct a blocked, within-subjects experiment.
 
-        This function creates a blocked within-subjects experiment,
+        This function creates a blocked within-subjects :class:`Experiment`,
         in which all the IVs are at either the trial level or the block level.
 
         Parameters
@@ -296,38 +323,36 @@ class Experiment(ExperimentSection):
             A list of the IVs to define at the trial level, specified in the form of tuples
             with the first element being the IV name and the second element a list of its possible values.
             Alternatively, the IVs at each level can be specified in a dictionary.
-            See documentation for `Design` for more information on specifying IVs.
+            See documentation for :class:`~experimentator.design.Design` for more information on specifying IVs.
         n_participants : int
             Number of participants to initialize.
-            If a non-atomic block ordering is used, this is the number of participants per ordering condition.
+            If a :class:`~experimentator.order.NonAtomicOrdering` is used,
+            this is the number of participants per order.
         design_matrices : dict, optional
             Design matrices for the experiment.
             Keys are ``'trial'`` and ``'block'``; values are the respective design matrices (if any).
             If not specified, IVs will be fully crossed.
-            See documentation for `Design` for more on design matrices.
+            See documentation for :class:`~experimentator.design.Design` for more on design matrices.
         orderings : dict, optional
             Dictionary with keys of ``'trial'`` and ``'block'``.
             Each value should be an instance of the class `Ordering` or one of its descendants,
             specifying how the trials will be ordered
-            If not specified, `Shuffle` will be used.
+            If not specified, :class:`~experimentator.order.Shuffle` will be used.
         block_ivs : list or dict, optional
             IVs to define at the block level.
-            See documentation for :class:`Design <experimentator.design.Design>` for more information on specifying IVs.
+            See documentation for :class:`~experimentator.design.Design` for more information on specifying IVs.
         filename : str, optional
             File location to save the experiment.
 
         Notes
         -----
         For blocks to have any effect,
-        you should either define at least one IV at the block level (for non-identical blocks),
-        or use the ordering ``Ordering(n)`` to create ``n`` identical blocks for every participant
-        (identical in the design sense;
-        the order of trials will depend on the trial ordering and will probably not be identical between blocks).
+        you should either define at least one IV at the block level
+        or use the ordering ``Ordering(n)`` to create ``n`` blocks for every participant.
 
         Returns
         -------
-        Experiment
-            The constructed experiment.
+        :class:`Experiment`
 
         """
         if not design_matrices:
@@ -349,9 +374,9 @@ class Experiment(ExperimentSection):
     def basic(cls, levels, ivs_by_level, design_matrices_by_level=None, ordering_by_level=None, filename=None):
         """Construct a basic, homogeneously-organized experiment.
 
-        This function builds a basic experiment,
+        This function builds a basic :class:`Experiment`,
         which is to say an experiment that has arbitrary levels
-        but only one design at each level,
+        but only one :class:`~experimentator.design.Design` at each level,
         and the same structure everywhere in the hierarchy.
 
         Parameters
@@ -365,23 +390,22 @@ class Experiment(ExperimentSection):
             specified in the form of tuples
             with the first element being the IV name and the second element a list of its possible values.
             Alternatively, the IVs at each level can be specified in a dictionary.
-            See documentation for `Design` for more information on specifying IVs.
+            See documentation for :class:`~experimentator.design.Design` for more information on specifying IVs.
         design_matrices_by_level : dict, optional
             Specify the design matrix for any levels.
             Keys are level names; values are design matrices.
             Any levels without a design matrix will be fully crossed.
-            See `Design` for more on design matrices.
+            See :class:`~experimentator.design.Design` for more on design matrices.
         ordering_by_level : dict, optional
             Specify the ordering for each level.
-            Keys are level names; values are instance objects from `experimentator.order`.
-            For ny levels without an order specified, `Shuffle` will be used.
+            Keys are level names; values are instance objects from :mod:`experimentator.order`.
+            For any levels without an order specified, :class:`~experimentator.order.Shuffle` will be used.
         filename : str, optional
             File location to save the experiment.
 
         Returns
         -------
-        Experiment
-            The constructed experiment.
+        :class:`Experiment`
 
         """
         if not design_matrices_by_level:

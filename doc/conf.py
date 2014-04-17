@@ -278,5 +278,6 @@ texinfo_documents = [
 intersphinx_mapping = {
     'python': ('http://docs.python.org/3/', None),
     'numpy': ('http://docs.scipy.org/doc/numpy/', None),
+    'pandas': ('http://pandas.pydata.org/pandas-docs/stable', None),
 }
 

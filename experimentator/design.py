@@ -15,7 +15,7 @@ from collections import ChainMap
 class Design:
     """
     :class:`Design` instances specify the experimental design at one level of the experimental hierarchy.
-    They guide the creation of :class:`ExperimentSection <experimentator.section.ExperimentSection>` instances
+    They guide the creation of :class:`~experimentator.section.ExperimentSection` instances
     by parsing design matrices or crossing independent variables (IVs).
 
     Parameters
@@ -52,7 +52,7 @@ class Design:
         The default is :class:`order.Shuffle` unless a `design_matrix` is passed.
     extra_data : dict, optional
         Items from this dictionary will be included in the ``data`` attribute
-        of any :class:`ExperimentSection <experimentator.section.ExperimentSection>` instances
+        of any :class:`~experimentator.section.ExperimentSection` instances
         created with this :class:`Design`.
 
     Attributes
@@ -60,8 +60,8 @@ class Design:
     iv_names : list of str
     iv_values : list of tuple
     design_matrix : array-like
-    extra_data : dictionary
-    ordering : Ordering
+    extra_data : dict
+    ordering : :class:`order.Ordering`
     heterogeneous_design_iv_name : str
         The IV name that triggers a heterogeneous (i.e., branching) tree structure when it is encountered.
         ``'design'`` by default.
@@ -75,7 +75,6 @@ class Design:
 
     Examples
     --------
-    >>> from experimentator import Design
     >>> from experimentator.order import Shuffle
     >>> design = Design(ivs={'side': ['left', 'right'], 'difficulty': ['easy', 'hard']}, ordering=Shuffle(2))
     >>> design.first_pass()
@@ -137,7 +136,7 @@ class Design:
                     - If the value is a sequence, then the first element is interpreted as the class name
                       and the following as positional arguments.
                 - ``'n'`` or ``'number'``, interpreted as the ``number`` argument to
-                  the specified :mod:`ordering <experimentator.order>`.
+                  the specified :class:`~experimentator.order.Ordering`.
                 - Finally, any fields not otherwise used are passed to the :class:`Design` constructor
                   as the ``extra_data`` argument.
 
@@ -145,7 +144,7 @@ class Design:
         -------
         name : str
             Only returned if `spec` contains a field ``'name'``.
-        design : Design
+        design : :class:`Design`
 
         See Also
         --------
@@ -225,7 +224,7 @@ class Design:
         """Initialize design.
 
         Initializes the design by parsing the design matrix or crossing the IVs
-        If a :class:`non-atomic ordering <experimentator.order.NonAtomicOrdering>` is used,
+        If a :class:`~experimentator.order.NonAtomicOrdering` is used,
         an additional IV will be returned which should be incorporated into the design
         one level up in the experimental hierarchy.
         For this reason, the `first_pass` methods in a hierarchy of :class:`Design` instances
@@ -330,16 +329,16 @@ class Design:
 class DesignTree:
     """
     A container for :class:`Design` instances, describing the entire hierarchy of a basic
-    :class:`Experiment <experimentator.experiment.Experiment>`.
+    :class:`~experimentator.experiment.Experiment`.
     :class:`DesignTree` instances are iterators; calling ``next`` on one
     will return another :class:`DesignTree` with the top level removed.
     In this way, the entire experimental hierarchy can be created by recursively calling ``next``.
 
     Parameters
     ----------
-    levels_and_design : OrderedDict or list of tuple
+    levels_and_designs : OrderedDict or list of tuple
         This input defines the structure of the tree,
-        and is either an :class:`OrderedDict <collections.OrderedDict>` or a list of 2-tuples.
+        and is either an :class:`~collections.OrderedDict` or a list of 2-tuples.
         Keys (or first element of each tuple) are level names.
         Values (or second element of each tuple) are design specifications,
         in the form of either a :class:`Design` instance, or a list of :class:`Design` instances to occur in sequence.
@@ -355,6 +354,13 @@ class DesignTree:
         each corresponding to the name of a :class:`DesignTree` from` other_designs`.
         The value of the IV ``'design'`` at each section
         determines which :class:`DesignTree` is used for children of that section.
+
+    Attributes
+    ----------
+    levels_and_designs : list of tuple
+    other_designs : dict
+    branches : dict
+        Only those items from `other_designs` that follow directly from this tree.
 
     Notes
     -----
@@ -415,7 +421,7 @@ class DesignTree:
 
         Returns
         -------
-        DesignTree
+        :class:`DesignTree`
 
         """
         if isinstance(spec, dict):
@@ -528,12 +534,13 @@ class DesignTree:
         """Add base level to tree.
 
         Adds a section to the top of the tree called ``'_base'``.
-        This makes the `DesignTree` suitable for constructing an `Experiment`.
+        This makes the :class:`DesignTree` suitable for constructing an :class:`~experimentator.experiment.Experiment`.
 
         Notes
         -----
-        The :class:`Experiment` constructor calls this automatically,
-        and this shouldn't be called when appending a tree to an existing :class:`Experiment`,
+        The :class:`~experimentator.experiment.Experiment` constructor calls this automatically,
+        and this shouldn't be called when appending a tree to an existing
+        :class:`~experimentator.experiment.Experiment`,
         so there is no reason to manually call this method.
 
         """
