@@ -426,12 +426,12 @@ class Experiment(ExperimentSection):
     def save(self, filename=None):
         """Save experiment.
 
-        Pickles the `Experiment` to the location in `Experiment.filename`.
+        Pickles the :class:`Experiment` to the location in :attr:`Experiment.filename`.
 
         Parameters
         ----------
         filename : str, optional
-            If specified, overrides `Experiment.filename`.
+            If specified, overrides :attr:`Experiment.filename`.
 
         """
         filename = filename or self.filename
