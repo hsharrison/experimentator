@@ -157,7 +157,7 @@ class Experiment(ExperimentSection):
     run_callback : func
         The function to be run when the bottom of the tree is reached (i.e., the trial function).
     context_managers : dict
-        A dictionary, mapping level names to :std:label:`context-managers`
+        A dictionary, mapping level names to :ref:`context-managers <context-managers>`
         (e.g., generator functions decorated with :func:`contextlib.contextmanager`).
         Defines behavior to run before and/or after each section at the associated level.
     session_data : dict
@@ -472,8 +472,8 @@ class Experiment(ExperimentSection):
     def run_section(self, section, demo=False, parent_callbacks=True, from_section=None):
         """
         Run a section and all its descendent sections.
-        Saves the results in the :attr:`~experimentator.section.ExperimentSection.data` attribute
-        of each lowest-level section.
+        Saves the results in the :attr:`ExperimentSection.data <experimentator.section.ExperimentSection.data>`
+        attribute of each lowest-level section.
 
         Parameters
         ----------
@@ -626,8 +626,7 @@ class Experiment(ExperimentSection):
             `func` should have the signature
             ``func(*args, section_data, experiment_data, **kwargs)``,
             where `args` and `kwargs` are arbitrary arguments passed in :meth:Experiment.set_context_manager`,
-            ``section_data`` is the :attr:`~experimentator.section.ExperimentSection` attribute
-            of the section being run,
+            ``section_data`` is an attribute of the :class:`~experimentator.section.ExperimentSection` being run,
             and ``session_data`` and ``experiment_data`` are attributes of the :class:`Experiment`.
             ``session_data`` and ``experiment_data`` are keyword arguments to `func`,
             so the shortest possible signature of a context manager is
@@ -665,8 +664,7 @@ class Experiment(ExperimentSection):
             `func` should have the signature
             ``func(*args, section_data, experiment_data, **kwargs)``,
             where `args` and `kwargs` are arbitrary arguments passed in :meth:Experiment.set_context_manager`,
-            ``section_data`` is the :attr:`~experimentator.section.ExperimentSection` attribute
-            of the section being run,
+            ``section_data`` is an attribute of the :class:`~experimentator.section.ExperimentSection` being run,
             and ``session_data`` and ``experiment_data`` are attributes of the :class:`Experiment`.
             ``session_data`` and ``experiment_data`` are keyword arguments to `func`,
             so the shortest possible signature of a run callback is
