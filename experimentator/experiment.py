@@ -27,8 +27,7 @@ logger = getLogger(__name__)
 
 def run_experiment_section(experiment, section_obj=None, demo=False, resume=False, parent_callbacks=True,
                            from_section=1, session_options='', **section_numbers):
-    """Run an experiment section.
-
+    """
     Run an experiment from a file or an :class:`Experiment` instance, and save it.
     If an exception is encountered, the :class:`Experiment` will be backed up and saved.
 
@@ -106,8 +105,7 @@ def run_experiment_section(experiment, section_obj=None, demo=False, resume=Fals
 
 
 def export_experiment_data(exp_filename, data_filename, **kwargs):
-    """ Export data.
-
+    """
     Reads a pickled :class:`Experiment` instance and saves its data in ``.csv`` format.
 
     Parameters
@@ -194,7 +192,8 @@ class Experiment(ExperimentSection):
 
     @staticmethod
     def load(filename):
-        """Load an experiment from disk.
+        """
+        Load an experiment from disk.
 
         Parameters
         ----------
@@ -213,8 +212,7 @@ class Experiment(ExperimentSection):
 
     @classmethod
     def from_dict(cls, spec):
-        """Experiment from dict.
-
+        """
         Constructs an :class:`Experiment` based on a dictionary specification.
 
         Parameters
@@ -246,8 +244,7 @@ class Experiment(ExperimentSection):
 
     @classmethod
     def from_yaml_file(cls, filename):
-        """Experiment from YAML file.
-
+        """
         Constructs an :class:`Experiment` based on specification in a YAML file.
         Requires module `PyYAML <http://pyyaml.org/wiki/PyYAML>`_.
 
@@ -278,7 +275,7 @@ class Experiment(ExperimentSection):
     def within_subjects(cls, ivs, n_participants, design_matrix=None, ordering=None, filename=None):
         """Construct a within-subjects experiment.
 
-        This function creates a within-subjects :class:`Experiment`,
+        Creates a within-subjects :class:`Experiment`,
         in which all the IVs are at the trial level.
 
         Parameters
@@ -372,7 +369,7 @@ class Experiment(ExperimentSection):
 
     @classmethod
     def basic(cls, levels, ivs_by_level, design_matrices_by_level=None, ordering_by_level=None, filename=None):
-        """Construct a basic, homogeneously-organized experiment.
+        """Construct a homogeneously-organized experiment.
 
         This function builds a basic :class:`Experiment`,
         which is to say an experiment that has arbitrary levels
@@ -424,8 +421,7 @@ class Experiment(ExperimentSection):
         return "Experiment({}, filename='{}')".format(self.tree.__repr__(), self.filename)
 
     def save(self, filename=None):
-        """Save experiment.
-
+        """
         Pickles the :class:`Experiment` to the location in :attr:`Experiment.filename`.
 
         Parameters
@@ -445,9 +441,8 @@ class Experiment(ExperimentSection):
             logger.warning('Cannot save experiment: No filename provided.')
 
     def export_data(self, filename, skip_columns=None, **kwargs):
-        """Export data.
-
-        Exports `Experiment.data` in ``.csv`` format.
+        """
+        Exports :attr:`Experiment.dataframe` in ``.csv`` format.
 
         Parameters
         ----------
@@ -456,13 +451,15 @@ class Experiment(ExperimentSection):
         skip_columns : list of str, optional
             Columns to skip.
         **kwargs
-            Arbitrary keyword arguments passed through to `pandas.Dataframe.to_csv`.
+            Arbitrary keyword arguments to pass to :meth:`pandas.DataFrame.to_csv`.
 
         Notes
         -----
-        This method is not recommended for experiments with compound data types, for example an experiment
-        which stores a time series for every trial. In those cases it is recommended to write a custom script that
-        parses the `Experiment.data` attribute as desired or use the `skip_columns` option.
+        This method is not recommended for experiments with compound data types,
+        for example an experiment which stores a time series for every trial.
+        In those cases it is recommended to write a custom script
+        that parses the :attr:`Experiment.dataframe` attribute as desired,
+        or use the `skip_columns` option to skip any compound columns.
 
         """
         df = self.dataframe
@@ -473,27 +470,27 @@ class Experiment(ExperimentSection):
             df.to_csv(f, **kwargs)
 
     def run_section(self, section, demo=False, parent_callbacks=True, from_section=None):
-        """Run a section.
-
-        Runs a section by descending the hierarchy and running each child section. Also calls the start, end, and inter
-        callbacks where appropriate. Results are saved in each `ExperimentSection.data` attribute.
+        """
+        Run a section and all its descendent sections.
+        Saves the results in the :attr:`~experimentator.section.ExperimentSection.data` attribute
+        of each lowest-level section.
 
         Parameters
         ----------
-        section : ExperimentSection
-            The `ExperimentSection` instance to be run.
+        section : :class:`~experimentator.section.ExperimentSection`
+            The section to be run.
         demo : bool, optional
             Data will only be saved if `demo` is False (the default).
         parent_callbacks : bool, optional
             If True (the default), all parent callbacks will be called.
         from_section : int or list of int, optional
-            Which section to start running from. This makes it possible to resume a session. If a list is passed, it
-            specifies where to start running on multiple levels. For example:
+            Which section to start running from.
+            If a list is passed, it specifies where to start running on multiple levels.
+            See the example below.
 
-            >>> exp.run_section(exp.subsection(participant=1, session=2), from_section=[3, 5])
-
-            Assuming the hierarchy is ``('participant', 'session', 'block', 'trial')``, this would run the first
-            participant's second session, starting from the fifth trial of the third block.
+        Notes
+        -----
+        The wrapper function :func:`run_experiment_section` should be used instead of this method, if possible.
 
         """
         logger.debug('Running {} with data {}.'.format(section.level, section.data))
@@ -552,16 +549,19 @@ class Experiment(ExperimentSection):
                     parent.has_finished = True
 
     def resume_section(self, section, **kwargs):
-        """Resume a section.
-
+        """
         Reruns a section that has been started but not finished, starting where running left off.
 
         Parameters
         ----------
-        section : ExperimentSection
+        section : :class:`~experimentator.section.ExperimentSection`
             The section to resume.
         **kwargs
-            Arbitrary keyword arguments to pass to `Experiment.run_section`. See its docstring for details.
+            Keyword arguments to pass to :meth:`Experiment.run_section`.
+
+        Notes
+        -----
+        The wrapper function :func:`run_experiment_section` should be used instead of this method, if possible.
 
         """
         if section.is_bottom_level:
@@ -588,7 +588,7 @@ class Experiment(ExperimentSection):
 
         Parameters
         ----------
-        section : ExperimentSection
+        section : :class:`~experimentator.section.ExperimentSection`
             The section to find the parents of.
 
         """
@@ -605,8 +605,8 @@ class Experiment(ExperimentSection):
         """Set a context manager to run at a certain level.
 
         Define a context manager `manager` to run at every section at a particular level.
-        A context manager is a convenient way to define behavior to occur at the beginning and end of every section
-        at a particular level.
+        A context manager is a convenient way to define behavior
+        to occur at the beginning and end of every section at a particular level.
         See :mod:`contextlib` for more information on creating context managers.
         The easiest way is to use :func:`contextlib.contextmanager` to decorate a function.
         The function should contain code to run at the beginning of every section,
@@ -615,7 +615,7 @@ class Experiment(ExperimentSection):
 
         Any value returned by the ``__exit__`` method of `manager`
         (equivalently, yielded by a function decorated with :func:`contextlib.contextmanager`)
-        will be stored in :attr:`session_data` under the key `level`.
+        will be stored in :attr:`Experiment.session_data` under the key `level`.
 
         Parameters
         ----------
@@ -623,29 +623,26 @@ class Experiment(ExperimentSection):
             Which level of the hierarchy to manage.
         func : func
             The context manager function.
+            `func` should have the signature
+            ``func(*args, section_data, experiment_data, **kwargs)``,
+            where `args` and `kwargs` are arbitrary arguments passed in :meth:Experiment.set_context_manager`,
+            ``section_data`` is the :attr:`~experimentator.section.ExperimentSection` attribute
+            of the section being run,
+            and ``session_data`` and ``experiment_data`` are attributes of the :class:`Experiment`.
+            ``session_data`` and ``experiment_data`` are keyword arguments to `func`,
+            so the shortest possible signature of a context manager is
+            ``func(section_data, **_)``.
         *args
             Any arbitrary positional arguments to be passed to `func`.
         func_module : str, optional
         func_name : str, optional
             These two arguments specify where the given function should be imported from in future Python sessions
-            (i.e., ``from func_module import func_name``). Usually, this is figured out automatically by introspection,
+            (i.e., ``from func_module import func_name``).
+            Usually, this is figured out automatically by introspection,
             but these arguments are provided for the rare situation where introspection fails.
         **kwargs
             Any arbitrary keyword arguments to be passed to `func`.
 
-        Notes
-        -----
-        In addition to the arguments you set in `*args` and `**kwargs`, one positional argument is passed to `func`,
-        the current section's `ExperimentSection.data` attribute, containing all the IV values and section numbers
-        defining the section. Additionally, two keyword arguments will be passed to
-        `func`: `Experiment.session_data` and `Experiment.experiment_data` as ``session_data`` and ``experiment_data``,
-        respectively. So the context manager should take the form of
-        ``func(*args, section_data, session_data, experiment_data, **kwargs)`` where ``*args`` and ``**kwargs`` come
-        from `Experiment.set_context_manager`, ``section_data`` comes from the `ExperimentSection` being run, and
-        ``session_data`` and ``experiment_data`` come from the `Experiment` instance. Since ``session_data`` and
-        ``experiment_data`` are keyword arguments, and ``*args`` and ``**kwargs`` are optional, the shortest possible
-        formulation of a context manager is ``func(section_data, **_)`` (in which ``session_data`` and
-        ``experiment_data`` are unused).
 
         """
         self.context_managers[level] = functools.partial(manager, *args, **kwargs)
@@ -657,37 +654,33 @@ class Experiment(ExperimentSection):
             self._callback_info[level][0][1] = func_name
 
     def set_run_callback(self, func, *args, func_module=None, func_name=None, **kwargs):
-        """Set the run callback.
-
-        Define a function to run at the lowest level of the experiment (i.e., the trial function).
+        """
+        Define a function to run at the lowest level of the experiment
+        (i.e., the trial function).
 
         Parameters
         ----------
         func : func
             The function to be set as the run callback.
+            `func` should have the signature
+            ``func(*args, section_data, experiment_data, **kwargs)``,
+            where `args` and `kwargs` are arbitrary arguments passed in :meth:Experiment.set_context_manager`,
+            ``section_data`` is the :attr:`~experimentator.section.ExperimentSection` attribute
+            of the section being run,
+            and ``session_data`` and ``experiment_data`` are attributes of the :class:`Experiment`.
+            ``session_data`` and ``experiment_data`` are keyword arguments to `func`,
+            so the shortest possible signature of a run callback is
+            ``func(section_data, **_)``.
         *args
             Any arbitrary positional arguments to be passed to `func`.
         func_module : str, optional
         func_name : str, optional
             These two arguments specify where the given function should be imported from in future Python sessions
-            (i.e., ``from func_module import func_name``). Usually, this is figured out automatically by introspection,
+            (i.e., ``from func_module import func_name``).
+            Usually, this is figured out automatically by introspection,
             but these arguments are provided for the rare situation where introspection fails.
         **kwargs
             Any arbitrary keyword arguments to be passed to `func`.
-
-        Notes
-        -----
-        In addition to the arguments you set in `*args` and `**kwargs`, one positional argument is passed to `func`,
-        the current section's `ExperimentSection.data` attribute, containing all the IV values and section numbers
-        defining the section. Additionally, two keyword arguments will be passed to
-        `func`: `Experiment.session_data` and `Experiment.experiment_data` as ``session_data`` and ``experiment_data``,
-        respectively. So the run callback should take the form of
-        ``func(*args, section_data, session_data, experiment_data, **kwargs)`` where ``*args`` and ``**kwargs`` come
-        from `Experiment.set_context_manager`, ``section_data`` comes from the `ExperimentSection` being run, and
-        ``session_data`` and ``experiment_data`` come from the `Experiment` instance. Since ``session_data`` and
-        ``experiment_data`` are keyword arguments, and ``*args`` and ``**kwargs`` are optional, the shortest possible
-        formulation of a run callback is ``func(section_data, **_)`` (in which ``session_data`` and
-        ``experiment_data`` are unused).
 
         """
         self.run_callback = functools.partial(func, *args, **kwargs)

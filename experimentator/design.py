@@ -43,13 +43,15 @@ class Design:
                If they are ``0`` and ``1``, they are associated with ``True`` and ``False``, respectively.
                Similarly, they could be ``1`` and ``2``, or any two non-equal values.
         Note that a design matrix also specifies the order of the conditions.
-        For this reason, the default `ordering` changes from :class:`order.Shuffle` to :class:`order.Ordering`,
+        For this reason, the default `ordering` changes
+        from :class:`order.Shuffle <experiment.order.Shuffle>
+        to :class:`order.Ordering <experimentator.order.Ordering>`,
         preserving the order of the conditions.
         When no `design_matrix` is passed, IVs are fully crossed.
     ordering : Ordering, optional
         An instance of an :class:`order.Ordering <experimentator.order.Ordering>` subclass
         defining the behavior for duplicating and ordering the conditions of the :class:`Design`.
-        The default is :class:`order.Shuffle` unless a `design_matrix` is passed.
+        The default is :class:`order.Shuffle <experiment.order.Shuffle>` unless a `design_matrix` is passed.
     extra_data : dict, optional
         Items from this dictionary will be included in the ``data`` attribute
         of any :class:`~experimentator.section.ExperimentSection` instances
@@ -61,7 +63,7 @@ class Design:
     iv_values : list of tuple
     design_matrix : array-like
     extra_data : dict
-    ordering : :class:`order.Ordering`
+    ordering : :class:`experimentator.order.Ordering`
     heterogeneous_design_iv_name : str
         The IV name that triggers a heterogeneous (i.e., branching) tree structure when it is encountered.
         ``'design'`` by default.
@@ -118,8 +120,7 @@ class Design:
 
     @classmethod
     def from_dict(cls, spec):
-        """Design from dictionary.
-
+        """
         Constructs a :class:`Design` instance from a dictionary-based specification
         (e.g., parsed from a YAML file).
 
@@ -345,7 +346,7 @@ class DesignTree:
 
     **other_designs
         Named design trees, can be other :class:`DesignTree` instances
-        or suitable `levels_and_designs` inputs (i.e., :class:`collections.OrderedDict` or list of tuples).
+        or suitable `levels_and_designs` inputs (i.e., :class:`~collections.OrderedDict` or list of tuples).
         These designs allow for heterogeneous design structures
         (i.e. not every section at the same level has the same :class:`Design`).
         To make a heterogeneous :class:`DesignTree`,
@@ -405,8 +406,7 @@ class DesignTree:
 
     @classmethod
     def from_spec(cls, spec):
-        """DesignTree from specification.
-
+        """
         Constructs a :class:`DesignTree` instance from a specification (e.g., parsed from a YAML file).
 
         spec : dict or list
@@ -495,9 +495,8 @@ class DesignTree:
 
     @staticmethod
     def first_pass(levels_and_designs):
-        """First pass.
-
-        Make first pass of all designs in a design tree, from bottom to top.
+        """
+        Make a first pass of all designs in a design tree, from bottom to top.
         This calls :meth:`Design.first_pass` on every :class:`Design` instance in the tree,
         in the proper order, updating designs when a new IV is returned.
         This is necessary for non-atomic orderings,
@@ -531,8 +530,7 @@ class DesignTree:
         return iv_names, iv_values
 
     def add_base_level(self):
-        """Add base level to tree.
-
+        """
         Adds a section to the top of the tree called ``'_base'``.
         This makes the :class:`DesignTree` suitable for constructing an :class:`~experimentator.experiment.Experiment`.
 
