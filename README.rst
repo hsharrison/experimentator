@@ -20,7 +20,7 @@ Worse, it encourages bad coding practices
 like copy-pasting boilerplate from someone else's experiment code
 without understanding it.
 
-The underlying purpose of **experimentator** is
+The purpose of **experimentator** is
 to handle all the boring logistics of running experiments
 and allow you to get straight to what really interests you, whatever that may be.
 This package was originally intended for behavioral experiments
@@ -158,7 +158,6 @@ From source (development version)
 Experimentator is hosted on both
 `GitHub <https://github.com/hsharrison/experimentator>`_
 and `BitBucket <https://bitbucket.org/hharrison/experimentator>`_.
-The Mercurial repository (BitBucket) is considered canonical.
 
 .. code-block:: bash
 
