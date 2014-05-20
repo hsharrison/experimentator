@@ -1,15 +1,23 @@
-"""Order module.
+"""
+This module contains the class :class:`Ordering` and its descendants.
+These classes handle how unique conditions at a particular experimental level are ordered and duplicated.
+:class:`Ordering` instances should be passed directly to the :class:`~experimentator.design.Design` constructor;
+there is no reason to otherwise interact with them in normal use.
 
-This module contains the class `Ordering` and its descendants. These classes handle how unique conditions at a
-particular experimental level are ordered and duplicated. `Ordering` objects should be instantiated and passed to the
-`Design` constructor; there is no reason to interact with them directly.
-
-Of special note are non-atomic orderings: the class `NonAtomicOrdering` and its descendants. These ordering methods are
-not independent between sections. For example, if you want to make sure that the possible block orders are evenly
-distributed among participants (a counterbalanced design), that means that each participant section can't decide
-independently how to order the blocks--the orderings must be managed by the parent level of the experimental hierarchy
-(in the example of counterbalanced blocks, the `Experiment.base_section`--the experiment itself, essentially--must tell
-each participant what block order to use).
+Of special note are non-atomic orderings:
+the class :class:`NonAtomicOrdering` and its descendants.
+'Non-atomic' here means that the orderings between sections are not independent.
+For example, a :class:`Shuffle` ordering is atomic;
+the order in one section is independent of the order in another.
+However, for example, if one wants to make sure that
+possible block orders are evenly distributed among participants
+(a :class:`counterbalanced <CompleteCounterbalance>` design),
+the block orders within each participants are not independent.
+Each participate can decide its order of blocks only in the context of the other participants' block orders.
+This means that the parent section must handle orderings
+(in the example of counterbalanced blocks,
+the :attr:`Experiment.base_section <experimentator.experiment.Experiment.base_section>`--the experiment itself,
+essentially--must tell each participant what block order to use).
 
 """
 import itertools
