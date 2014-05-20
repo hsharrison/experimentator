@@ -6,7 +6,7 @@ there is no reason to otherwise interact with them in normal use.
 
 Of special note are non-atomic orderings:
 the class :class:`NonAtomicOrdering` and its descendants.
-'Non-atomic' here means that the orderings between sections are not independent.
+''Non-atomic'' here means that the orderings between sections are not independent.
 For example, a :class:`Shuffle` ordering is atomic;
 the order in one section is independent of the order in another.
 However, for example, if one wants to make sure that
@@ -30,15 +30,23 @@ logger = logging.getLogger(__name__)
 
 
 class Ordering():
-    """Base ordering class.
-
-    This is the base ordering class. It will keep conditions in the order they are defined (either in the design matrix,
-    or the result of a call to `itertools.product` with all the IVs at its level).
+    """
+    The base ordering class.
+    It will keep conditions in the order they are defined by the :class:`~experimentator.design.Design` instance
+    (either the order of rows in the design matrix,
+    or the output of :func:`itertools.product` on the IV levels).
+    Remember not to rely on the order of dictionary items.
+    Therefore, if a specific order is desired,
+    it is recommended to use a design matrix or an :class:`collections.OrderedDict` to define the IVs.
+    See documentation for :class:`~experimentator.design.Design` for more on defining IVs.
 
     Parameters
     ----------
     number : int, optional
-        The number of times each unique condition should appear (default=1).
+        The number of times each unique condition should appear.
+        The default is 1.
+        If ``number > 1``, the entire order will be cycled
+        (as opposed to repeating each condition within the order).
 
     """
     def __init__(self, number=1):
