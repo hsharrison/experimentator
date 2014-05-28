@@ -57,23 +57,28 @@ class Ordering():
         return '{}(number={})'.format(self.__class__.__name__, self.number)
 
     def first_pass(self, conditions):
-        """First pass of order.
-
-        Handles operations that should only be performed once, initializing the object before ordering conditions. In
-        this case, it simply duplicates the list of conditions.
+        """
+        Handle operations that should only be performed once,
+        initializing the object before ordering conditions.
+        In the case of :class:`Ordering`, it simply duplicates the list of conditions.
+        :meth:`Ordering.first_pass` is called by :meth:`Design.first_pass <design.Design.first_pass>`,
+        which is in turn called by :meth:`DesignTree.first_pass <design.DesignTree.first_pass>`.
+        These methods should not be called manually.
 
         Parameters
         ----------
         conditions : sequence of dict
-            A list or other sequence (often a generator) containing dictionaries, with each key being an IV name and
-            each value that IV's value for that particular condition.
+            A list of conditions,
+            where each condition is a dictionary mapping IV names to IV values.
 
         Returns
         -------
         iv_name : str or tuple
-            The name of the IV, for non-atomic orderings. Otherwise, an empty tuple.
+            The name of the IV, for non-atomic orderings.
+            Otherwise, an empty tuple.
         iv_values : tuple
-            The possible values of the IV. Empty for atomic orderings.
+            The possible values of the IV.
+            Empty for atomic orderings.
 
         """
         self.all_conditions = self.number * list(conditions)
@@ -81,41 +86,38 @@ class Ordering():
         return (), ()
 
     def get_order(self, data=None):
-        """Get an order of conditions.
-
-        This is the method that is called to get an order of conditions. In this case, the conditions are always
-        returned in the same default order.
+        """
+        Get an order of conditions.
 
         Parameters
         ----------
         data : dict, optional
-            A dictionary describing the data of the parent section. Unused for atomic orderings.
+            A dictionary describing the data of the parent section.
+            Unused for atomic orderings.
 
         Returns
         -------
         list of dict
-            A list of dictionaries, each specifying a condition (a combination of IVs).
+            A list of conditions,
+            where each condition is a dictionary mapping IV names to IV values.
 
         """
         return self.all_conditions
 
     @staticmethod
     def possible_orders(conditions, unique=True):
-        """All permutations.
-
-        Yields all possible orders of the conditions.
+        """
+        Yield all possible orders of the conditions.
         Each order is a list of dictionaries, with each dictionary representing a condition.
-        Each list defines one possible order of the conditions.
 
         Parameters
         ----------
         conditions : sequence of dict
-            A list or other sequence (often a generator) containing dictionaries, with each key being an IV name and
-            each value that IV's value for that particular condition.
+            A list of conditions,
+            where each condition is a dictionary mapping IV names to IV values.
         unique : bool, optional
-            If true (the default), will only return unique orders. Otherwise, non-unique orders will occur only if two
-            or more elements of `conditions` are identical. In other words, uniqueness in determining permutations is
-            predicated on identity if True, and position if False.
+            If true (the default), will only return unique orders.
+            If false, some identical orders will be generated if `conditions` contains identical elements.
 
         """
         if unique:
