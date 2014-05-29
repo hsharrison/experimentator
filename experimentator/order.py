@@ -23,10 +23,12 @@ essentially--must tell each participant what block order to use).
 import itertools
 import random
 import logging
-from collections import deque
+from collections import deque, namedtuple
 from math import factorial
 
 logger = logging.getLogger(__name__)
+
+IndependentVariable = namedtuple('IndependentValue', ('name', 'values'))
 
 
 class Ordering():
@@ -82,7 +84,7 @@ class Ordering():
         """
         self.all_conditions = self.number * list(conditions)
 
-        return (), ()
+        return IndependentVariable((), ())
 
     def get_order(self, data=None):
         """
@@ -208,7 +210,7 @@ class NonAtomicOrdering(Ordering):
             The possible values of the IV.
             Empty for atomic orderings.
         """
-        return self.iv_name, list(self.order_ivs.keys())
+        return IndependentVariable(self.iv_name, list(self.order_ivs.keys()))
 
     def get_order(self, data=None):
         """
@@ -357,7 +359,7 @@ class Sorted(NonAtomicOrdering):
             logger.warning("Creating IV '{}' with levels 'ascending' and 'descending'.".format(self.iv_name))
             return self.iv
         else:
-            return (), ()
+            return IndependentVariable((), ())
 
     def get_order(self, data=None):
         """
