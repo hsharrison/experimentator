@@ -88,6 +88,7 @@ class Ordering():
     def get_order(self, data=None):
         """
         Get an order of conditions.
+        For :class:`Ordering`, always returns the same order.
 
         Parameters
         ----------
@@ -133,16 +134,16 @@ class Ordering():
 
 
 class Shuffle(Ordering):
-    """Randomly shuffle the conditions.
-
-    This ordering method randomly shuffles the sections.
+    """
+    This ordering randomly shuffles the conditions.
 
     Parameters
     ----------
     number : int, optional
-        Number of times each condition should appear (default=1). Conditions are duplicated before shuffling.
+        Number of times each condition should appear (default=1).
+        Conditions are duplicated *before* shuffling.
     avoid_repeats : bool, optional
-        If True (default is False), no unique conditions will appear back-to-back.
+        If True (default is False), no identical conditions will appear back-to-back.
 
     """
     def __init__(self, number=1, avoid_repeats=False):
@@ -153,20 +154,21 @@ class Shuffle(Ordering):
         return '{}(number={}, avoid_repeats={})'.format(self.__class__.__name__, self.number, self.avoid_repeats)
 
     def get_order(self, data=None):
-        """Order the conditions.
-
-        This is the method that is called to get an order of conditions. In this case, a different, random order is
-        returned every time.
+        """
+        Get an order of conditions.
+        For :class:`Shuffle`, returns the conditions in a random order.
 
         Parameters
         ----------
-        **data
-            Arbitrary keyword arguments describing the data of the parent section. Unused for atomic orderings.
+        data : dict, optional
+            A dictionary describing the data of the parent section.
+            Unused for atomic orderings.
 
         Returns
         -------
         list of dict
-            A list of dictionaries, each specifying a condition (a combination of IVs).
+            A list of conditions,
+            where each condition is a dictionary mapping IV names to IV values.
 
         """
         conditions = self.all_conditions.copy()
