@@ -181,11 +181,11 @@ class Shuffle(Ordering):
 
 
 class NonAtomicOrdering(Ordering):
-    """Non-atomic ordering.
-
-    This is a base class for non-atomic orderings, and should not be directly instantiated. Non-atomic orderings work
-    by creating a new independent variable one level up. The IV name will start with an underscore, a convention to
-    avoid name clashes with other IVs.
+    """
+    This is a base class for non-atomic orderings,
+    and is not meant to be directly instantiated.
+    Non-atomic orderings work by creating a new independent variable one level up.
+    The IV name will start with an underscore, a convention to avoid name clashes.
 
     """
     iv_name = 'order'
@@ -196,35 +196,35 @@ class NonAtomicOrdering(Ordering):
 
     @property
     def iv(self):
-        """Independent variable.
-
-        The IV associated with this non-atomic ordering. It will be added to the design one level up in the hierarchy.
+        """
+        The IV associated with the non-atomic ordering.
+        It will be added to the design one level up in the experiment hierarchy.
 
         Returns
         -------
         iv_name : str or tuple
-            The name of the IV, for non-atomic orderings. Otherwise, an empty tuple.
+            The name of the IV, for non-atomic orderings.
+            Otherwise, an empty tuple.
         iv_values : seq
-            The possible values of the IV. Empty for atomic orderings.
+            The possible values of the IV.
+            Empty for atomic orderings.
         """
         return self.iv_name, list(self.order_ivs.keys())
 
     def get_order(self, data=None):
-        """Order the conditions.
-
-        This is the method that is called to get an order of conditions. For non-atomic orderings, the order will depend
-        on IV values one level above.
+        """
+        Get an order of conditions.
 
         Parameters
         ----------
-        data : dict
-            A dictionary describing the data of the parent section. For non-atomic orderings, one of its elements will
-            determine the order to be used.
+        data : dict, optional
+            A dictionary describing the data of the parent section.
 
         Returns
         -------
         list of dict
-            A list of dictionaries, each specifying a condition (a combination of IVs).
+            A list of conditions,
+            where each condition is a dictionary mapping IV names to IV values.
 
         """
         return self.order_ivs[data[self.iv_name]]
