@@ -60,10 +60,9 @@ class Ordering():
         """
         Handle operations that should only be performed once,
         initializing the object before ordering conditions.
-        In the case of :class:`Ordering`, it simply duplicates the list of conditions.
-        :meth:`Ordering.first_pass` is called by :meth:`Design.first_pass <design.Design.first_pass>`,
-        which is in turn called by :meth:`DesignTree.first_pass <design.DesignTree.first_pass>`.
-        These methods should not be called manually.
+        For :class:`Ordering`, the only operation is duplication of the list of conditions
+        (if :attr:`Ordering.number` > 1).
+        This methods should not be called manually.
 
         Parameters
         ----------
@@ -231,47 +230,49 @@ class NonAtomicOrdering(Ordering):
 
 
 class CompleteCounterbalance(NonAtomicOrdering):
-    """Complete counterbalance.
-
-    In a complete counterbalance design, every unique ordering of the conditions appears the same numbers of times.
-    Using this ordering will create an IV one level up called ``'counterbalance_order'`` with values of integers, each
-    associated with a unique ordering of the conditions at this level.
+    """
+    In a complete counterbalance design,
+    every unique ordering of the conditions appears the same numbers of times.
 
     Parameters
     ----------
     number : int, optional
-        The number of times each condition should be duplicated. Note that conditions are duplicated before determining
-        all possible orderings.
+        The number of times each condition should be duplicated.
+        Note that conditions are duplicated *before* determining the possible orderings.
 
     Notes
     -----
-    The number of possible orderings can get very large very quickly. Therefore, a complete counterbalance is not
-    recommended for more than 3 conditions. The number of unique orderings can be determined by
-    ``factorial(number * k) // number**k``, where `k` is the number of conditions (assuming all conditions are unique).
-    For example, with 5 conditions there are 120 possible orders; with 3 conditions and ``number==2``, there are 90
-    unique orders.
+    The number of possible orderings can get very large very quickly.
+    Therefore, a complete counterbalance is not recommended for more than 3 conditions.
+    The number of unique orderings can be determined by
+    ``factorial(number * k) // number**k``,
+    where `k` is the number of conditions (assuming all conditions are unique).
+    For example, with 5 conditions there are 120 possible orders;
+    with 3 conditions and ``number==2``, there are 90 unique orders.
 
     """
     iv_name = 'counterbalance_order'
 
     def first_pass(self, conditions):
-        """First pass of order.
-
-        Handles operations that should only be performed once, initializing the object before ordering conditions. In
-        this case, it determines all possible orders and assigns them to values of the IV, ``'counterbalance_order'``.
+        """
+        Handle operations that should only be performed once,
+        initializing the object before ordering conditions.
+        For :class:`CompleteCounterbalance`, all possible orders are determined.
+        This method should not be called manually.
 
         Parameters
         ----------
         conditions : sequence of dict
-            A list or other sequence (often a generator) containing dictionaries, with each key being an IV name and
-            each value that IV's value for that particular condition.
+            A list of conditions,
+            where each condition is a dictionary mapping IV names to IV values.
 
         Returns
         -------
-        iv_name : str
-            The string ``'counterbalance_order'``, the name of the IV created one level up.
-        iv_values : list of int
-            Integers, values of the IV one level up, each associated with a unique ordering of conditions.
+        iv_name : str or tuple
+            The name of the IV to be created one level up, ``'counterbalance_order'``.
+        iv_values : tuple
+            Values of the IV to be created one level up,
+            integers each associated with an order of the conditions.
 
         """
         conditions = list(conditions)
