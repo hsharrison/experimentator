@@ -289,18 +289,20 @@ class CompleteCounterbalance(NonAtomicOrdering):
 
 
 class Sorted(NonAtomicOrdering):
-    """Sorted conditions.
-
-    This ordering method sorts the conditions based on the value of the IV defined at its level.
+    """
+    Sorts the conditions based on the value of the IV defined at its level.
+    This ordering can be non-atomic (if `order` ``== 'both'``),
+    creating an IV with levels of ``'ascending'`` and ``'descending'``.
+    If `order` is ``'ascending'`` or ``'descending'``, the ordering will be atomic
+    (each section will be ordered the same way).
 
     Parameters
     ----------
     order : {'both', 'ascending', 'descending'}, optional
-        If `order` is ``'ascending'`` or ``'descending'``, all sections will be sorted the same way as this ordering
-        will be atomic. No IV will be created one  level up. However, if `order` is ``'both'`` (the default), an IV
-        ``'sorted_order'`` will be created created one level up, with possible values ``'ascending'`` and
-        ``'descending'``. As a result, half the sections will be created in ascending order, and half in descending
-        order.
+        The order to sort the sections.
+        If ``'both'`` (the default),
+        half the sections will be created in ascending order, and half in descending order,
+        depending on the value of the new IV ``'sorted_order'``.
     number : int, optional
         The number of times each condition should appear.
 
@@ -320,24 +322,25 @@ class Sorted(NonAtomicOrdering):
 
     def first_pass(self, conditions):
         """First pass of order.
-
-        Handles operations that should only be performed once, initializing the object before ordering conditions. In
-        this case, the conditions will be sorted based on the IV values.
+        Handle operations that should only be performed once,
+        initializing the object before ordering conditions.
+        For :class:`Sorted`, the conditions are sorted.
 
         Parameters
         ----------
         conditions : sequence of dict
-            A list or other sequence (often a generator) containing dictionaries, with each key being an IV name and
-            each value that IV's value for that particular condition.
+            A list of conditions,
+            where each condition is a dictionary mapping IV names to IV values.
 
         Returns
         -------
         iv_name : str or tuple
-            The string ``'sorted_order'`` if `order` is ``'both'``, the name of the IV created one level up. Otherwise,
-            an empty tuple to denote that no IV is to be created.
-        iv_values : list of int
-            Integers, values of the IV one level up, each associated with a unique ordering of conditions. If `order` is
-            not ``'both'``, an empty tuple will be passed.
+            If `order` is ``'both'``, the name of the IV to be created one level up, ``'sorted_order'``.
+            Otherwise, an empty tuple (denoting that no IV will be created).
+        iv_values : tuple
+            If `order` is ``'both'``, values of the IV to be created one level up,
+            integers each associated with an order of the conditions.
+            Otherwise, empty tuple.
 
         """
         if len(conditions[0]) > 1:
@@ -357,21 +360,19 @@ class Sorted(NonAtomicOrdering):
             return (), ()
 
     def get_order(self, data=None):
-        """Order the conditions.
-
-        This is the method that is called to get an order of conditions. In this case, a sorted order is returned. If
-        `order` is ``'both'``, the returned order depends on the IV ``'sorted_order'`` passed as a keyword argument.
+        """
+        Get an order of conditions.
 
         Parameters
         ----------
-        data : dict
-            A dictionary describing the data of the parent section. In this case, only the key ``'sorted_order'`` is
-            relevant.
+        data : dict, optional
+            A dictionary describing the data of the parent section.
 
         Returns
         -------
         list of dict
-            A list of dictionaries, each specifying a condition (a combination of IVs).
+            A list of conditions,
+            where each condition is a dictionary mapping IV names to IV values.
 
         """
         if self.order == 'both':
