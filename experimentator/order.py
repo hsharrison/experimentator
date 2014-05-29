@@ -483,7 +483,7 @@ def _has_repeats(seq):
 
 def latin_square(order, reduced=False, uniform=True, shuffle=False):
     """
-    Constructs a Latin square of order `order`.
+    Constructs a Latin square of size `order` x `order`.
     Each row and column will contain every element of ``range(order)`` exactly once.
 
     Parameters
@@ -491,18 +491,18 @@ def latin_square(order, reduced=False, uniform=True, shuffle=False):
     order : int
         Size of Latin square to construct.
     reduced : bool, optional
-        If True, the first row and first column of the square will be the ``list(range(order))``,
-        unless `shuffle` is also True. The default is False.
+        If True (default is False),
+        the first row and first column of the square will be the ``list(range(order))``,
+        unless `shuffle` is also True.
     uniform : bool, optional
         If True (the default), the Latin square will be sampled from a uniform distribution of Latin squares.
         Set to False to relax this constraint and allow for a faster run time.
     shuffle : bool, optional
-        If True, after construction of the Latin square
-        its rows will be shuffled randomly, then its columns,
-        and then the elements (the numbers in ``range(order)``) will be randomly rearranged.
-        The default is False.
-        Shuffling is pointless when `uniform` is True.
-        Otherwise, it will add some randomness, though the resulting latin square will still be biased.
+        If True (default is False),
+        after construction of the Latin square its rows will be shuffled randomly,
+        then its columns, and then the elements will be randomly permuted.
+        Shuffling is irrelevant when `uniform` is True.
+        Otherwise, it adds some randomness, though the resulting Latin square will still be biased.
 
     Returns
     -------
@@ -512,13 +512,14 @@ def latin_square(order, reduced=False, uniform=True, shuffle=False):
     See Also
     --------
     balanced_latin_square
-    experimentator.order.LatinSquare
+    LatinSquare
 
     Notes
     -----
     This function uses a naive algorithm to construct latin squares,
     randomly generating elements and starting over whenever a collision is encountered.
-    It will take a long time to construct Latin squares of order 5, when sampling from a uniform distribution.
+    It will take a long time to construct Latin squares of order 5,
+    when sampling from a uniform distribution.
     However, if a uniform distribution is not required,
     it is recommended to also set `reduced` and `shuffle` to True for fastest run times.
     In this case, latin squares up to an order of about 10 can be constructed in a reasonable amount of time.
@@ -581,7 +582,8 @@ def balanced_latin_square(order):
     Parameters
     ----------
     order : int
-        Order of the Latin square to construct. Must be even.
+        Order of the Latin square to construct.
+        Must be even.
 
     Returns
     -------
@@ -591,15 +593,16 @@ def balanced_latin_square(order):
     See Also
     --------
     latin_square
+    LatinSquare
 
 
     Notes
     -----
     The algorithm constructs a stereotypical balanced Latin square,
     then shuffles the rows and elements (but not the columns).
-    This algorithm is much faster than the algorithm used by `latin_square`.
+    This algorithm is much faster than the algorithm used by :func:`latin_square`.
     However, it does not sample from a uniform distribution of balanced Latin squares (i.e. it is biased)
-    and it cannot created Latin squares that are both reduced and balanced.
+    and it cannot create Latin squares that are both reduced and balanced.
 
     Examples
     --------
