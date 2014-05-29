@@ -321,7 +321,7 @@ class Sorted(NonAtomicOrdering):
         return "{}(number={}, order='{}')".format(self.__class__.__name__, self.number, self.order)
 
     def first_pass(self, conditions):
-        """First pass of order.
+        """
         Handle operations that should only be performed once,
         initializing the object before ordering conditions.
         For :class:`Sorted`, the conditions are sorted.
@@ -383,37 +383,41 @@ class Sorted(NonAtomicOrdering):
 
 
 class LatinSquare(NonAtomicOrdering):
-    """Latin square ordering.
-
-    This orders the conditions according to a Latin square of order equal to the number of unique conditions at the
-    level (the order of the Latin square is its, apologies for the clashing terminology here). A Latin square is a 2D
-    array of elements with each element appearing exactly once in each row and column. Each row is a different ordering
-    of the conditions, of the same length as the number of conditions. This allows for some counterbalancing, in designs
-    too large to accommodate a complete counterbalance. An IV called ``'latin_square_row'`` will be created one level
-    up. Its values are integers, and each corresponds to a row in the square.
-    square
+    """
+    Orders the conditions by constructing an NxN Latin square,
+    where N is the number of unique conditions.
+    A Latin square is a matrix with each element appearing exactly once in each row and column.
+    Each row represents a different potential ordering of the conditions.
+    This allows for balanced counterbalancing,
+    in designs too large to accommodate a complete counterbalance.
 
     Parameters
     ----------
     number : int, optional
-        The number of times the Latin square should be repeated (default=1. Note that the duplication occurs after
-        constructing the square.
+        The number of times the Latin square should be repeated (default=1).
+        Duplication occurs *after* constructing the square.
     balanced : bool, optional
-        If True (the default), then first-order order effects will be balanced. each condition will appear the same
-        number of times immediately before and immediately after every other condition. Balanced latin squares can onl
-        be constructed with an even number of conditions.
+        If True (the default), first-order order effects will be balanced
+        Each condition will appear the same number of times
+        immediately before and immediately after every other condition.
+        Balanced latin squares can only be constructed with an even number of conditions.
     uniform : bool, optional
-        If True (default=False), the Latin square will be randomly sampled from a uniform distribution of Latin squares.
-        Otherwise, the sampling will be biased. The construction of balanced, uniform Latin squares is not implemented.
+        If True (default is False), the Latin square will be randomly sampled
+        from a uniform distribution of Latin squares of size NxN.
+        Otherwise, the sampling will be biased.
+        The construction of balanced, uniform Latin squares is not implemented.
 
     Notes
     -----
-    The algorithm for computing unbalanced Latin squares is not very efficient. It is not recommended to construct
-    unbalanced, uniform Latin squares of order above 5; for non-uniform, unbalanced Latin squares it is safe to go up to
-    an order of 10. Higher than that, computation times increase rapidly. On the flip side, the algorithm for
-    constructing balanced Latin squares is fast only because it is not robust; it is very biased and only samples from
-    the same limited set of balanced Latin squares. However, this is usually not an issue. For more implementation
-    details, see `latin_square` and `balanced_latin_square`.
+    The algorithm for computing unbalanced Latin squares is not very efficient.
+    It is not recommended to construct unbalanced, uniform Latin squares of order above 5;
+    for non-uniform, unbalanced Latin squares it is safe to go up to an order of 10
+    Higher than that, computation times increase rapidly.
+
+    The algorithm for computing balanced Latin squares is fast only because it is not robust;
+    it is very biased and only samples from the same limited set of balanced Latin squares.
+    However, this is usually not an issue.
+    For more implementation details, see :func:`latin_square` and :func:`balanced_latin_square`.
 
     """
     iv_name = 'latin_square_row'
@@ -430,23 +434,24 @@ class LatinSquare(NonAtomicOrdering):
             self.__class__.__name__, self.number, self.balanced, self.uniform)
 
     def first_pass(self, conditions):
-        """First pass of order.
-
-        Handles operations that should only be performed once, initializing the object before ordering conditions. In
-        this case, it constructs the Latin square and assigns its rows to values of the IV ``'latin_square_row'``.
+        """
+        Handle operations that should only be performed once,
+        initializing the object before ordering conditions.
+        For :class:`LatinSquare`, the square is constructed.
 
         Parameters
         ----------
         conditions : sequence of dict
-            A list or other sequence (often a generator) containing dictionaries, with each key being an IV name and
-            each value that IV's value for that particular condition.
+            A list of conditions,
+            where each condition is a dictionary mapping IV names to IV values.
 
         Returns
         -------
-        iv_name : str
-            The string ``'latin_square_row'``, the name of the IV created one level up.
-        iv_values : list of int
-            Integers, values of the IV one level up, each associated with one row of the Latin square.
+        iv_name : str or tuple
+            The name of the IV to be created one level up, ``'latin_square_row'``.
+        iv_values : tuple
+            Values of the IV to be created one level up,
+            integers each corresponding to one row of the Latin square.
 
         """
         self.all_conditions = list(conditions)
