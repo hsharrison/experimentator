@@ -232,8 +232,6 @@ class Experiment(ExperimentSection):
         See Also
         --------
         Experiment.from_yaml_file
-        DesignTree.from_spec
-        Design.from_dict
 
         """
         tree = DesignTree.from_spec(spec.pop('design'))
@@ -257,12 +255,6 @@ class Experiment(ExperimentSection):
         Returns
         -------
         :class:`Experiment`
-
-        See Also
-        --------
-        Experiment.from_dict
-        DesignTree.from_spec
-        Design.from_dict
 
         """
         if not yaml:
