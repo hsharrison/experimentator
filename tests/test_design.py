@@ -7,6 +7,7 @@ import pytest
 import numpy as np
 
 from experimentator import Design, DesignTree
+from experimentator.design import Level
 from experimentator.order import Shuffle, Ordering, CompleteCounterbalance, Sorted
 
 

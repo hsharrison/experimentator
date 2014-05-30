@@ -11,6 +11,8 @@ import numpy as np
 import experimentator.order as order
 from collections import ChainMap
 
+Level = collections.namedtuple('Level', ('name', 'design'))
+
 
 class Design:
     """
@@ -159,8 +161,7 @@ class Design:
         ...'ordering': 'Shuffle',
         ...'n': 3}
         >>> Design.from_dict(design_spec)
-        ('block',
-        Design(ivs=[('speed', [1, 2, 3]), ('size', [15, 30])], design_matrix=None, ordering=Shuffle(number=2, avoid_repeats=False), extra_data={}))
+        Level(name='block', design=Design(ivs=[('speed', [1, 2, 3]), ('size', [15, 30])], design_matrix=None, ordering=Shuffle(number=3, avoid_repeats=False), extra_data={}))
 
         """
         inputs = spec.copy()
@@ -195,7 +196,7 @@ class Design:
 
         self = cls(ordering=ordering, **design_kwargs)
         if name:
-            return name, self
+            return Level(name, self)
         else:
             return self
 
@@ -382,10 +383,12 @@ class DesignTree:
         for i, (level, design) in enumerate(levels_and_designs):
             if isinstance(design, Design):
                 levels_and_designs[i] = (level, [design])
-        self.levels_and_designs = levels_and_designs
+
+        # Convert to namedtuples.
+        self.levels_and_designs = [Level(*level) for level in levels_and_designs]
 
         # Handle heterogeneous trees.
-        bottom_level_design = levels_and_designs[-1][1][0]
+        bottom_level_design = self.levels_and_designs[-1].design[0]
         if bottom_level_design.is_heterogeneous:
             self.branches = {name: branch for name, branch in other_designs.items()
                              if branch in bottom_level_design.branches and isinstance(branch, DesignTree)}
@@ -461,7 +464,7 @@ class DesignTree:
                 yield name, designs
 
     def __repr__(self):
-        if self.levels_and_designs[0][0] == '_base':
+        if self.levels_and_designs[0].name == '_base':
             levels_and_designs = self.levels_and_designs[1:]
         else:
             levels_and_designs = self.levels_and_designs
@@ -524,7 +527,7 @@ class DesignTree:
 
         # And call first pass of the top level.
         iv_names, iv_values = (), ()
-        for design in levels_and_designs[0][1]:
+        for design in levels_and_designs[0].design:
             iv_names, iv_values = design.first_pass()
 
         return iv_names, iv_values
@@ -542,6 +545,6 @@ class DesignTree:
         so there is no reason to manually call this method.
 
         """
-        levels_and_designs = [('_base', Design())]
+        levels_and_designs = [Level('_base', Design())]
         levels_and_designs.extend(self.levels_and_designs)
         self.levels_and_designs = levels_and_designs

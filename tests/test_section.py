@@ -6,6 +6,7 @@ import pandas as pd
 import pytest
 
 from experimentator import Design, DesignTree
+from experimentator.design import Level
 from experimentator.section import ExperimentSection
 from experimentator.order import Ordering
 

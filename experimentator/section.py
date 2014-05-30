@@ -73,8 +73,8 @@ class ExperimentSection():
     def __init__(self, tree, data):
         self.data = data
         self.tree = tree
-        self.level = self.tree[0][0]
-        self.levels = list(zip(*self.tree.levels_and_designs))[0][1:]
+        self.level = self.tree[0].name
+        self.levels = [level.name for level in self.tree.levels_and_designs][1:]
         self.is_bottom_level = len(self.tree) == 1
 
         self._children = collections.deque()
@@ -92,7 +92,7 @@ class ExperimentSection():
         (str) IV name determining which branch of the :class:`DesignTree <experimentator.design.DesignTree>` to follow.
 
         """
-        return self.tree.levels_and_designs[0][1][0].heterogeneous_design_iv_name
+        return self.tree.levels_and_designs[0].design[0].heterogeneous_design_iv_name
 
     @property
     def dataframe(self):
@@ -194,7 +194,7 @@ class ExperimentSection():
 
         child_data = self.data.new_child()
         child_data.update(data)
-        level = tree.levels_and_designs[0][0]
+        level = tree.levels_and_designs[0].name
 
         logger.debug('Generating {} with data {}.'.format(level, child_data))
         child = ExperimentSection(tree, child_data)
