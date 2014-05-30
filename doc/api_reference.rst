@@ -12,14 +12,6 @@ experimentator.cli module
     :undoc-members:
     :show-inheritance:
 
-experimentator.common module
-----------------------------
-
-.. automodule:: experimentator.common
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 experimentator.design module
 ----------------------------
 
