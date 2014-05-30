@@ -545,6 +545,4 @@ class DesignTree:
         so there is no reason to manually call this method.
 
         """
-        levels_and_designs = [Level('_base', Design())]
-        levels_and_designs.extend(self.levels_and_designs)
-        self.levels_and_designs = levels_and_designs
+        self.levels_and_designs.insert(0, Level('_base', Design()))
