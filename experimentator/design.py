@@ -402,10 +402,7 @@ class DesignTree:
         else:
             self.branches = {}
 
-        top_level_iv_names, _ = self.first_pass(self.levels_and_designs)
-        if top_level_iv_names:
-            raise ValueError('Cannot have a non-atomic ordering at the top level of a DesignTree. ' +
-                             'The recommended workaround is to insert a "dummy level" with no IVs and number=1.')
+        self.first_pass(self.levels_and_designs)
 
     @classmethod
     def from_spec(cls, spec):
@@ -505,11 +502,6 @@ class DesignTree:
         This is necessary for non-atomic orderings,
         which create an additional IV for the :class:`Design` one level up.
 
-        Returns
-        -------
-        iv_names, iv_values
-            IVs for a non-atomic sort at the top level of the tree, if any (there shouldn't be).
-
         """
         for (level, designs), (level_above, designs_above) in \
                 zip(reversed(levels_and_designs[1:]), reversed(levels_and_designs[:-1])):
@@ -530,7 +522,8 @@ class DesignTree:
         for design in levels_and_designs[0].design:
             iv_names, iv_values = design.first_pass()
 
-        return iv_names, iv_values
+        if iv_names != () or iv_values != ():
+            raise ValueError('Cannot have a non-atomic ordering at the top level of a DesignTree. ')
 
     def add_base_level(self):
         """
