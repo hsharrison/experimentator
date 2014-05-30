@@ -438,30 +438,38 @@ class ExperimentSection():
         if at_level is None:
             return node
 
-    @staticmethod
-    def _prepare_for_indexing(item):
-        """Change an indexing object from using 1-based indexing to using 0-based indexing.
+    def _convert_index_object(self, item):
+        """
+        Change an indexing object (slice or int) from using 1-based indexing to using 0-based indexing.
 
         """
-        if isinstance(item, slice):
-            if item.start == 0 or item.stop == 0:
-                raise IndexError('Use 1-based indexing with ExperimentSection instances')
-            return slice(item.start-1 if item.start else None, item.stop-1 if item.stop else None, item.step)
+        try:
+            if isinstance(item, slice):
+                return slice(self._convert_index(item.start), self._convert_index(item.stop), item.step)
+            else:
+                return self._convert_index(item)
 
-        elif item == 0:
+        except IndexError:
             raise IndexError('Use 1-based indexing with ExperimentSection instances')
 
-        elif item == -1:
-            return item
+    @staticmethod
+    def _convert_index(idx):
+        if idx is None:
+            return None
 
-        else:
-            return item - 1
+        if idx < 0:
+            return idx
+
+        if idx == 0:
+            raise IndexError
+
+        return idx - 1
 
     def __len__(self):
         return len(self._children)
 
     def __getitem__(self, item):
-        item = self._prepare_for_indexing(item)
+        item = self._convert_index_object(item)
 
         if isinstance(item, slice):
             return list(itertools.islice(self._children, *item.indices(len(self))))
@@ -475,11 +483,11 @@ class ExperimentSection():
         return self._children.__iter__()
 
     def __delitem__(self, key):
-        del self._children[self._prepare_for_indexing(key)]
+        del self._children[self._convert_index_object(key)]
         self._number_children()
 
     def __setitem__(self, key, value):
-        self._children[self._prepare_for_indexing(key)] = value
+        self._children[self._convert_index_object(key)] = value
         self._number_children()
 
     def __reversed__(self):
