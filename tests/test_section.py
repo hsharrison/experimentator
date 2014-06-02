@@ -50,7 +50,11 @@ def test_constructor():
 
 def test_appending_tree():
     section = ExperimentSection(make_tree(['session', 'block', 'trial'], {}), ChainMap())
+    assert section.local_levels == {'block'}
+    
     section.append_design_tree(make_tree(['block-test', 'trial-test'], {'foo': 'bar'}), to_start=True)
+    assert section.local_levels == {'block', 'block-test'}
+
     assert len(section) == 10
     assert len(section[1]) == 4
     assert len(section[5]) == 6
