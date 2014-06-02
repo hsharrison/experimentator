@@ -176,7 +176,7 @@ def test_run_from():
     assert all(exp.subsection(participant=1, block=2, trial=n).has_started and
                exp.subsection(participant=1, block=2, trial=n).has_finished for n in range(4, 9))
     assert exp.subsection(participant=1, block=3).has_started and exp.subsection(participant=1, block=3).has_finished
-    assert not exp.subsection(particiapnt=2).has_started
+    assert not exp.subsection(participant=2).has_started
 
 
 def test_resume():
