@@ -151,6 +151,14 @@ def test_find_section():
         assert section.data['trial'] == 6
 
 
+def test_find_parent():
+    exp = make_manual_exp()
+    assert exp.parent(exp.subsection(participant=1)) is exp
+    assert exp.parent(exp.subsection(participant=1, block=2)) is exp.subsection(participant=1)
+    assert exp.parent(exp.subsection(participant=1, block=2, trial=3)) is exp.subsection(participant=1, block=2)
+    assert exp.parent(exp) is None
+
+
 def test_find_parents():
     exp = make_manual_exp()
     assert list(exp.parents(exp.subsection(participant=1))) == []

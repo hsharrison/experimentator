@@ -573,6 +573,30 @@ class Experiment(ExperimentSection):
 
         self.run_section(section, from_section=start_at_numbers, **kwargs)
 
+    def parent(self, section, _search_node=None):
+        """
+        Find the parent of a section.
+
+        Parameters
+        ----------
+        section : :class:`~experimentator.section.ExperimentSection`
+            The section to find the parent of.
+
+        Returns
+        -------
+        :class:`~experimentator.section.ExperimentSection`
+
+        """
+        _search_node = _search_node or self
+
+        if section in _search_node:
+            return _search_node
+
+        for child in _search_node:
+            result = self.parent(section, _search_node=child)
+            if result:
+                return result
+
     def parents(self, section):
         """Find parents.
 
