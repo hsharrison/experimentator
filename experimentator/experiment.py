@@ -573,44 +573,6 @@ class Experiment(ExperimentSection):
 
         self.run_section(section, from_section=start_at_numbers, **kwargs)
 
-    def parent(self, section):
-        """
-        Find the parent of a section.
-
-        Parameters
-        ----------
-        section : :class:`~experimentator.section.ExperimentSection`
-            The section to find the parent of.
-
-        Returns
-        -------
-        :class:`~experimentator.section.ExperimentSection`
-
-        """
-        parents = self.parents(section)
-        if parents:
-            return parents[-1]
-
-    def parents(self, section):
-        """Find parents.
-
-        Returns all parents of a section, in top-to-bottom order.
-
-        Parameters
-        ----------
-        section : :class:`~experimentator.section.ExperimentSection`
-            The section to find the parents of.
-
-        Returns
-        -------
-        list of :class:`~experimentator.section.ExperimentSection`
-
-        """
-        if section.level == '_base':
-            return []
-
-        return self.breadth_first_search(lambda node: section in node)
-
     def set_context_manager(self, level, manager, *args,
                             func_module=None, func_name=None, **kwargs):
         """Set a context manager to run at a certain level.

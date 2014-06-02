@@ -469,6 +469,43 @@ class ExperimentSection():
         for child in self:
             yield from child.walk()
 
+    def parent(self, section):
+        """
+        Find the parent of a section.
+
+        Parameters
+        ----------
+        section : :class:`~experimentator.section.ExperimentSection`
+            The section to find the parent of.
+
+        Returns
+        -------
+        :class:`~experimentator.section.ExperimentSection`
+
+        """
+        parents = self.parents(section)
+        if parents:
+            return parents[-1]
+
+    def parents(self, section):
+        """
+        Find all parents of a section, in top-to-bottom order.
+
+        Parameters
+        ----------
+        section : :class:`~experimentator.section.ExperimentSection`
+            The section to find the parents of.
+
+        Returns
+        -------
+        list of :class:`~experimentator.section.ExperimentSection`
+
+        """
+        if section.level == '_base':
+            return []
+
+        return self.breadth_first_search(lambda node: section in node)
+
     def _convert_index_object(self, item):
         """
         Change an indexing object (slice or int) from using 1-based indexing to using 0-based indexing.
