@@ -104,6 +104,14 @@ class ExperimentSection():
         data = DataFrame(self.generate_data()).set_index(list(self.levels))
         return data
 
+    @property
+    def local_levels(self):
+        """
+        (set) Set of level names of this section's children. Usually a single-element set.
+        
+        """
+        return {child.level for child in self}
+
     def __repr__(self):
         return 'ExperimentSection({}, {})'.format(self.tree.__repr__(), self.data.__repr__())
 
@@ -207,8 +215,7 @@ class ExperimentSection():
             self._number_children()
 
     def _number_children(self):
-        levels = {child.level for child in self}
-        for level in levels:
+        for level in self.local_levels:
             children_at_level = [child for child in self if child.level == level]
             for i, child in enumerate(children_at_level):
                 child.data.update({level: i + 1})
