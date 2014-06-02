@@ -161,9 +161,9 @@ def test_find_parent():
 
 def test_find_parents():
     exp = make_manual_exp()
-    assert list(exp.parents(exp.subsection(participant=1))) == []
-    assert list(exp.parents(exp.subsection(participant=1, block=2))) == [exp[1]]
-    assert list(exp.parents(exp.subsection(participant=1, block=2, trial=3))) == [exp[1], exp[1][2]]
+    assert list(exp.parents(exp.subsection(participant=1))) == [exp]
+    assert list(exp.parents(exp.subsection(participant=1, block=2))) == [exp, exp[1]]
+    assert list(exp.parents(exp.subsection(participant=1, block=2, trial=3))) == [exp, exp[1], exp[1][2]]
 
 
 def test_find_first_not_run():
@@ -171,9 +171,9 @@ def test_find_first_not_run():
     exp.run_section(exp[1])
     assert exp.find_first_not_run('participant') is exp[2]
     assert exp.find_first_not_run('trial') is exp[2][1]
-    assert exp.find_first_not_run('trial', starting_at=exp.subsection(participant=1)) is None
-    assert exp.find_first_not_run('trial', starting_at=exp.subsection(participant=2)) is exp[2][1]
-    assert exp.find_first_not_run('trial', starting_at=exp.subsection(participant=3)) is exp[3][1]
+    assert exp.subsection(participant=1).find_first_not_run('trial') is None
+    assert exp.subsection(participant=2).find_first_not_run('trial') is exp[2][1]
+    assert exp.subsection(participant=3).find_first_not_run('trial') is exp[3][1]
     assert exp[1].find_first_not_run('trial') is None
     assert exp[2].find_first_not_run('trial') is exp[2][1]
 

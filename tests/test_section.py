@@ -113,15 +113,6 @@ def test_repr():
     assert section == eval(section.__repr__())
 
 
-def test_find_section():
-    section = ExperimentSection(make_tree(['session', 'block', 'trial'], {}), ChainMap())
-    assert section.subsection(block=1, trial=3) is section[1][3]
-    key = lambda sec: all(sec.data.get(level, number) == number for level, number in {'block': 2, 'trial': 3}.items())
-    assert section.find_first_top_down(key) is section[2][3]
-    key = lambda sec: sec.data['block'] == 4 and 'trial' not in sec.data
-    assert section.find_first_top_down(key) is section[4]
-
-
 def test_dataframe():
     section = ExperimentSection(make_tree(['session', 'block', 'trial'], {}), ChainMap())
     assert len(section.dataframe) == 3*2*3*2
@@ -158,3 +149,41 @@ def test_heterogeneous_tree_section():
     assert test_block.data['block'] == 2 and test_block.data['session'] == 3
     assert len(test_block) == 4*5
     assert all(trial.data['difficulty'] in (1, 3, 5, 7) for trial in test_block)
+
+
+def test_breadth_first_search():
+    section = ExperimentSection(make_tree(['session', 'block', 'trial'], {}), ChainMap())
+    section[1][2].data['foo'] = True
+
+    key = lambda node: node.data.get('foo', False)
+    search_result = section.breadth_first_search(key)
+    assert search_result == [section, section[1], section[1][2]]
+
+    assert section.breadth_first_search(lambda node: False) == []
+
+
+def test_depth_first_search():
+    section = ExperimentSection(make_tree(['session', 'block', 'trial'], {}), ChainMap())
+    section[1][2].data['foo'] = True
+
+    key = lambda node: node.data.get('foo', False)
+    search_result = section.depth_first_search(key)
+    assert search_result == [section, section[1], section[1][2]]
+
+    assert section.depth_first_search(lambda node: False) == []
+
+
+def test_depth_first_path_search():
+    section = ExperimentSection(make_tree(['session', 'block', 'trial'], {}), ChainMap())
+    section[2][1].data['foo'] = True  # Target.
+    section[1][2].data['foo'] = True  # Red herring.
+    section.data['bar'] = True
+    section[1].data['bar'] = False
+
+    key = lambda node: node.data.get('foo', False)
+    path_key = lambda node: node.data.get('bar', False)
+    search_result = section.depth_first_search(key, path_key=path_key)
+    assert search_result == [section, section[2], section[2][1]]
+
+    assert section.depth_first_search(lambda node: True, path_key=lambda node: False) == []
+    assert section.depth_first_search(lambda node: False, path_key=lambda node: True) == []

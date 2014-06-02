@@ -275,14 +275,11 @@ class ExperimentSection():
         >>> some_block = exp.subsection(participant=2, session=1, block=3)
 
         """
-        if not section_numbers:
-            return self
-
-        for child in self:
-            if (child.level in section_numbers and
-                    child.data[child.level] == section_numbers[child.level]):
-                del section_numbers[child.level]
-                return child.subsection(**section_numbers)
+        key = lambda node: all(level in node.data and node.data[level] == number
+                               for level, number in section_numbers.items())
+        result = self.depth_first_search(key)
+        if result:
+            return result[-1]
 
         raise ValueError('Could not find specified section.')
 
@@ -350,7 +347,7 @@ class ExperimentSection():
             for child in section:
                 yield from self.all_subsections(_section=child, **section_numbers)
 
-    def find_first_not_run(self, at_level, by_started=True, starting_at=None):
+    def find_first_not_run(self, at_level, by_started=True):
         """
         Search the experimental hierarchy,
         and return the first descendant :class:`ExperimentSection` at `at_level`
@@ -363,31 +360,24 @@ class ExperimentSection():
         by_started : bool, optional
             If True (default), returns the first section that has not been started.
             Otherwise, finds the first section that has not finished.
-        starting_at : :class:`ExperimentSection`, optional
-            Starts the search at the given section.
-            Allows for finding the first section not run of a particular part of the experiment.
-            For example, the first block not run of the second participant could be found by:
-
-            >>> from experimentator import Experiment
-            >>> exp = Experiment.load('experiment.exp')
-            >>> some_block = exp.find_first_not_run(
-            ...     'block', starting_at=exp.subsection(participant=2))
 
         Returns
         -------
         :class:`ExperimentSection`
 
         """
+        key = lambda node: node.level == at_level
+
         if by_started:
-            key = lambda x: not x.has_started
-            descriptor = 'not started'
+            path_key = lambda node: not node.has_started
         else:
-            key = lambda x: not x.has_finished
-            descriptor = 'not finished'
+            path_key = lambda node: not node.has_finished
 
-        return self.find_first_top_down(key, at_level, starting_at=starting_at, descriptor=descriptor)
+        result = self.depth_first_search(key, path_key=path_key)
+        if result:
+            return result[-1]
 
-    def find_first_partially_run(self, at_level, starting_at=None):
+    def find_first_partially_run(self, at_level):
         """
         Search the experimental hierarchy,
         and return the first descendant :class:`ExperimentSection` at `at_level`
@@ -397,55 +387,77 @@ class ExperimentSection():
         ----------
         at_level : str
             Which level to search.
-        starting_at : :class:`ExperimentSection`, optional
-            Starts the search at the given section.
-            Allows for finding the first partially-run section of a particular part of the experiment.
 
         Returns
         -------
         :class:`ExperimentSection`
 
         """
-        return self.find_first_top_down(lambda x: x.has_started and not x.has_finished, at_level,
-                                        starting_at=starting_at, descriptor='partially run')
+        key = lambda node: node.level == at_level
+        path_key = lambda node: node.has_started and not node.has_finished
 
-    def find_first_top_down(self, key, at_level=None, starting_at=None, descriptor=''):
+        result = self.depth_first_search(key, path_key=path_key)
+        if result:
+            return result[-1]
+
+    def breadth_first_search(self, key):
         """
-        Search the experimental hierarchy starting at the top,
-        and return the first :class:`ExperimentSection` ``section`` at `at_level`
-        for which ``key(section)`` is True.
-        Descends the hierarchy only via sections for which ``key(section)`` is True.
+        Breadth-first search starting from here.
+        Returns the entire search path.
 
         Parameters
         ----------
-        key : function
-            A function that returns True or False when passed an :class:`ExperimentSection`.
-        at_level : str, optional
-            Which level to return a section from.
-            If not given, the lowest possible level will be used.
-        start_at : :class:`ExperimentSection`, optional
-            Where in the tree to start searching.
-        descriptor : str, optional
-            A human-language description of the criterion, for logging.
+        key : func
+            Function that returns True or False when passed an :class:`ExperimentSection`.
 
         Returns
         -------
-        :class:`ExperimentSection`
+        list of :class:`ExperimentSection`
 
         """
-        node = starting_at or self
-        if node.is_bottom_level or node.level == at_level:
-            return node
+        paths = collections.deque([[self]])
+        while paths:
+            path = paths.popleft()
+            node = path[-1]
+            if key(node):
+                return path
 
-        logger.info('Checking all children of a {}...'.format(node.level))
-        for child in node:
-            if key(child):
-                return self.find_first_top_down(key, at_level=at_level, starting_at=child, descriptor=descriptor)
+            for child in node:
+                paths.append(path.copy() + [child])
 
-        logger.warning('Could not find a child {}'.format(descriptor))
+        return []
 
-        if at_level is None:
-            return node
+    def depth_first_search(self, key, path_key=None, _path=None):
+        """
+        Depth-first search starting from here.
+        Returns the entire search path.
+
+        Parameters
+        ----------
+        key : func
+            Function that returns True or False when passed an :class:`ExperimentSection`.
+        path_key : func, optional
+            Function that returns True or False when passed an :class:`ExperimentSection`.
+            If given, the search will proceed only via sections for which `path_key` returns True.
+
+        Returns
+        -------
+        list of :class:`ExperimentSection`
+
+        """
+        no_path_key_or_true = lambda node: not path_key or path_key(node)
+
+        path = _path or [self]
+        if key(path[-1]) and no_path_key_or_true(path[-1]):
+            return path
+
+        for child in path[-1]:
+            if no_path_key_or_true(child):
+                result = self.depth_first_search(key, path_key=path_key, _path=path + [child])
+                if result:
+                    return result
+
+        return []
 
     def _convert_index_object(self, item):
         """

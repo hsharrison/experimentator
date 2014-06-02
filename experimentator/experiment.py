@@ -568,12 +568,12 @@ class Experiment(ExperimentSection):
         start_at_numbers = []
         start_at_section = section
         for level in levels[1:]:
-            start_at_section = self.find_first_not_run(level, starting_at=start_at_section)
+            start_at_section = start_at_section.find_first_not_run(level)
             start_at_numbers.append(start_at_section.data[level])
 
         self.run_section(section, from_section=start_at_numbers, **kwargs)
 
-    def parent(self, section, _search_node=None):
+    def parent(self, section):
         """
         Find the parent of a section.
 
@@ -587,34 +587,29 @@ class Experiment(ExperimentSection):
         :class:`~experimentator.section.ExperimentSection`
 
         """
-        _search_node = _search_node or self
-
-        if section in _search_node:
-            return _search_node
-
-        for child in _search_node:
-            result = self.parent(section, _search_node=child)
-            if result:
-                return result
+        parents = self.parents(section)
+        if parents:
+            return parents[-1]
 
     def parents(self, section):
         """Find parents.
 
-        Yields all parents of a section, in top-to-bottom order.
+        Returns all parents of a section, in top-to-bottom order.
 
         Parameters
         ----------
         section : :class:`~experimentator.section.ExperimentSection`
             The section to find the parents of.
 
-        """
-        parent_section_numbers = {}
-        for level in self.levels:
-            if level == section.level or section.level == '_base':
-                break
+        Returns
+        -------
+        list of :class:`~experimentator.section.ExperimentSection`
 
-            parent_section_numbers.update({level: section.data[level]})
-            yield self.subsection(**parent_section_numbers)
+        """
+        if section.level == '_base':
+            return []
+
+        return self.breadth_first_search(lambda node: section in node)
 
     def set_context_manager(self, level, manager, *args,
                             func_module=None, func_name=None, **kwargs):
