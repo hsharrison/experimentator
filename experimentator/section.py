@@ -100,8 +100,8 @@ class ExperimentSection():
 
         """
         from pandas import DataFrame
-        data = DataFrame(self.generate_data()).set_index(self.levels)
-        return data
+        data = DataFrame(section.data for section in self.walk() if section.is_bottom_level)
+        return data.set_index(self.levels)
 
     @property
     def levels(self):
@@ -245,18 +245,6 @@ class ExperimentSection():
 
         """
         self.data.update(data)
-
-    def generate_data(self):
-        """
-        Yield the :attr:`ExperimentSection.data` attribute from each bottom-level section
-        that descends from this section.
-
-        """
-        for child in self:
-            if child.is_bottom_level:
-                yield child.data
-            else:
-                yield from child.generate_data()
 
     def subsection(self, **section_numbers):
         """

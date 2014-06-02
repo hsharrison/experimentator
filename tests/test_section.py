@@ -101,22 +101,17 @@ def test_add_data():
             yield check_test_data, trial
 
 
-def test_data():
-    section = ExperimentSection(make_tree(['session', 'block', 'trial'], {}), ChainMap())
-    data = pd.DataFrame(section.generate_data()).set_index(['block', 'trial'])
-    assert int(sum(data['a'] == 0)) == int(sum(data['a'] == 1)) == int(sum(data['a'] == 2)) == 6*6//3
-    assert int(sum(data['b'])) == int(sum(-data['b'])) == 6*6//2
-
-
 def test_repr():
     section = ExperimentSection(make_tree(['session', 'block', 'trial'], {}), ChainMap())
     assert section == eval(section.__repr__())
 
 
 def test_dataframe():
-    section = ExperimentSection(make_tree(['session', 'block', 'trial'], {}), ChainMap())
-    assert len(section.dataframe) == 3*2*3*2
-    assert set(section.dataframe.columns) == {'a', 'b'}
+    data = ExperimentSection(make_tree(['session', 'block', 'trial'], {}), ChainMap()).dataframe
+    assert len(data) == 3*2*3*2
+    assert set(data.columns) == {'a', 'b'}
+    assert int(sum(data['a'] == 0)) == int(sum(data['a'] == 1)) == int(sum(data['a'] == 2)) == 6*6//3
+    assert int(sum(data['b'])) == int(sum(-data['b'])) == 6*6//2
 
 
 def test_find_all_sections():
