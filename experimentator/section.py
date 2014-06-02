@@ -74,7 +74,6 @@ class ExperimentSection():
         self.data = data
         self.tree = tree
         self.level = self.tree[0].name
-        self.levels = [level.name for level in self.tree.levels_and_designs][1:]
         self.is_bottom_level = len(self.tree) == 1
 
         self._children = collections.deque()
@@ -101,8 +100,21 @@ class ExperimentSection():
 
         """
         from pandas import DataFrame
-        data = DataFrame(self.generate_data()).set_index(list(self.levels))
+        data = DataFrame(self.generate_data()).set_index(self.levels)
         return data
+
+    @property
+    def levels(self):
+        """
+        (list of str) Level names below this section.
+
+        """
+        levels = []
+        for section in self.walk():
+            for level in section.local_levels:
+                if level not in levels:
+                    levels.append(level)
+        return levels
 
     @property
     def local_levels(self):
