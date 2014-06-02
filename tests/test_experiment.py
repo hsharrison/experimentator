@@ -127,6 +127,9 @@ def test_find_section():
     assert some_trial.is_bottom_level
     assert some_trial.level == 'trial'
 
+    with pytest.raises(ValueError):
+        exp.subsection(participant=30)
+
     sections = list(exp.all_subsections(trial=1))
     assert len(sections) == 10
     for section in sections:

@@ -268,14 +268,16 @@ class ExperimentSection():
         >>> some_block = exp.subsection(participant=2, session=1, block=3)
 
         """
-        node = self
-        for level in self.levels:
-            if level in section_numbers:
-                node = node[section_numbers[level]]
-            else:
-                break
+        if not section_numbers:
+            return self
 
-        return node
+        for child in self:
+            if (child.level in section_numbers and
+                    child.data[child.level] == section_numbers[child.level]):
+                del section_numbers[child.level]
+                return child.subsection(**section_numbers)
+
+        raise ValueError('Could not find specified section.')
 
     def all_subsections(self, **section_numbers):
         """
