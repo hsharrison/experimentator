@@ -459,6 +459,16 @@ class ExperimentSection():
 
         return []
 
+    def walk(self):
+        """
+        Walk the tree depth-first, starting from here.
+        Yields this section and every descendant section.
+
+        """
+        yield self
+        for child in self:
+            yield from child.walk()
+
     def _convert_index_object(self, item):
         """
         Change an indexing object (slice or int) from using 1-based indexing to using 0-based indexing.

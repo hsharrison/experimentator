@@ -187,3 +187,13 @@ def test_depth_first_path_search():
 
     assert section.depth_first_search(lambda node: True, path_key=lambda node: False) == []
     assert section.depth_first_search(lambda node: False, path_key=lambda node: True) == []
+
+
+def test_walk():
+    session = ExperimentSection(make_tree(['session', 'block', 'trial'], {}), ChainMap())
+    all_sections = [session]
+    for block in session:
+        all_sections.append(block)
+        all_sections.extend(block)
+
+    assert all_sections == list(session.walk())
