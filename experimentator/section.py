@@ -97,7 +97,7 @@ class ExperimentSection():
     @property
     def dataframe(self):
         """
-        (:class:`~pandas.DataFrame`) All data associated with the :class:`ExperimentSection` and its parents.
+        (:class:`~pandas.DataFrame`) All data associated with the :class:`ExperimentSection` and its descendants.
 
         """
         from pandas import DataFrame
