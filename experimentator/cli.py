@@ -46,7 +46,7 @@ import sys
 import os
 import logging
 from docopt import docopt
-from schema import Schema, Use, And, Or, Optional
+from schema import Schema, Use, And, Or
 
 from experimentator import __version__, Experiment, run_experiment_section, export_experiment_data
 
@@ -55,26 +55,26 @@ def main(args=None):
     # The console script created by setuptools takes the cwd off the path.
     sys.path.insert(0, os.getcwd())
 
-    scheme = Schema({Optional('--debug'): bool,
-                     Optional('--delim'): str,
-                     Optional('--demo'): bool,
-                     Optional('--help'): bool,
-                     Optional('--float'): Or(None, str),
-                     Optional('--nan'): Or(None, str),
-                     Optional('--next'): Or(None, str)
-                     Optional('--no-index-label'): bool,
-                     Optional('--not-finished'): bool,
-                     Optional('-o'): Or(None, str),
-                     Optional('--skip'): Or(None, Use(lambda x: x.split(','))),
-                     Optional('--skip-parents'): bool,
-                     Optional('--version'): bool,
-                     Optional('<data-file>'): Or(None, str),
-                     Optional('<exp-file>'): Or(lambda x: x is None, os.path.exists, error='Invalid <exp-file>'),
-                     Optional('<level>'): [str],
-                     Optional('<n>'): [And(Use(int), lambda n: n > 0)],
-                     Optional('export'): bool,
-                     Optional('resume'): bool,
-                     Optional('run'): bool,
+    scheme = Schema({'--debug': bool,
+                     '--delim': str,
+                     '--demo': bool,
+                     '--help': bool,
+                     '--float': Or(None, str),
+                     '--nan': Or(None, str),
+                     '--next': Or(None, str),
+                     '--no-index-label': bool,
+                     '--not-finished': bool,
+                     '-o': Or(None, str),
+                     '--skip': Or(None, Use(lambda x: x.split(','))),
+                     '--skip-parents': bool,
+                     '--version': bool,
+                     '<data-file>': Or(None, str),
+                     '<exp-file>': Or(lambda x: x is None, os.path.exists, error='Invalid <exp-file>'),
+                     '<level>': [str],
+                     '<n>': [And(Use(int), lambda n: n > 0)],
+                     'export': bool,
+                     'resume': bool,
+                     'run': bool,
                      })
 
     options = scheme.validate(docopt(__doc__, argv=args, version=__version__))
