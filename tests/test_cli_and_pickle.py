@@ -148,15 +148,18 @@ def make_deterministic_exp():
 def test_export():
     make_deterministic_exp()
     call_cli('exp export test.pkl test.csv')
-    assert filecmp.cmp('tests/test_data.csv', 'test.csv')
+    assert (filecmp.cmp('tests/test_data.csv', 'test.csv')
+            or filecmp.cmp('tests/test_data_alt.csv', 'test.csv'))
     os.remove('test.csv')
 
     call_cli('exp export --no-index-label test.pkl test.csv')
-    assert filecmp.cmp('tests/test_data_no_index_label.csv', 'test.csv')
+    assert (filecmp.cmp('tests/test_data_no_index_label.csv', 'test.csv')
+            or filecmp.cmp('tests/test_data_no_index_label_alt.csv', 'test.csv'))
     os.remove('test.csv')
 
     call_cli('exp export test.pkl test.csv --skip counterbalance_order')
-    assert filecmp.cmp('tests/test_data_skip_order.csv', 'test.csv')
+    assert (filecmp.cmp('tests/test_data_skip_order.csv', 'test.csv')
+            or filecmp.cmp('tests/test_data_skip_order_alt.csv', 'test.csv'))
     os.remove('test.csv')
 
     for file in glob('test.pkl*'):
