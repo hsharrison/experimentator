@@ -94,7 +94,7 @@ def run_experiment_section(experiment, section_obj=None, demo=False, resume=Fals
             exp.run_section(section_obj, demo=demo, parent_callbacks=parent_callbacks, from_section=from_section)
 
     except:
-        logger.warning('Exception occurred saving.')
+        logger.warning('Exception occurred, saving backup.')
         # Backup experiment file.
         os.rename(exp.filename,
                   exp.filename + datetime.now().strftime('.%m-%d-%H-%M-backup'))
