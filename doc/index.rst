@@ -6,6 +6,8 @@ Contents
 .. toctree::
    :maxdepth: 2
 
+   creation
+   cli
    api_reference
 
 Indices and tables
