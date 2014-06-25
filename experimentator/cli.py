@@ -10,7 +10,7 @@ Usage:
 Run/resume options:
   -h, --help        Show full help.
   --version         Print the installed version number of experimentator.
-  -d --debug        Set logging level to DEBUG.
+  -d, --debug       Set logging level to DEBUG.
   -o=<options>      Pass <options> to the experiment and save it as string in Experiment.session_data['options'].
   --demo            Don't save data.
   --not-finished    Run the first <level> that hasn't finished (rather than first that hasn't started).
