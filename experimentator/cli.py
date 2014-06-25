@@ -2,7 +2,7 @@
 
 Usage:
   exp run [options] <exp-file> (--next=<level>  [--not-finished] | (<level> <n>)...)
-  exp resume [options] <exp-file> <level> [<n> (<level> <n>)...]
+  exp resume [options] <exp-file> (<level> | (<level> <n>)...)
   exp export <exp-file> <data-file> [ --no-index-label --delim=<sep> --skip=<columns> --float=<format> --nan=<rep>]
   exp -h | --help
   exp --version
