@@ -60,8 +60,8 @@ def main(args=None):
                      Optional('--demo'): bool,
                      Optional('--help'): bool,
                      Optional('--float'): Or(None, str),
-                     Optional('--next'): Or(None, str),
                      Optional('--nan'): Or(None, str),
+                     Optional('--next'): Or(None, str)
                      Optional('--no-index-label'): bool,
                      Optional('--not-finished'): bool,
                      Optional('-o'): Or(None, str),
