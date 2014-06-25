@@ -425,7 +425,6 @@ class Experiment(ExperimentSection):
         filename = filename or self.filename
         if filename:
             logger.debug('Saving Experiment instance to {}.'.format(filename))
-            logger.debug('Saving Experiment instance to {}.'.format(filename))
             with open(filename, 'wb') as f:
                 pickle.dump(self, f)
 
