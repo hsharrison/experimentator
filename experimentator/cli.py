@@ -1,9 +1,9 @@
 """experimentator
 
 Usage:
-  exp run [options] <exp-file> (--next <level>  [--not-finished] | (<level> <n>)...)
+  exp run [options] <exp-file> (--next=<level>  [--not-finished] | (<level> <n>)...)
   exp resume [options] <exp-file> <level> [<n> (<level> <n>)...]
-  exp export <exp-file> <data-file> [ --no-index-label --delim <sep> --skip <columns> --float <format> --nan <rep>]
+  exp export <exp-file> <data-file> [ --no-index-label --delim=<sep> --skip=<columns> --float=<format> --nan=<rep>]
   exp -h | --help
   exp --version
 
@@ -11,17 +11,17 @@ Run/resume options:
   -h, --help        Show full help.
   --version         Print the installed version number of experimentator.
   -d --debug        Set logging level to DEBUG.
-  -o <options>      Pass <options> to the experiment and save it as string in Experiment.session_data['options'].
+  -o=<options>      Pass <options> to the experiment and save it as string in Experiment.session_data['options'].
   --demo            Don't save data.
   --not-finished    Run the first <level> that hasn't finished (rather than first that hasn't started).
   --skip-parents    Don't enter context of parent levels.
 
 Export options (see pandas.Dataframe.to_csv documentation) :
   --no-index-label    Don't put column labels on index columns (e.g. participant, trial), for easier importing into R.
-  --delim <sep>       Field delimiter [default: ,].
-  --skip <columns>    Comma-separated list of columns to skip.
-  --float <format>    Format string for floating point numbers.
-  --nan <rep>         Missing data representation.
+  --delim=<sep>       Field delimiter [default: ,].
+  --skip=<columns>    Comma-separated list of columns to skip.
+  --float=<format>    Format string for floating point numbers.
+  --nan=<rep>         Missing data representation.
 
 Commands:
   run <exp-file> --next <level>        Runs the first <level> that hasn't started. E.g.:
@@ -60,7 +60,7 @@ def main(args=None):
                      Optional('--demo'): bool,
                      Optional('--help'): bool,
                      Optional('--float'): Or(None, str),
-                     Optional('--next'): bool,
+                     Optional('--next'): Or(None, str),
                      Optional('--nan'): Or(None, str),
                      Optional('--no-index-label'): bool,
                      Optional('--not-finished'): bool,
@@ -92,7 +92,7 @@ def main(args=None):
 
         if options['--next']:
             kwargs.update(section_obj=exp.find_first_not_run(
-                options['<level>'][0], by_started=not options['--not-finished']))
+                options['--next'], by_started=not options['--not-finished']))
 
         elif options['resume'] and not options['<n>']:
             kwargs.update(section_obj=exp.find_first_partially_run(options['<level>'][0]))
