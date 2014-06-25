@@ -1,7 +1,7 @@
 """experimentator
 
 Usage:
-  exp run [options] <exp-file> (--next=<level>  [--not-finished] | (<level> <n>)...)
+  exp run [options] <exp-file> (--next=<level>  [--not-finished] | (<level> <n>)... [--from=<n>])
   exp resume [options] <exp-file> (<level> | (<level> <n>)...)
   exp export <exp-file> <data-file> [ --no-index-label --delim=<sep> --skip=<columns> --float=<format> --nan=<rep>]
   exp -h | --help
@@ -15,6 +15,9 @@ Run/resume options:
   --demo            Don't save data.
   --not-finished    Run the first <level> that hasn't finished (rather than first that hasn't started).
   --skip-parents    Don't enter context of parent levels.
+  --from=<n>        Start running at child number <n> of the specified section.
+                    <n> can also be a comma-separated list of ints; see run_experiment_section for details
+                    (specifically, --from=<n> works like the parameter from_section).
 
 Export options (see pandas.Dataframe.to_csv documentation) :
   --no-index-label    Don't put column labels on index columns (e.g. participant, trial), for easier importing into R.
@@ -60,6 +63,7 @@ def main(args=None):
                      '--demo': bool,
                      '--help': bool,
                      '--float': Or(None, str),
+                     '--from': Or(None, Use(lambda x: list(map(int, x.split(','))))),
                      '--nan': Or(None, str),
                      '--next': Or(None, str),
                      '--no-index-label': bool,
@@ -88,6 +92,7 @@ def main(args=None):
                   'parent_callbacks': not options['--skip-parents'],
                   'resume': options['resume'],
                   'session_options': options['-o'],
+                  'from_section': options['--from'],
                   }
 
         if options['--next']:

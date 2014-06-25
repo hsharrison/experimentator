@@ -108,6 +108,25 @@ def test_cli():
         else:
             assert isnan(row[1]['result'])
 
+    call_cli('exp run test.pkl participant 3 block 3 --from 3')
+    exp = Experiment.load('test.pkl')
+    for row in exp.dataframe.iterrows():
+        if row[0][0] <= 2 or row[0][:2] == (3, 1) or (row[0][:2] == (3, 3) and row[0][-1] >= 3):
+            yield check_trial, row
+        else:
+            assert isnan(row[1]['result'])
+
+    call_cli('exp run test.pkl participant 3 --from 2,4')
+    exp = Experiment.load('test.pkl')
+    for row in exp.dataframe.iterrows():
+        if (row[0][0] <= 2
+                or row[0][:2] == (3, 1)
+                or (row[0][:2] == (3, 2) and row[0][-1] >= 4)
+                or (row[0][:2] == (3, 3) and row[0][2] > 2)):
+            yield check_trial, row
+        else:
+            assert isnan(row[1]['result'])
+
     for file in glob('test.pkl*'):
         os.remove(file)
 
