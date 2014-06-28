@@ -231,5 +231,5 @@ License
 
 *Licensed under the MIT license.*
 
-.. include:: ../LICENSE.txt
+.. include:: ../LICENSE.rst
     :start-after: The MIT License (MIT)

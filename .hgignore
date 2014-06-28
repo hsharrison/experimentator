@@ -8,5 +8,6 @@ syntax: glob
 .cache
 build
 .idea
-doc/_build
+docs/_build
 dist
+.tox

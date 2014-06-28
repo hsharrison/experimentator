@@ -1,0 +1,11 @@
+graft docs
+graft tests
+graft src
+
+include LICENSE.rst
+include README.rst
+include requirements.txt
+include .travis.yml
+include tox.ini
+
+recursive-exclude *.py[co] __pycache__

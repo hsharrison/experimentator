@@ -1,14 +1,13 @@
 language: python
-python:
-  - "3.3"
-  - "3.4"
+python: 3.4
+
+env:
+  - TOX_ENV=py33
+  - TOX_ENV=py34
+  - TOX_ENV=docs-coverage
 
 install:
-  - pip install -r requirements.txt
-  - pip install pytest-cov python-coveralls
+  - pip install tox
 
 script:
-  - py.test --cov experimentator tests/
-
-after_success:
-  - coveralls
+  - tox -e $TOX_ENV

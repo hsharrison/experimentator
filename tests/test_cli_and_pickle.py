@@ -14,7 +14,7 @@ import pytest
 
 from experimentator import run_experiment_section, QuitSession, Experiment, DesignTree, Design
 from experimentator.design import Level
-from experimentator.cli import main
+from experimentator.__main__ import main
 from experimentator.order import Ordering
 from tests.test_experiment import make_blocked_exp, check_trial
 

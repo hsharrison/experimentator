@@ -1,4 +1,4 @@
-.. _creation
+.. _creation:
 
 ======================
 Creating an experiment
@@ -10,7 +10,7 @@ The workflow using experimentator is relatively straightforward:
 2. Run the experiment using the :ref:`cli <command-line interface>`.
 3. Inspect, analyze or export the resulting data.
 
-.. _structure
+.. _structure:
 
 Experiment structure
 ====================
@@ -39,7 +39,7 @@ All other level names are arbitrary and are specified when the experiment is cre
 Be aware that experimentator uses 1-based indexing when numbering sections and indexing
 :class:`~experimentator.section.ExperimentSection` instances, as illustrated in the diagram above.
 
-.. _ IVs
+.. _ IVs:
 
 Independent variables
 ---------------------
@@ -89,8 +89,6 @@ An IV at the ``'participant'`` level will always take the same value within each
 Similarly, a blocked experiment will probably have IVs at the ``'block'`` level;
 these IVs will only take on a new value when a new block is reached.
 
-.. _conditions
-
 IV values are ultimately passed to your :ref:`run callback <callbacks>` as a *condition*.
 A condition is a combination of specific IV values.
 Although you don't need to create conditions yourself, you can think of them as dictionaries mapping IV names to values.
@@ -102,7 +100,7 @@ For example, a condition generated from the example IVs above might be
      'distractor': None,
      'difficulty': 1.5}
 
-.. _why levels
+.. _why levels:
 
 Why use levels?
 ---------------

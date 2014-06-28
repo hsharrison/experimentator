@@ -7,5 +7,6 @@ build
 .idea
 .coverage
 .cache
-doc/_build
+docs/_build
 dist
+.tox

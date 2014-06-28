@@ -1,0 +1,2 @@
+sphinx
+-e git+https://github.com/numpy/numpydoc#egg=numpydoc

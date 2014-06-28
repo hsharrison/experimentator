@@ -4,14 +4,6 @@ experimentator package
 Submodules
 ----------
 
-experimentator.cli module
--------------------------
-
-.. automodule:: experimentator.cli
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 experimentator.design module
 ----------------------------
 
