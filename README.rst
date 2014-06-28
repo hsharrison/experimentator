@@ -108,6 +108,7 @@ We can now run sessions from the command line:
 .. code-block:: bash
 
     exp run exp_1.dat participant 1
+    # or
     exp run exp_1.dat --next participant
 
 Eventually, we can export the data to a text file:
@@ -141,9 +142,9 @@ It also depends on the following Python libraries:
 
 - `numpy <http://www.numpy.org/>`_  ``>= v1.8.0``
 - `pandas <http://pandas.pydata.org/>`_ ``>= v0.13.1``
-- `docopt <http://docopt.org/>`_ ``>= v0.6.1`` or later
+- `docopt <http://docopt.org/>`_ ``>= v0.6.1``
 - `schema <https://github.com/halst/schema>`_ ``>= v0.2.0``
-- `PyYAML <hhttp://pyyaml.org/wiki/PyYAML>`_ ``>= v3.10``
+- `PyYAML <http://pyyaml.org/wiki/PyYAML>`_ ``>= v3.10``
   (Required only for ``Experiment.from_yaml_file``)
 - `pytest <http://pytest.org/latest/>`_ ``>=2.5.2``
   (Required only for running tests)
