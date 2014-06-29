@@ -258,9 +258,8 @@ class Experiment(ExperimentSection):
 
     @classmethod
     def within_subjects(cls, ivs, n_participants, design_matrix=None, ordering=None, filename=None):
-        """Construct a within-subjects experiment.
-
-        Creates a within-subjects |Experiment|, with all the IVs at the |trial| level.
+        """
+        Create a within-subjects |Experiment|, with all the IVs at the |trial| level.
 
         Parameters
         ----------
@@ -292,9 +291,7 @@ class Experiment(ExperimentSection):
 
     @classmethod
     def blocked(cls, trial_ivs, n_participants, design_matrices=None, orderings=None, block_ivs=None, filename=None):
-        """Construct a blocked, within-subjects experiment.
-
-        This function creates a blocked within-subjects |Experiment|,
+        """Create a blocked within-subjects |Experiment|,
         in which all the IVs are at either the trial level or the block level.
 
         Parameters
@@ -352,9 +349,7 @@ class Experiment(ExperimentSection):
 
     @classmethod
     def basic(cls, levels, ivs_by_level, design_matrices_by_level=None, ordering_by_level=None, filename=None):
-        """Construct a homogeneously-organized experiment.
-
-        This function builds a basic |Experiment|,
+        """Construct a homogeneously-organized |Experiment|,
         with arbitrary levels but only one |Design| at each level,
         and the same structure throughout its hierarchy.
 
