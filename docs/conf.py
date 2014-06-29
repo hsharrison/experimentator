@@ -281,3 +281,72 @@ intersphinx_mapping = {
     'pandas': ('http://pandas.pydata.org/pandas-docs/stable', None),
 }
 
+rst_epilog = """
+.. |IV docs| replace:: :ref:`IV docs <IVs>`
+.. |design matrix docs| replace:: :ref:`design matrix docs <design-matrices>`
+.. |design matrix| replace:: :ref:`design matrix <design-matrices>`
+.. |context-manager docs| replace:: :ref:`context-manager docs <contexts>`
+.. |callbacks| replace:: :ref:`callbacks <callbacks>`
+.. |callback docs| replace:: :ref:`callback docs <callbacks>`
+
+.. |Experiment| replace:: :class:`~experimentator.experiment.Experiment`
+.. |ExperimentSection| replace:: :class:`~experimentator.section.ExperimentSection`
+.. |Design| replace:: :class:`~experimentator.design.Design`
+.. |DesignTree| replace:: :class:`~experimentator.design.DesignTree`
+.. |Ordering| replace:: :class:`~experimentator.order.Ordering`
+.. |Shuffle| replace:: :class:`~experimentator.order.Shuffle`
+.. |NonAtomicOrdering| replace:: :class:`~experimentator.order.NonAtomicOrdering`
+.. |non-atomic orderings| replace:: :class:`non-atomic orderings <experimentator.order.NonAtomicOrdering>`
+.. |CompleteCounterbalance| replace:: :class:`~experimentator.order.CompleteCounterbalance>`
+.. |counterbalanced design| replace:: :class:`counterbalanced design <experimentator.order.CompleteCounterbalance>`
+.. |Sorted| replace:: :class:`~experimentator.order.Sorted`
+.. |LatinSquare| replace:: :class:`~experimentator.order.LatinSquare`
+
+.. |Experiment.base_section| replace:: :attr:`Experiment.base_section <experimentator.experiment.Experiment.base_section>`
+.. |Experiment.session_data| replace:: :attr:`Experiment.session_data`
+.. |Experiment.dataframe| replace:: :attr:`Experiment.dataframe <experimentator.experiment.Experiment.dataframe>`
+.. |Experiment.save| replace:: :meth:`Experiment.save <experimentator.experiment.Experiment.save>`
+.. |Experiment.filename| replace:: :attr:`Experiment.filename <experimentator.experiment.Experiment.filename>`
+.. |Experiment.experiment_data| replace:: :attr:`Experiment.experiment_data <experimentator.experiment.Experiment.experiment_data>`
+.. |Experiment.from_yaml_file| replace:: :meth:`Experiment.from_yaml_file <experimentator.experiment.Experiment.from_yaml_file>`
+.. |Experiment.from_dict| replace:: :meth:`Experiment.from_dict <experimentator.experiment.Experiment.from_dict>`
+.. |Experiment.run_section| replace:: :meth:`Experiment.run_section <experimentator.experiment.Experiment.run_section>`
+.. |Experiment.set_context_manager| replace:: :meth:`Experiment.set_context_manager <experimentator.experiment.Experiment.set_context_manager>`
+.. |Experiment.set_run_callback| replace:: :meth:`Experiment.set_run_callback <experimentator.experiment.Experiment.set_run_callback>`
+.. |ExperimentSection.add_data| replace:: :meth:`ExperimentSection.add_data <experimentator.section.ExperimentSection.add_data>`
+.. |ExperimentSection.subsection| replace:: :meth:`ExperimentSection.subsection <experimentator.section.ExperimentSection.subsection>`
+.. |ExperimentSection.data| replace:: :attr:`ExperimentSection.data <experimentator.section.ExperimentSection.data>`
+.. |data| replace:: :attr:`data <experimentator.section.ExperimentSection.data>`
+.. |Design.first_pass| replace:: :meth:`Design.first_pass <experimentator.design.Design.first_pass>`
+.. |first_pass| replace:: :meth:`~experimentator.design.Design.first_pass`
+.. |Design.from_dict| replace:: :meth:`Design.from_dict <experimentator.design.Design.from_dict>`
+.. |DesignTree.from_spec| replace:: :meth:`DesignTree.from_spec <experimentator.design.DesignTree.from_spec>`
+.. |run_experiment_section| replace:: :func:`~experimentator.experiment.run_experiment_section`
+.. |Ordering.number| replace:: :attr:`Ordering.number <experimentator.order.Ordering.number>`
+.. |latin_square| replace:: :func:`~experimentator.order.latin_square`
+.. |balanced_latin_square| replace:: :func:`~experimentator.order.balanced_latin_square`
+
+.. |experimentator.order| replace:: :mod:`experimentator.order`
+
+.. |itertools.product| replace:: :func:`itertools.product`
+.. |ChainMap| replace:: :class:`~collections.ChainMap`
+.. |collections.ChainMap| replace:: :class:`collections.ChainMap`
+.. |OrderedDict| replace:: :class:`~collections.OrderedDict`
+.. |context-manager| replace:: :ref:`context-manager <typecontextmanager>`
+.. |context-managers| replace:: :ref:`context-managers`
+.. |contextlib| replace:: :mod:`contextlib`
+.. |contextlib.contextmanager| replace:: :func:`contextlib.contextmanager`
+.. |picklable| replace:: :ref:`picklable <pickle-picklable>`
+
+.. |numpy array| replace:: :class:`numpy array <numpy.ndarray>`
+.. |DataFrame| replace:: :class:`~pandas.DataFrame`
+.. |DataFrame.to_csv| replace:: :meth:`pandas.DataFrame.to_csv`
+
+.. |trial| replace:: ``'trial'``
+.. |block| replace:: ``'block'``
+.. |session| replace:: ``'session'``
+.. |participant| replace:: ``'participant'``
+
+.. _PyYAML:  http://pyyaml.org/wiki/PyYAML
+.. _pyDOE: http://pythonhosted.org//pyDOE/index.html
+"""

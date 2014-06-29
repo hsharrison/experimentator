@@ -28,7 +28,7 @@ All other level names are arbitrary and are specified when the experiment is cre
 Be aware that experimentator uses 1-based indexing when numbering sections and indexing
 |ExperimentSection| instances, as illustrated in the diagram above.
 
-.. _ IVs:
+.. _IVs:
 
 Independent variables
 =====================
@@ -39,7 +39,7 @@ An IV is a variable that you are explicitly varying in order to test its effects
 The easiest way to represent IVs in experimentator is using a dictionary.
 Each key is a string, the name of an IV.
 Each value is either a list, representing the possible values the IV can take,
-or ``None`` if the IV takes continuous values.
+or ``None`` if the IV takes continuous values (continuous values are only possible with a |design matrix|).
 For example:
 
 .. code-block:: python
@@ -54,7 +54,7 @@ For example:
    In Python, dictionaries have no order.
    In most cases, the order of IVs is not important and so representing IVs as dictionaries will work fine.
    However, there are times when the order you specify the IVs is important.
-   This is the case, for example, when using a :ref:`design matrix`, because each column of the design matrix refers to one IV.
+   This is the case, for example, when using a |design matrix|, because each column of the design matrix refers to one IV.
    You will need to rely on the order of IVs in order to know which column controls which IV.
    In these cases you should use one of two alternative ways of representing IVs:
    using a :class:`collections.OrderedDict`, or a list of 2-tuples.
@@ -99,7 +99,7 @@ You may be wondering how many levels to use, or why to use them at all
 That decision must be made on a case-by-case basis.
 For example, imagine your experiment has sessions of 20 trials, divided into two blocks.
 As long as the order of conditions within each session is correctly specified
-(for example, by using a  :ref:`design matrix`),
+(for example, by using a |design matrix|),
 using an explicit ``'block'`` level may not be necessary.
 Alternatively, you could define a ``'block'`` level but not a ``'trial'`` level
 and stick a trial loop inside the block.

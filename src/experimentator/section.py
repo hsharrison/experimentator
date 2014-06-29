@@ -1,6 +1,5 @@
 """
-This module contains the `ExperimentSection` class,
-which is imported in `__init__.py`.
+This module contains the |ExperimentSection| class, which is imported in `__init__.py`.
 
 """
 import logging
@@ -13,43 +12,39 @@ logger = logging.getLogger(__name__)
 class ExperimentSection():
     """
     A section of the experiment, at any level of the hierarchy.
-    Single trials,  groups of trials (blocks, sessions, participants, etc.)
-    are represented as :class:`ExperimentSection` instances.
-    A complete experiment consists of :class:`ExperimentSection` instances arranged in a tree.
-    The root element should be an :class:`Experiment <experimentator.experiment.Experiment>` instance
-    (a subclass of :class:`ExperimentSection`);
+    Single trials and groups of trials (blocks, sessions, participants, etc.)
+    are represented as |ExperimentSection| instances.
+    A complete experiment consists of |ExperimentSection| instances arranged in a tree.
+    The root element should be an |Experiment| (a subclass of |ExperimentSection|);
     the rest of the sections can be reached via its descendants (see below on the sequence protocol).
-    A new :class:`ExperimentSection` instance
-    is automatically populated with :class:`ExperimentSection` descendants
-    according to the :class:`DesignTree <experimentator.design.DesignTree>` passed to its constructor.
+    A new |ExperimentSection| instance is automatically populated with |ExperimentSection| descendants
+    according to the |DesignTree| passed to its constructor.
 
-    :class:`ExperimentSection` implements Python's sequence protocol;
-    its items are :class:`ExperimentSection` instances at the level below.
+    |ExperimentSection| implements Python's sequence protocol;
+    its contents are |ExperimentSection| instances at the level below.
     In other words, children can be accessed using the ``[index]`` notation,
-    as we as using slices (``my_experiment_section[3:6]``) or
-    iteration (``for section in my_experiment_section:``).
-    However, `ExperimentSection` breaks the Python convention of 0-based indexing.
-    It uses 1-based indexing to match the convention in experimental science.
+    as well as with slices (``[3:6]``) or iteration (``for section in experiment_section:``).
+    However, |ExperimentSection| breaks the Python convention of 0-based indexing,
+    using 1-based indexing to match the convention in experimental science.
 
     Parameters
     ----------
-    tree : :class:`DesignTree <experimentator.design.DesignTree>`
+    tree : |DesignTree|
         Describes the design of the experiment hierarchy.
-    data : :class:`~collections.ChainMap`
-        All data to be associated with the :class:`ExperimentSection`,
+    data : |ChainMap|
+        All data to be associated with the |ExperimentSection|,
         including the values of independent variables,
         the section numbers indicating the section's location in the experiment,
         and any results associated with this section,
-        arising from either the run callback of the :class:`Experiment <experimentator.experiment.Experiment>`,
-        or from the method :meth:`ExperimentSection.add_data`.
-        `data` should be a  :class:`collections.ChainMap`,
+        arising from either the run callback of the |Experiment| or from the method |ExperimentSection.add_data|.
+        `data` should be a  |collections.ChainMap|,
         which behaves like a dictionary but has a hierarchical organization such that
         children can access values from the parent but not vice-versa.
 
     Attributes
     ----------
-    tree : :class:`DesignTree <experimentator.design.DesignTree>`
-    data : :class:`~collections.ChainMap`
+    tree : |DesignTree|
+    data : |ChainMap|
     dataframe
     heterogeneous_design_iv_name
     level : str
@@ -63,10 +58,9 @@ class ExperimentSection():
 
     Notes
     -------
-    Use 1-based indexing to refer to :class:`ExperimentSection` children,
-    both when when using indexing or slicing with an :class:`ExperimentSection`,
-    and when identifying sections in keyword arguments to methods
-    such as :meth:`ExperimentSection.subsection`.
+    Use 1-based indexing to refer to |ExperimentSection| children,
+    both when when using indexing or slicing with an |ExperimentSection|,
+    and when identifying sections in keyword arguments to methods such as |ExperimentSection.subsection|.
     This better corresponds to the language commonly used by scientists to identify participants, trials, etc.
 
     """
@@ -88,7 +82,7 @@ class ExperimentSection():
     @property
     def heterogeneous_design_iv_name(self):
         """
-        (str) IV name determining which branch of the :class:`DesignTree <experimentator.design.DesignTree>` to follow.
+        (str) IV name determining which branch of the |DesignTree| to follow.
 
         """
         return self.tree.levels_and_designs[0].design[0].heterogeneous_design_iv_name
@@ -96,7 +90,7 @@ class ExperimentSection():
     @property
     def dataframe(self):
         """
-        (:class:`~pandas.DataFrame`) All data associated with the :class:`ExperimentSection` and its descendants.
+        (|DataFrame|) All data associated with the |ExperimentSection| and its descendants.
 
         """
         from pandas import DataFrame
@@ -133,11 +127,11 @@ class ExperimentSection():
 
     def get_next_tree(self):
         """
-        Get a tree to use for creating child :class:`ExperimentSection` instances.
+        Get a tree to use for creating child |ExperimentSection| instances.
 
         Returns
         -------
-        :class:`DesignTree <experimentator.design.DesignTree>`
+        |DesignTree|
 
         """
         next_tree = next(self.tree)
@@ -147,13 +141,12 @@ class ExperimentSection():
 
     def append_design_tree(self, tree, to_start=False, _renumber=True):
         """
-        Append all sections associated with the top level of a :class:`DesignTree <experimentator.design.DesignTree>`
-        (and therefore also create descendant sections)
-        to the :class:`ExperimentSection`.
+        Append all sections associated with the top level of a |DesignTree|
+        (and therefore also create descendant sections) to the |ExperimentSection|.
 
         Parameters
         ----------
-        tree : :class:`DesignTree <experimentator.design.DesignTree>`
+        tree : |DesignTree|
             The tree to append.
         to_start : bool, optional
             If True, the sections will be inserted at the beginning of the section.
@@ -162,7 +155,7 @@ class ExperimentSection():
         Notes
         -----
         After calling this method,
-        the section numbers in the children's :attr:`ExperimentSection.data` attributes
+        the section numbers in the children's |ExperimentSection.data| attributes
         will be automatically replaced with the correct numbers.
 
         """
@@ -186,26 +179,26 @@ class ExperimentSection():
 
     def append_child(self, data, tree=None, to_start=False, _renumber=True):
         """
-        Create a new :class:`ExperimentSection` (and its descendants)
-        and append it as a child of the current :class:`ExperimentSection`.
+        Create a new |ExperimentSection| (and its descendants)
+        and append it as a child of the current |ExperimentSection|.
 
         Parameters
         ----------
         data : dict
-            Data to be included in the new section's :attr:`ExperimentSection.data` :class:`~collections.ChainMap`.
+            Data to be included in the new section's |ExperimentSection.data| |ChainMap|.
             Should include values of IVs at the section's level, for example.
-        tree : :class:`DesignTree <experimentator.design.DesignTree>`, optional
+        tree : |DesignTree|, optional
             If given, the section will be appended from the top level of `tree`.
             If not passed, the tree of the current section will be used.
             Note that this does not affect IV values; IV values must still be included in `data`.
         to_start : bool, optional
-            If True, the new :class:`ExperimentSection` will be appended to the beginning of the current section.
+            If True, the new |ExperimentSection| will be appended to the beginning of the current section.
             If False (the default), it will be appended to the end.
 
         Notes
         -----
         After calling this method,
-        the section numbers in the children's :attr:`ExperimentSection.data` attributes
+        the section numbers in the children's |ExperimentSection.data| attributes
         will be automatically replaced with the correct numbers.
 
         """
@@ -234,21 +227,21 @@ class ExperimentSection():
 
     def add_data(self, data):
         """
-        Update the :attr:`ExperimentSection.data` :class:`~collections.ChainMap`.
+        Update the |ExperimentSection.data| |ChainMap|.
         This data will apply to this section and all child sections.
         This can be used, for example, to manually record a participant's age.
 
         Parameters
         ----------
         data : dict
-            Elements to be added to :attr:`ExperimentSection.data`.
+            Elements to be added to |ExperimentSection.data|.
 
         """
         self.data.update(data)
 
     def subsection(self, **section_numbers):
         """
-        Find a single, descendant :class:`ExperimentSection` based on section numbers.
+        Find a single, descendant |ExperimentSection| based on section numbers.
 
         Parameters
         ----------
@@ -258,7 +251,7 @@ class ExperimentSection():
 
         Returns
         -------
-        :class:`ExperimentSection`
+        |ExperimentSection|
 
         See Also
         --------
@@ -287,7 +280,7 @@ class ExperimentSection():
         """
         Find all subsections in the experiment matching the given section numbers.
 
-        Yields specified :class:`ExperimentSection` instances.
+        Yields specified |ExperimentSection| instances.
         The yielded sections will be at the lowest level given in `section_numbers`.
         If levels not in `section_numbers` are encountered before reaching its lowest level,
         all sections will be descended into.
@@ -350,7 +343,7 @@ class ExperimentSection():
     def find_first_not_run(self, at_level, by_started=True):
         """
         Search the experimental hierarchy,
-        and return the first descendant :class:`ExperimentSection` at `at_level`
+        and return the first descendant |ExperimentSection| at `at_level`
         that has not yet been run.
 
         Parameters
@@ -363,7 +356,7 @@ class ExperimentSection():
 
         Returns
         -------
-        :class:`ExperimentSection`
+        |ExperimentSection|
 
         """
         key = lambda node: node.level == at_level
@@ -380,7 +373,7 @@ class ExperimentSection():
     def find_first_partially_run(self, at_level):
         """
         Search the experimental hierarchy,
-        and return the first descendant :class:`ExperimentSection` at `at_level`
+        and return the first descendant |ExperimentSection| at `at_level`
         that has been started but not finished.
 
         Parameters
@@ -390,7 +383,7 @@ class ExperimentSection():
 
         Returns
         -------
-        :class:`ExperimentSection`
+        |ExperimentSection|
 
         """
         key = lambda node: node.level == at_level
@@ -408,11 +401,11 @@ class ExperimentSection():
         Parameters
         ----------
         key : func
-            Function that returns True or False when passed an :class:`ExperimentSection`.
+            Function that returns True or False when passed an |ExperimentSection|.
 
         Returns
         -------
-        list of :class:`ExperimentSection`
+        list of |ExperimentSection|
 
         """
         paths = collections.deque([[self]])
@@ -435,14 +428,14 @@ class ExperimentSection():
         Parameters
         ----------
         key : func
-            Function that returns True or False when passed an :class:`ExperimentSection`.
+            Function that returns True or False when passed an |ExperimentSection|.
         path_key : func, optional
-            Function that returns True or False when passed an :class:`ExperimentSection`.
+            Function that returns True or False when passed an |ExperimentSection|.
             If given, the search will proceed only via sections for which `path_key` returns True.
 
         Returns
         -------
-        list of :class:`ExperimentSection`
+        list of |ExperimentSection|
 
         """
         no_path_key_or_true = lambda node: not path_key or path_key(node)
@@ -475,12 +468,12 @@ class ExperimentSection():
 
         Parameters
         ----------
-        section : :class:`~experimentator.section.ExperimentSection`
+        section : |ExperimentSection|
             The section to find the parent of.
 
         Returns
         -------
-        :class:`~experimentator.section.ExperimentSection`
+        |ExperimentSection|
 
         """
         parents = self.parents(section)
@@ -493,12 +486,12 @@ class ExperimentSection():
 
         Parameters
         ----------
-        section : :class:`~experimentator.section.ExperimentSection`
+        section : |ExperimentSection|
             The section to find the parents of.
 
         Returns
         -------
-        list of :class:`~experimentator.section.ExperimentSection`
+        list of |ExperimentSection|
 
         """
         if section.level == '_base':
@@ -529,7 +522,7 @@ class ExperimentSection():
             return idx
 
         if idx == 0:
-            raise IndexError
+            raise IndexError('Use 1-based indexing with ExperimentSection instances')
 
         return idx - 1
 

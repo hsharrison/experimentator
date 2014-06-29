@@ -1,23 +1,21 @@
 """
-This module contains the class :class:`Ordering` and its descendants.
+This module contains the class |Ordering| and its descendants.
 These classes handle how unique conditions at a particular experimental level are ordered and duplicated.
-:class:`Ordering` instances should be passed directly to the :class:`~experimentator.design.Design` constructor;
+|Ordering| instances should be passed directly to the |Design| constructor;
 there is no reason to otherwise interact with them in normal use.
 
 Of special note are non-atomic orderings:
-the class :class:`NonAtomicOrdering` and its descendants.
+the class |NonAtomicOrdering| and its descendants.
 ''Non-atomic'' here means that the orderings between sections are not independent.
-For example, a :class:`Shuffle` ordering is atomic;
+A |Shuffle| ordering is atomic;
 the order in one section is independent of the order in another.
-However, for example, if one wants to make sure that
-possible block orders are evenly distributed among participants
-(a :class:`counterbalanced <CompleteCounterbalance>` design),
+However, if one wants to ensure, for example, that possible block orders are evenly distributed among participants
+(a |counterbalanced design|),
 the block orders within each participants are not independent.
 Each participate can decide its order of blocks only in the context of the other participants' block orders.
-This means that the parent section must handle orderings
+This means that the *parent* section must handle orderings
 (in the example of counterbalanced blocks,
-the :attr:`Experiment.base_section <experimentator.experiment.Experiment.base_section>`--the experiment itself,
-essentially--must tell each participant what block order to use).
+the |Experiment.base_section|--the experiment itself, essentially--must tell each participant what block order to use).
 
 """
 import itertools
@@ -34,13 +32,13 @@ IndependentVariable = namedtuple('IndependentValue', ('name', 'values'))
 class Ordering():
     """
     The base ordering class.
-    It will keep conditions in the order they are defined by the :class:`~experimentator.design.Design` instance
+    It will keep conditions in the order they are defined by the |Design| instance
     (either the order of rows in the design matrix,
-    or the output of :func:`itertools.product` on the IV levels).
+    or a full factorial cross--the output of calling |itertools.product| on the IV levels).
     Remember not to rely on the order of dictionary items.
     Therefore, if a specific order is desired,
-    it is recommended to use a design matrix or an :class:`collections.OrderedDict` to define the IVs.
-    See documentation for :class:`~experimentator.design.Design` for more on defining IVs.
+    it is recommended to use a design matrix or an |OrderedDict| to define the IVs.
+    See the |IV docs| for more information.
 
     Parameters
     ----------
@@ -62,15 +60,13 @@ class Ordering():
         """
         Handle operations that should only be performed once,
         initializing the object before ordering conditions.
-        For :class:`Ordering`, the only operation is duplication of the list of conditions
-        (if :attr:`Ordering.number` > 1).
+        For |Ordering|, the only operation is duplication of the list of conditions (if |Ordering.number| > 1).
         This methods should not be called manually.
 
         Parameters
         ----------
         conditions : sequence of dict
-            A list of conditions,
-            where each condition is a dictionary mapping IV names to IV values.
+            A list of conditions, where each condition is a dictionary mapping IV names to IV values.
 
         Returns
         -------
@@ -89,7 +85,7 @@ class Ordering():
     def get_order(self, data=None):
         """
         Get an order of conditions.
-        For :class:`Ordering`, always returns the same order.
+        For |Ordering|, always returns the same order.
 
         Parameters
         ----------
@@ -157,7 +153,7 @@ class Shuffle(Ordering):
     def get_order(self, data=None):
         """
         Get an order of conditions.
-        For :class:`Shuffle`, returns the conditions in a random order.
+        For |Shuffle|, returns the conditions in a random order.
 
         Parameters
         ----------
@@ -183,8 +179,7 @@ class Shuffle(Ordering):
 
 class NonAtomicOrdering(Ordering):
     """
-    This is a base class for non-atomic orderings,
-    and is not meant to be directly instantiated.
+    This is a base class for non-atomic orderings, and is not meant to be directly instantiated.
     Non-atomic orderings work by creating a new independent variable one level up.
     The IV name will start with an underscore, a convention to avoid name clashes.
 
@@ -233,8 +228,7 @@ class NonAtomicOrdering(Ordering):
 
 class CompleteCounterbalance(NonAtomicOrdering):
     """
-    In a complete counterbalance design,
-    every unique ordering of the conditions appears the same numbers of times.
+    In a complete counterbalance design, every unique ordering of the conditions appears the same numbers of times.
 
     Parameters
     ----------
@@ -259,7 +253,7 @@ class CompleteCounterbalance(NonAtomicOrdering):
         """
         Handle operations that should only be performed once,
         initializing the object before ordering conditions.
-        For :class:`CompleteCounterbalance`, all possible orders are determined.
+        For |CompleteCounterbalance|, all possible orders are determined.
         This method should not be called manually.
 
         Parameters
@@ -310,7 +304,7 @@ class Sorted(NonAtomicOrdering):
 
     Notes
     -----
-    To avoid ambiguity, `Sorted` can only be used at levels containing only one IV.
+    To avoid ambiguity, |Sorted| can only be used at levels containing only one IV.
 
     """
     iv_name = 'sorted_order'
@@ -326,7 +320,7 @@ class Sorted(NonAtomicOrdering):
         """
         Handle operations that should only be performed once,
         initializing the object before ordering conditions.
-        For :class:`Sorted`, the conditions are sorted.
+        For |Sorted|, the conditions are sorted on IV values.
 
         Parameters
         ----------
@@ -419,7 +413,7 @@ class LatinSquare(NonAtomicOrdering):
     The algorithm for computing balanced Latin squares is fast only because it is not robust;
     it is very biased and only samples from the same limited set of balanced Latin squares.
     However, this is usually not an issue.
-    For more implementation details, see :func:`latin_square` and :func:`balanced_latin_square`.
+    For more implementation details, see |latin_square| and |balanced_latin_square|.
 
     """
     iv_name = 'latin_square_row'
@@ -439,7 +433,7 @@ class LatinSquare(NonAtomicOrdering):
         """
         Handle operations that should only be performed once,
         initializing the object before ordering conditions.
-        For :class:`LatinSquare`, the square is constructed.
+        For |LatinSquare|, the square is constructed.
 
         Parameters
         ----------
@@ -602,7 +596,7 @@ def balanced_latin_square(order):
     -----
     The algorithm constructs a stereotypical balanced Latin square,
     then shuffles the rows and elements (but not the columns).
-    This algorithm is much faster than the algorithm used by :func:`latin_square`.
+    This algorithm is much faster than the algorithm used by |latin_square|.
     However, it does not sample from a uniform distribution of balanced Latin squares (i.e. it is biased)
     and it cannot create Latin squares that are both reduced and balanced.
 
