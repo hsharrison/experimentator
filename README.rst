@@ -1,3 +1,4 @@
+=========================================
 experimentator: Python experiment builder
 =========================================
 
@@ -31,7 +32,7 @@ You might say that **experimentator** is a library for
 (although that doesn't do it full justice).
 
 Not handled here
-----------------
+================
 
 * graphics
 * timing
@@ -49,7 +50,7 @@ Of course, there are alternatives that offer experimental design features along 
 A selection, as well as recommended complimentary packages, are listed later in the documentation.
 
 An example
-----------
+==========
 
 To demonstrate, let's create a simple perceptual experiment.
 For the sake of example, imagine we will present some stimulus
@@ -132,10 +133,10 @@ and two data columns with labels ``'reaction_time'`` and ``'correct'``
 (the keys in the dictionary returned by ``run_Trial``).
 
 Installation
-------------
+============
 
 Dependencies
-^^^^^^^^^^^^
+------------
 
 Experimentator requires Python 3.3 or later.
 It also depends on the following Python libraries:
@@ -152,26 +153,39 @@ It also depends on the following Python libraries:
 - `numpydoc <https://github.com/numpy/numpydoc>`_
   (Required only for generating docs)
 
+The easiest way to install these libraries, especially on Windows,
+is with Continuum's free Python distribution `Anaconda <https://store.continuum.io/cshop/anaconda/>`_.
+For experimentator, Anaconda3 or the lightweight Miniconda3 is recommended,
+although you can create a Python3 ``conda`` environment regardless of which
+version you initially download.
+
+For example, to install dependencies to a clean environment (with name ``experiment``)::
+
+    conda update conda
+    conda create -n experiment python=3 pip
+    source activate experiment
+    conda install numpy pandas pyyaml
+    pip install docopt schema
+
 From source (development version)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+---------------------------------
 
 Experimentator is hosted on both
 `GitHub <https://github.com/hsharrison/experimentator>`_
 and `BitBucket <https://bitbucket.org/hharrison/experimentator>`_.
-
-.. code-block:: bash
+From the latter::
 
     hg clone https://bitbucket.org/hharrison/experimentator
     cd experimentator
-    python setup.py install  # Inside a python3 virtualenv.
+    pip install .
 
 Other libraries
----------------
+===============
 
 *Please, feel free to submit a pull request to add your software to one of these lists.*
 
 Alternatives
-^^^^^^^^^^^^
+------------
 
 The Python ecosystem offers some wonderful alternatives that provide experiment logistics
 in addition to other functionality like graphics and input/output:
@@ -184,7 +198,7 @@ in addition to other functionality like graphics and input/output:
   An all-in-one package with a graphical interface to boot. An impressive piece of software.
 
 Complimentary libraries
-^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------
 
 What about all those important things that experimentator doesn't do?
 Here's a short selection.
@@ -195,13 +209,17 @@ but they're included here for completeness:
     - `pyDOE <http://pythonhosted.org/pyDOE/>`_:
       Construct design matrices in a format that experimentator can use to build your experiment.
 - *graphics*
+    - `PsychoPy <http://psychopy.org/>`_:
+      A stimulus-presentation library with an emphasis on calibration and temporal precision.
+      Unfortunately, at the time of this writing it is not yet Python3-compatible, and so cannot be easily combined with experimentator.
     - `Pygame <http://pygame.org/news.html>`_:
        Very popular.
     - `Pyglet <http://www.pyglet.org/>`_:
-       A smaller community than Pygame, but my personal preference. Includes OpenGL bindings.
+       A smaller community than Pygame, but has several advantages, including cross-compatibility and a more pythonic API.
+       Includes OpenGL bindings.
     - `PyOpenGL <http://pyopengl.sourceforge.net/>`_:
       If all you need is to make OpenGL calls.
-- *graphical interfaces*
+- *graphical user interfaces*
     - `urwid <http://urwid.org/>`_:
       Console user interface library, ncurses-style.
     - `wxPython <http://wxpython.org/>`_:
@@ -227,7 +245,7 @@ but they're included here for completeness:
       Call ``R`` from Python. Because sometimes the model or test you need isn't in statsmodels or scikit-learn.
 
 License
--------
+=======
 
 *Licensed under the MIT license.*
 
