@@ -4,34 +4,103 @@
 Experiment structure
 ====================
 
-In experimentator, experiments are organized as hierarchical tree structures.
+In experimentator, experiments (represented by an |Experiment| instance) are organized as hierarchical tree structures.
 Each section of the experiment (represented by an |ExperimentSection| instance)
 is a node in this tree, and its children are the sections it contains.
 Levels on the tree are named;
 common level names in behavioral research are ``'participant'``, ``'session'``, ``'block'``, and ``'trial'``.
-For example, an experiment with two participants and three trials each would have a tree that looks like this::
+For example, an experiment with two participants with two blocks of three trials each would have a tree that looks like this::
 
-    '_base'               ______1_____
-                         /            \
-    'participant'    ___1___        ___2___
-                    /   |   \      /   |   \
-    'trial'        1    2    3    1    2    3
+    '_base'                       ______________1______________
+                                 /                             \
+    'participant'         ______1______                   ______2______
+                         /             \                 /             \
+    'block'          ___1___         ___2___         ___1___         ___2___
+                    /   |   \       /   |   \       /   |   \       /   |   \
+    'trial'        1    2    3     1    2    3     1    2    3     1    2    3
 
 The top level is always called ``'_base'``;
 the leading underscore indicates that you should not have to refer to this level directly.
 All other level names are arbitrary and are specified when the experiment is created.
 
 .. note::
-   For simplicity, this documentation uses the term *trial* to mean the lowest level of an experiment,
-   even though experimentator will let you use whatever string you want for this name.
+   Be aware that experimentator uses 1-based indexing when numbering sections and indexing
+   |ExperimentSection| instances, as in the diagram above.
 
-Be aware that experimentator uses 1-based indexing when numbering sections and indexing
-|ExperimentSection| instances, as illustrated in the diagram above.
+An experimental hierarchy can be explored in a number of ways.
+Given an |Experiment| object, any section can be found by direct indexing:
+
+.. code-block:: python
+
+    # Assuming the same structure as the diagram above.
+    experiment[1]        # first participant
+    experiment[1][2]     # second block of first participant
+    experiment[1][2][2]  # second trial of second block of first participant
+
+Alternatively, the :meth:`~experimentator.section.ExperimentSection.subsection` method can be used.
+The following finds the same sections as the previous example:
+
+.. code-block:: python
+
+    experiment.subsection(participant=1)
+    experiment.subsection(participant=1, block=2)
+    experiment.subsection(participant=1, block=2, trial=2)
+
+The generator method :meth:`~experimentator.section.ExperimentSection.all_subsections`
+yields all subsections matching the given criteria.
+For example, with the same experiment structure,
+
+.. code-block:: python
+
+    list(experiment.all_subsections(block=2, trial=1))
+
+will return the same list as
+
+.. code-block:: python
+
+    [experiment.subsection(participant=1, block=2, trial=1),
+     experiment.subsection(participant=2, block=2, trial=1)]
+
+There are other methods to help find specific sections, for example
+:meth:`~experimentator.section.ExperimentSection.find_first_not_run`,
+:meth:`~experimentator.section.ExperimentSection.find_first_partially_run`,
+and the more general
+:meth:`~experimentator.section.ExperimentSection.depth_first_search` and
+:meth:`~experimentator.section.ExperimentSection.breadth_first_search`.
+These last two methods allow you to define the search criteria with a custom ``key`` function
+that returns ``True`` for the desired section.
+
+An important principle of experimentator is that each section only handles its children,
+the sections immediately below it.
+In a structure with levels |participant|, |block|, and |trial|,
+every block section knows how to create and order trials (e.g., by crossing :ref:`independent variables <IVs>`),
+but knows nothing of participants.
+Likewise, every participant section organizes the blocks under it,
+but lets each block figure out its constitutent trials.
+The only exception to this rule is in the case of :ref:`non-atomic orderings <non-atomic-orderings>`.
+
+.. note::
+   For simplicity, this documentation uses the term *trial* to mean the lowest level of an experiment,
+   even though experimentator will let you use whatever string you want to name this level.
+
+.. _designs:
+
+Design
+======
+
+In experimentator, every section has a ''design'', represented by a |Design| object
+(usually, these will be created for you).
+Most of the time, all sections at the same level have the same design
+(but see :ref:`heterogeneity`).
+The design is a high-level description of one level of an experiment.
+It includes everything experimentator needs to know to create the children of a section.
+This consists of two things:
+:ref:`independent variables <IVs>` and an :ref:`ordering method <orderings>`.
 
 .. _IVs:
 
 Independent variables
-=====================
+---------------------
 
 A central concept in experimentator (and in experimental design more generally)
 is that of *independent variables*, or IVs.
@@ -47,7 +116,6 @@ For example:
     independent_variables = {
         'congruent': [True, False],
         'distractor': [None, 'left', 'right'],
-        'difficulty': None,
     }
 
 .. note::
@@ -65,7 +133,6 @@ For example:
        independent_variables = [
            ('congruent', [True, False]),
            ('distractor', [None, 'left', 'right']),
-           ('difficulty', None),
        ]
 
 When you specify your IVs, you will specify them separately for every level of the experiment.
@@ -75,7 +142,7 @@ For example, a within-subjects experiment will probably have IVs at the ``'trial
 a between-subjects experiment will have IVs at the ``'participant'`` level,
 and a mixed-design experiment will have both.
 An IV at the ``'participant'`` level will always take the same value within each participant.
-Similarly, a blocked experiment will probably have IVs at the ``'block'`` level;
+Similarly, a blocked experiment may have IVs at the ``'block'`` level;
 these IVs will only take on a new value when a new block is reached.
 
 IV values are ultimately passed to your :ref:`run callback <callbacks>` as a *condition*.
@@ -86,8 +153,66 @@ For example, a condition generated from the example IVs above might be
 .. code-block:: python
 
     {'congruent': False,
-     'distractor': None,
-     'difficulty': 1.5}
+     'distractor': None}
+
+.. _orderings:
+
+Orderings
+---------
+
+The second element of a :ref:`design <designs>` is an *ordering method*.
+The ordering method determines how children of a section wll be ordered (and possibly repeated).
+For example, an experiment may shuffle trials within each block,
+counter-balance blocks within each session,
+and put all sessions within each participant in the same order.
+
+Each ordering method is a class in the |experimentator.order| module.
+Currently, experimentator includes
+|Ordering| (the base class, resulting in a deterministic order),
+|Shuffle|,
+|CompleteCounterbalance|,
+|Sorted|, and
+|LatinSquare|.
+|Shuffle| is usually the default, except if you're using a |design matrix|,
+in which case experimentator assumes you want a deterministic order and makes |Ordering| the default.
+
+Each ordering method class has different parameters, so see the specific API reference for details.
+Commonly, the first argument is ``number``, which specifies the number of times each condition will be repeated.
+For example, with the ordering method ``Shuffle(3)``,
+each unique condition will be repeated three times, and then the order will be randomized.
+
+.. _non-atomic-orderings:
+
+Non-atomic orderings
+********************
+
+The included ordering classes can be divided into two categories: atomic and non-atomic.
+If every ordering of sections is independent of all other orderings, then the ordering method is atomic.
+For example, if trials within a block are shuffled, then the ordering of trials within each block will be independent.
+Each block can shuffle its trials without needing to know the order of trials within the other blocks.
+
+However, this is not the case for non-atomic orderings.
+The ordering of sections using non-atomic orderings are dependent on each other.
+For example, if blocks within a session are counterbalanced using |CompleteCounterbalance|,
+then each session cannot, on its own, determine the order of blocks within it.
+
+Non-atomic orderings are implemented by automatically creating a new independent variable.
+For example, if the |block| level has three conditions (e.g., one IV with three possible values)
+and a |CompleteCounterbalance| ordering (with ``number=1``),
+then there are six possible orderings of blocks.
+A new IV called ``'counterbalance_order'`` will be automatically created one level up (e.g., at the |session| level),
+with six possible values (the integers 0-5).
+
+Don't forget to take this automatically-created IV into account when designing your experiment.
+In the above example, if there are no other IVs at the |session| level, and ``number=1`` for the |session| ordering,
+there will still be six sessions per participant due to the six conditions defined by the ``'counterbalance_order'`` IV.
+
+Only |Ordering| and |Shuffle| are atomic; the other ordering methods provided in experimentator are non-atomic
+(the |Sorted| ordering method straddles the line; it may or may not be atomic, depending on the parameter ``order``.
+If ``order='ascending'`` or ``order='descending'``,
+then the ordering method is atomic as it is sorted the same way at every section.
+However, if ``order='both'``, then it is non-atomic and a new IV ``{'order': ['ascending', 'descending']}``
+will be created).
 
 .. _why levels:
 
@@ -135,3 +260,20 @@ However, using levels makes it possible to...
     data.xs((2, 1), level=('block', 'trial'))
 
 .. _flat is better than nested: http://legacy.python.org/dev/peps/pep-0020/
+
+.. _heterogeneity:
+
+Heterogeneous experiment structures
+===================================
+
+A final concept to explain is the difference between homogeneous and heterogeneous experiment structures.
+In a homogeneous experiment, every section at the same level has the same :ref:`design <designs>`.
+For example, if the first block contains ten trials and the second block contains twenty,
+the experiment structure is heterogeneous.
+If the order of blocks within the first session is random
+but the order of blocks within the second session is counterbalanced,
+the experiment structure is heterogeneous.
+Even different possible IV values across sections is enough to break homogeneity.
+
+Heterogeneous experiments are a little trickier to set up, but they are fully supported by experimentator.
+See :ref:`constructing-heterogeneity`.

@@ -297,7 +297,7 @@ rst_epilog = """
 .. |Shuffle| replace:: :class:`~experimentator.order.Shuffle`
 .. |NonAtomicOrdering| replace:: :class:`~experimentator.order.NonAtomicOrdering`
 .. |non-atomic orderings| replace:: :class:`non-atomic orderings <experimentator.order.NonAtomicOrdering>`
-.. |CompleteCounterbalance| replace:: :class:`~experimentator.order.CompleteCounterbalance>`
+.. |CompleteCounterbalance| replace:: :class:`~experimentator.order.CompleteCounterbalance`
 .. |counterbalanced design| replace:: :class:`counterbalanced design <experimentator.order.CompleteCounterbalance>`
 .. |Sorted| replace:: :class:`~experimentator.order.Sorted`
 .. |LatinSquare| replace:: :class:`~experimentator.order.LatinSquare`
@@ -313,6 +313,9 @@ rst_epilog = """
 .. |Experiment.run_section| replace:: :meth:`Experiment.run_section <experimentator.experiment.Experiment.run_section>`
 .. |Experiment.set_context_manager| replace:: :meth:`Experiment.set_context_manager <experimentator.experiment.Experiment.set_context_manager>`
 .. |Experiment.set_run_callback| replace:: :meth:`Experiment.set_run_callback <experimentator.experiment.Experiment.set_run_callback>`
+.. |Experiment.within_subjects| replace:: :meth:`Experiment.within_subjects <experimentator.experiment.Experiment.within_subjects>`
+.. |Experiment.blocked| replace:: :meth:`Experiment.blocked <experimentator.experiment.Experiment.blocked>`
+
 .. |ExperimentSection.add_data| replace:: :meth:`ExperimentSection.add_data <experimentator.section.ExperimentSection.add_data>`
 .. |ExperimentSection.subsection| replace:: :meth:`ExperimentSection.subsection <experimentator.section.ExperimentSection.subsection>`
 .. |ExperimentSection.data| replace:: :attr:`ExperimentSection.data <experimentator.section.ExperimentSection.data>`
