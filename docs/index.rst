@@ -6,6 +6,7 @@ Contents
 .. toctree::
    :maxdepth: 2
 
+   structure
    creation
    cli
    api_reference
