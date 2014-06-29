@@ -140,15 +140,14 @@ Dependencies
 Experimentator requires Python 3.3 or later.
 It also depends on the following Python libraries:
 
-- `numpy <http://www.numpy.org/>`_  ``>= v1.8.0``
-- `pandas <http://pandas.pydata.org/>`_ ``>= v0.13.1``
-- `docopt <http://docopt.org/>`_ ``>= v0.6.1``
-- `schema <https://github.com/halst/schema>`_ ``>= v0.2.0``
-- `PyYAML <http://pyyaml.org/wiki/PyYAML>`_ ``>= v3.10``
-  (Required only for ``Experiment.from_yaml_file``)
-- `pytest <http://pytest.org/latest/>`_ ``>=2.5.2``
+- `numpy <http://www.numpy.org/>`_
+- `pandas <http://pandas.pydata.org/>`_
+- `docopt <http://docopt.org/>`_
+- `schema <https://github.com/halst/schema>`_
+- `PyYAML <http://pyyaml.org/wiki/PyYAML>`_
+- `pytest <http://pytest.org/latest/>`_
   (Required only for running tests)
-- `Sphinx <http://sphinx-doc.org/>`_ ``>=1.2.2``
+- `Sphinx <http://sphinx-doc.org/>`_
   (Required only for generating docs)
 - `numpydoc <https://github.com/numpy/numpydoc>`_
   (Required only for generating docs)
@@ -196,7 +195,7 @@ but they're included here for completeness:
     - `pyDOE <http://pythonhosted.org/pyDOE/>`_:
       Construct design matrices in a format that experimentator can use to build your experiment.
 - *graphics*
-    -  `Pygame <http://pygame.org/news.html>`_:
+    - `Pygame <http://pygame.org/news.html>`_:
        Very popular.
     - `Pyglet <http://www.pyglet.org/>`_:
        A smaller community than Pygame, but my personal preference. Includes OpenGL bindings.
