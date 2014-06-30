@@ -127,6 +127,7 @@ class Design:
         ----------
         spec : dict
             A dictionary containing some of the following keys (all optional):
+                - ``'name'``, the name  of the level.
                 - ``'ivs'``, ``'design_matrix'``, ``'extra_data'``, interpreted as
                   keyword arguments to the |Design| constructor.
                 - ``'order'`` or ``'ordering'``, determining the ``ordering`` keyword argument.
