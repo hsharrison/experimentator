@@ -8,8 +8,6 @@ Usage:
   exp --version
 
 Run/resume options:
-  -h, --help        Show full help.
-  --version         Print the installed version number of experimentator.
   -d, --debug       Set logging level to DEBUG.
   -o <options>      Pass <options> to the experiment and save it as string in Experiment.session_data['options'].
   --demo            Don't save data.
@@ -25,6 +23,10 @@ Export options (see pandas.Dataframe.to_csv documentation) :
   --skip=<columns>    Comma-separated list of columns to skip.
   --float=<format>    Format string for floating point numbers.
   --nan=<rep>         Missing data representation.
+
+Other options:
+  -h, --help        Show full help.
+  --version         Print the installed version number of experimentator.
 
 Commands:
   run <exp-file> --next <level>        Runs the first <level> that hasn't started. E.g.:
