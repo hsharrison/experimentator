@@ -353,4 +353,5 @@ rst_epilog = """
 
 .. _PyYAML:  http://pyyaml.org/wiki/PyYAML
 .. _pyDOE: http://pythonhosted.org//pyDOE/index.html
+.. _YAML: http://en.wikipedia.org/wiki/YAML
 """

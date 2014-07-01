@@ -155,7 +155,7 @@ Experimentator provides a dictionary-based specification format for creating new
 There are two relevant constructor methods:
 |Experiment.from_dict| constructs an |Experiment| given a dictionary, and
 |Experiment.from_yaml_file| constructs an |Experiment|
-given the path to a file containing the specification in YAML format.
+given the path to a file containing the specification in `YAML`_ format.
 
 The specification is the same for both.
 Central to the specification format is specifying a |DesignTree| and its constituent |Design| instances.
@@ -174,7 +174,7 @@ Design specification format
        The method that implements the construction of a |Design| from a specification dictionary.
 
 A single |Design| instance can be created from a dictionary
-(either a Python dict or read from a YAML file via |Experiment.from_yaml_file|).
+(either a Python dict or read from a `YAML`_ file via |Experiment.from_yaml_file|).
 The dictionary can contain any of the following keys, all optional:
 
 * ``'name'``:
@@ -301,7 +301,7 @@ Using YAML
 
 All the nested lists and dictionaries required for |Experiment.from_dict| can be unwieldy.
 An alternative is |Experiment.from_yaml_file|, which allows you to save your specification in an external file.
-`YAML <http://en.wikipedia.org/wiki/YAML>`_ is a file-format designed to be both human- and computer-readable.
+`YAML`_ is a file-format designed to be both human- and computer-readable.
 
 Porting the previous mixed-design example into a YAML file would look like this:
 
