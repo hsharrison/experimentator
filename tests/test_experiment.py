@@ -95,7 +95,7 @@ def test_data_before_running():
 
 def test_demo_mode():
     exp = make_simple_exp()
-    exp.run_section(exp, demo=True)
+    exp.run_section(exp[1], demo=True)
     data = exp.dataframe
     assert data.shape == (2 * 3 * 4 * 10, 2)
     assert set(data.columns.values) == {'a', 'b'}
@@ -289,21 +289,19 @@ def test_callbacks_and_data():
         exp.set_context_manager(level, context)
 
     exp.experiment_data.update({level: level + 's_seen' for level in ('participant', 'block', 'trial')})
-    exp.run_section(exp)
+    exp.run_section(exp[1])
 
-    assert exp.session_data['blocks_between'] == 6 * 2 * (3-1)
-    assert exp.session_data['trials_between'] == 6 * 2 * 3 * (2*4 - 1)
+    assert exp.session_data['blocks_between'] == 3-1
+    assert exp.session_data['trials_between'] == 3 * (2*4 - 1)
 
-    assert exp.session_data['participants_seen'] == set(range(1, 6*2 + 1))
+    assert exp.session_data['participants_seen'] == {1}
     assert exp.session_data['blocks_seen'] == {1, 2, 3}
 
     assert exp.session_data['blocks_started'] == \
-        exp.session_data['blocks_ended'] == \
-        6 * 2 * 3
+        exp.session_data['blocks_ended'] == 3
+
     assert exp.session_data['participants_started'] == \
-        exp.session_data['participants_ended'] == \
-        exp.session_data['participants_between'] + 1 == \
-        6 * 2
+        exp.session_data['participants_ended'] == 1
 
 
 def test_experiment_from_spec():
