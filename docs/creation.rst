@@ -440,7 +440,7 @@ only a subset of the possible combinations are used.
 We can specify these, and other, designs in experimentator using
 `design matrices <http://en.wikipedia.org/wiki/Design_matrix>`_.
 
-The support for design matrices in experimenator is designed to be compatible with the Python library |pyDOE|.
+The support for design matrices in experimenator is designed to be compatible with the Python library pyDOE_.
 This is a library that allows for easy creation of various common design matrices.
 
 Design matrices can be specified during the creation of |Design| objects.
@@ -472,7 +472,7 @@ For this reason, the default ordering method is |Ordering| when a design matrix 
 Change this to |Shuffle|, for example,
 if you instead want the rows of the design matrix to appear in a random order.
 
-Here is an example of using a `Box-Behnken design <http://pythonhosted.org/pyDOE/rsm.html>`_ with |pyDOE|:
+Here is an example of using a `Box-Behnken design <http://pythonhosted.org/pyDOE/rsm.html>`_ with pyDOE_:
 
 .. code-block:: python
 
