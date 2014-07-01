@@ -385,3 +385,20 @@ def test_experiment_from_yaml_file():
     yield check_equality, len(test_block), 2*2 + 2*3
     yield check_in, (trial.data['difficulty'] for trial in test_block[:4]), [1, 3]
     yield check_in, (trial.data['difficulty'] for trial in test_block[5:]), [5, 7]
+
+
+def test_doc_yaml():
+    experiment = Experiment.from_yaml_file('tests/doctest.yml')
+    assert len(experiment) == 40
+    participant = experiment[1]
+    assert len(participant) == 2
+    first_session, second_session = participant
+    assert len(first_session[1]) == len(second_session[1]) == 4
+    first_experimental_section = first_session[2]
+    second_experimental_section = second_session[2]
+    assert len(first_experimental_section) == 60
+    assert first_experimental_section[1].level == 'trial'
+    assert first_experimental_section[1].is_bottom_level
+    assert len(second_experimental_section) == 2
+    assert second_experimental_section[1].level == 'block'
+    assert len(second_experimental_section[1]) == len(second_experimental_section[2]) == 30

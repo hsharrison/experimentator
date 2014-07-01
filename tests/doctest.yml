@@ -1,0 +1,54 @@
+design:
+  main:
+    - name: participant
+      ivs:
+        vision: [monocular, binocular]
+      n: 20
+
+    - name: session
+      ivs:
+        design: [first_session, second_session]
+      ordering: Ordering
+
+  first_session:
+    - name: section
+      ivs:
+        design: [practice, first_experimental_section]
+      ordering: Ordering
+
+  second_session:
+    - name: section
+      ivs:
+        design: [practice, second_experimental_section]
+      ordering: Ordering
+
+  practice:
+    - name: trial
+      ivs:
+        difficulty: [easy]
+        side: [left, right]
+        display_time: [0.1, 1]
+      practice: True
+
+  first_experimental_section:
+    - name: trial
+      ivs:
+        difficulty: [easy]
+        side: [left, right]
+        display_time: [0.1, 0.55, 1]
+      n: 10
+      practice: False
+
+  second_experimental_section:
+    - name: block
+      ivs:
+        difficulty: [easy, hard]
+
+    - name: trial
+      ivs:
+        side: [left, right]
+        display_time: [0.1, 0.55, 1]
+      n: 5
+      practice: False
+
+filename: mixed_experiment.dat

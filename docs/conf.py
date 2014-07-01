@@ -315,6 +315,7 @@ rst_epilog = """
 .. |Experiment.set_run_callback| replace:: :meth:`Experiment.set_run_callback <experimentator.experiment.Experiment.set_run_callback>`
 .. |Experiment.within_subjects| replace:: :meth:`Experiment.within_subjects <experimentator.experiment.Experiment.within_subjects>`
 .. |Experiment.blocked| replace:: :meth:`Experiment.blocked <experimentator.experiment.Experiment.blocked>`
+.. |Experiment.basic| replace:: :meth:`Experiment.basic <experimentator.experiment.Experiment.basic>`
 
 .. |ExperimentSection.add_data| replace:: :meth:`ExperimentSection.add_data <experimentator.section.ExperimentSection.add_data>`
 .. |ExperimentSection.subsection| replace:: :meth:`ExperimentSection.subsection <experimentator.section.ExperimentSection.subsection>`
