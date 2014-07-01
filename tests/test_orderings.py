@@ -169,7 +169,7 @@ def test_latin_square_repeat():
 
 
 def check_repr(obj):
-    assert obj == eval(obj.__repr__())
+    assert obj == eval(repr(obj))
 
 
 def test_reprs():

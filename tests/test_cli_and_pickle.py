@@ -211,6 +211,6 @@ def test_exception():
 def test_exp_repr():
     make_deterministic_exp()
     e = Experiment.load('test.pkl')
-    assert e == eval(e.__repr__())
+    assert e == eval(repr(e))
     for file in glob('test.pkl*'):
         os.remove(file)

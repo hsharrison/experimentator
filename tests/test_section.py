@@ -103,7 +103,7 @@ def test_add_data():
 
 def test_repr():
     section = ExperimentSection(make_tree(['session', 'block', 'trial'], {}), ChainMap())
-    assert section == eval(section.__repr__())
+    assert section == eval(repr(section))
 
 
 def test_dataframe():
