@@ -81,7 +81,7 @@ class Design:
     >>> from experimentator.order import Shuffle
     >>> design = Design(ivs={'side': ['left', 'right'], 'difficulty': ['easy', 'hard']}, ordering=Shuffle(2))
     >>> design.first_pass()
-    ((), ())
+    IndependentValue(name=(), values=())
     >>> design.get_order()
     [{'difficulty': 'easy', 'side': 'left'},
      {'difficulty': 'hard', 'side': 'left'},
