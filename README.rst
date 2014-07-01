@@ -73,10 +73,11 @@ Here's how it might look in experimentator:
         return random.choice(['yes', 'no'])
 
 
-    def run_trial(trial_data, session_data, experiment_data):
-        stimulus, answer = random.choice(list(experiment_data['stimuli'].items()))
+    def run_trial(experiment, trial):
+        stimulus, answer = random.choice(
+            list(experiment.experiment_data['stimuli'].items()))
         start_time = time()
-        response = present_stimulus_and_get_response(trial_data['side'], trial_data['display_time'])
+        response = present_stimulus_and_get_response(trial.data['side'], trial.data['display_time'])
         result = {
             'reaction_time': time() - start_time,
             'correct': response == answer
@@ -99,7 +100,7 @@ Here's how it might look in experimentator:
                                                 ordering=order.Shuffle(10),
                                                 filename='exp_1.dat')
 
-        experiment.experiment_data
+        experiment.experiment_data['stimuli'] = stimuli_and_answers
         experiment.set_run_callback(run_trial)
         experiment.save()
 

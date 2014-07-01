@@ -25,24 +25,24 @@ def call_cli(args):
     main(args=args.split()[1:])
 
 
-def set_session_data(data, session_data, **_):
-    session_data['test'] = True
+def set_session_data(experiment, section):
+    experiment.session_data['test'] = True
 
 
-def check_session_data(data, session_data, **_):
-    assert session_data['test']
+def check_session_data(experiment, section):
+    assert experiment.session_data['test']
 
 
 @contextmanager
-def participant_context(data, session_data, **_):
-    session_data['test'] = True
+def participant_context(experiment, section):
+    experiment.session_data['test'] = True
     yield
 
 
 @contextmanager
-def block_context(data, session_data, **_):
-    if data['block'] > 1:
-        assert session_data['test']
+def block_context(experiment, section):
+    if section.data['block'] > 1:
+        assert experiment.session_data['test']
     yield
 
 
@@ -142,8 +142,8 @@ def test_pickle_error():
 
 
 @contextmanager
-def context(data, session_data, experiment_data):
-    assert session_data['options'] == 'pass,through,option'
+def context(experiment, section):
+    assert experiment.session_data['options'] == 'pass,through,option'
     yield
 
 
@@ -185,7 +185,7 @@ def test_export():
         os.remove(file)
 
 
-def bad_trial(data, **_):
+def bad_trial(experiment, section):
     raise QuitSession('Nope!')
 
 

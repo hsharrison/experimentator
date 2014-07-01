@@ -6,12 +6,11 @@ Public objects are imported in ``__init__.py``.
 import os
 import pickle
 import inspect
-import functools
 from logging import getLogger
 from importlib import import_module
 from contextlib import contextmanager, ExitStack
 from datetime import datetime
-from collections import ChainMap
+from collections import ChainMap, namedtuple
 
 try:
     import yaml
@@ -23,6 +22,7 @@ from experimentator.design import DesignTree, Design
 import experimentator.order as order
 
 logger = getLogger(__name__)
+FunctionReference = namedtuple('FunctionReference', ('module', 'name'))
 
 
 def run_experiment_section(experiment, section_obj=None, demo=False, resume=False, parent_callbacks=True,
@@ -174,12 +174,11 @@ class Experiment(ExperimentSection):
 
         self.filename = filename
 
-        self.context_managers = {level: _dummy_context for level in self.levels}
-        self.context_managers['_base'] = _dummy_context
-        self._context_info = {level: None for level in self.levels}
+        self.run_callback = _dummy_run_callback
+        self.context_managers = {}
 
-        self.run_callback = _dummy_callback
         self._callback_info = None
+        self._context_info = {}
 
         self.session_data = {}
         self.experiment_data = {}
@@ -490,20 +489,18 @@ class Experiment(ExperimentSection):
                 parent.has_started = True
                 if parent_callbacks:
                     logger.debug('Entering {} with data {}...'.format(parent.level, parent.data))
-                    self.session_data[parent.level] = stack.enter_context(self.context_managers[parent.level](
-                        parent.data, session_data=self.session_data, experiment_data=self.experiment_data))
+                    self.session_data[parent.level] = stack.enter_context(
+                        self.context_managers.get(parent.level, _dummy_context_manager)(self, parent))
 
             # Back to the regular behavior.
-            with self.context_managers[section.level](
-                    section.data, session_data=self.session_data, experiment_data=self.experiment_data) as \
-                    self.session_data[section.level]:
+            with self.context_managers.get(
+                    section.level, _dummy_context_manager)(self, section) as self.session_data[section.level]:
 
                 if not demo:
                     section.has_started = True
 
                 if section.is_bottom_level:
-                    results = self.run_callback(
-                        section.data, session_data=self.session_data, experiment_data=self.experiment_data)
+                    results = self.run_callback(self, section)
                     logger.debug('Results: {}.'.format(results))
 
                     if not demo:
@@ -578,14 +575,10 @@ class Experiment(ExperimentSection):
             Which level of the hierarchy to manage.
         func : func
             The context manager function.
-            `func` should have the signature
-            ``func(*args, section_data, experiment_data, **kwargs)``,
-            where `args` and `kwargs` are arbitrary arguments passed in |Experiment.set_context_manager|,
-            ``section_data`` is an attribute of the |ExperimentSection| being run,
-            and ``session_data`` and ``experiment_data`` are attributes of the |Experiment|.
-            ``session_data`` and ``experiment_data`` are keyword arguments to `func`,
-            so the shortest possible signature of a context manager is
-            ``func(section_data, **_)``.
+            `func` should have the signature ``func(experiment, section, *args, **kwargs)``
+            where `experiment` and `section`
+            are the current |Experiment| and |ExperimentSection| instances, respectively,
+            and `args` and `kwargs` are arbitrary arguments passed to this method.
         *args
             Any arbitrary positional arguments to be passed to `func`.
         func_module : str, optional
@@ -599,13 +592,12 @@ class Experiment(ExperimentSection):
 
 
         """
-        self.context_managers[level] = functools.partial(manager, *args, **kwargs)
-        self._context_info[level] = [list(_get_func_reference(manager)), args, kwargs]
+        self.context_managers[level] = _callback_partial(manager, args, kwargs)
 
-        if func_module:
-            self._context_info[level][0][0] = func_module
-        if func_name:
-            self._callback_info[level][0][1] = func_name
+        reference = _get_func_reference(manager)
+        reference = FunctionReference(func_module or reference[0],
+                                      func_name or reference[1])
+        self._context_info[level] = [reference, args, kwargs]
 
     def set_run_callback(self, func, *args, func_module=None, func_name=None, **kwargs):
         """Define a function to run at the lowest level of the experiment
@@ -616,14 +608,10 @@ class Experiment(ExperimentSection):
         ----------
         func : func
             The function to be set as the run callback.
-            `func` should have the signature
-            ``func(*args, section_data, experiment_data, **kwargs)``,
-            where `args` and `kwargs` are arbitrary arguments passed in |Experiment.set_run_callback|,
-            ``section_data`` is an attribute of the |ExperimentSection| being run,
-            and ``session_data`` and ``experiment_data`` are attributes of the |Experiment|.
-            ``session_data`` and ``experiment_data`` are keyword arguments to `func`,
-            so the shortest possible signature of a run callback is
-            ``func(section_data, **_)``.
+            `func` should have the signature ``func(experiment, section, *args, **kwargs)``
+            where `experiment` and `section`
+            are the current |Experiment| and |ExperimentSection| instances, respectively,
+            and `args` and `kwargs` are arbitrary arguments passed to this method.
         *args
             Any arbitrary positional arguments to be passed to `func`.
         func_module : str, optional
@@ -636,13 +624,12 @@ class Experiment(ExperimentSection):
             Any arbitrary keyword arguments to be passed to `func`.
 
         """
-        self.run_callback = functools.partial(func, *args, **kwargs)
-        self._callback_info = [list(_get_func_reference(func)), args, kwargs]
+        self.run_callback = _callback_partial(func, args, kwargs)
 
-        if func_module:
-            self._callback_info[0][0] = func_module
-        if func_name:
-            self._callback_info[0][1] = func_name
+        reference = _get_func_reference(func)
+        reference = FunctionReference(func_module or reference[0],
+                                      func_name or reference[1])
+        self._callback_info = [reference, args, kwargs]
 
     def __getstate__(self):
         state = self.__dict__.copy()
@@ -651,33 +638,28 @@ class Experiment(ExperimentSection):
 
         # Clear functions.
         del state['context_managers']
-        del state['run_callback']
+        state['run_callback'] = None
 
         return state
 
     def __setstate__(self, state):
         self.__dict__.update(state)
 
-        self.run_callback = functools.partial(_load_func_reference(*self._callback_info[0]),
-                                              *self._callback_info[1], **self._callback_info[2]) \
-            if self._callback_info else _dummy_callback
+        # Reload run callback.
+        self.run_callback = _callback_partial(*self._callback_info) if self._callback_info else _dummy_run_callback
 
-        self.context_managers = {'_base': _dummy_context}
+        # Reload context-managers.
+        self.context_managers = {}
         for level in self.levels:
-            if self._context_info[level]:
-                func_info, func_args, func_kwargs = self._context_info[level]
-                func = _load_func_reference(*func_info)
-
-                self.context_managers[level] = functools.partial(func, *func_args, **func_kwargs)
-
-            else:
-                self.context_managers[level] = _dummy_context
+            if level in self._context_info:
+                self.context_managers[level] = _callback_partial(*self._context_info[level])
+                self.context_managers[level] = _callback_partial(*self._context_info[level])
 
 
 def _get_func_reference(func):
     if '__wrapped__' in func.__dict__:
         func = func.__wrapped__
-    return os.path.basename(inspect.getsourcefile(func))[:-3], func.__name__
+    return FunctionReference(os.path.basename(inspect.getsourcefile(func))[:-3], func.__name__)
 
 
 def _load_func_reference(module_name, func_name):
@@ -690,10 +672,16 @@ def _load_func_reference(module_name, func_name):
     return getattr(module, func_name)
 
 
-@contextmanager
-def _dummy_context(*args, **kwargs):
-    yield
+def _callback_partial(func, args, kwargs):
+    if isinstance(func, FunctionReference):
+        func = _load_func_reference(*func)
+    return lambda experiment, section: func(experiment, section, *args, **kwargs)
 
 
-def _dummy_callback(*args, **kwargs):
+def _dummy_run_callback(experiment, section):
     return {}
+
+
+@contextmanager
+def _dummy_context_manager(experiment, section):
+    yield

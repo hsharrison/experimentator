@@ -10,10 +10,14 @@ from experimentator import Design, DesignTree, Experiment
 from tests.test_design import check_equality
 
 
-def trial(data, **_):
+def trial_result(**data):
     a = data['a']
     b = data['b']
     return {'result': (b+1)**2 if a else b}
+
+
+def trial(experiment, section):
+    return trial_result(**section.data)
 
 
 def make_simple_exp():
@@ -101,7 +105,7 @@ def test_demo_mode():
 
 
 def check_trial(row):
-    assert trial(row[1])['result'] == row[1]['result']
+    assert trial_result(**row[1])['result'] == row[1]['result']
 
 
 def test_data_after_running():
@@ -229,7 +233,12 @@ def test_finished_section_detection():
     assert exp.subsection(participant=1).has_finished
 
 
-def start_callback(level, data, session_data, experiment_data):
+def start_callback(experiment, section):
+    session_data = experiment.session_data
+    experiment_data = experiment.experiment_data
+    level = section.level
+    data = section.data
+
     if level + 's_started' in session_data:
         session_data[level + 's_started'] += 1
     else:
@@ -241,14 +250,20 @@ def start_callback(level, data, session_data, experiment_data):
         session_data[experiment_data[level]] = {data[level]}
 
 
-def end_callback(level, data, session_data, **_):
+def end_callback(experiment, section):
+    session_data = experiment.session_data
+    level = section.level
+
     if level + 's_ended' in session_data:
         session_data[level + 's_ended'] += 1
     else:
         session_data[level + 's_ended'] = 1
 
 
-def inter_callback(level, data, session_data, **_):
+def inter_callback(experiment, section):
+    session_data = experiment.session_data
+    level = section.level
+
     assert session_data[level] == level
     if level + 's_between' in session_data:
         session_data[level + 's_between'] += 1
@@ -257,18 +272,21 @@ def inter_callback(level, data, session_data, **_):
 
 
 @contextmanager
-def context(level, data, **kwargs):
-    start_callback(level, data, **kwargs)
+def context(experiment, section):
+    data = section.data
+    level = section.level
+
+    start_callback(experiment, section)
     if data[level] > 1:
-        inter_callback(level, data, **kwargs)
+        inter_callback(experiment, section)
     yield level
-    end_callback(level, data, **kwargs)
+    end_callback(experiment, section)
 
 
 def test_callbacks_and_data():
     exp = make_blocked_exp()
     for level in ('participant', 'block', 'trial'):
-        exp.set_context_manager(level, context, level)
+        exp.set_context_manager(level, context)
 
     exp.experiment_data.update({level: level + 's_seen' for level in ('participant', 'block', 'trial')})
     exp.run_section(exp)
