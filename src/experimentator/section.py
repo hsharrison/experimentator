@@ -245,7 +245,7 @@ class ExperimentSection():
 
         See Also
         --------
-        ExperimentSection.all_subsections
+        experimentator.section.ExperimentSection.all_subsections
 
         Examples
         --------
@@ -283,7 +283,7 @@ class ExperimentSection():
 
         See Also
         --------
-        ExperimentSection.subsection
+        experimentator.section.ExperimentSection.subsection
 
         Examples
         --------

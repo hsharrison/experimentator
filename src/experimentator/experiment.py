@@ -223,7 +223,7 @@ class Experiment(ExperimentSection):
 
         See Also
         --------
-        Experiment.from_yaml_file
+        experimentator.Experiment.from_yaml_file
 
         """
         tree = DesignTree.from_spec(spec.pop('design'))

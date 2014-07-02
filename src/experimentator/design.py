@@ -76,7 +76,7 @@ class Design:
     See Also
     --------
     experimentator.order
-    DesignTree
+    experimentator.DesignTree
 
     Examples
     --------
@@ -151,7 +151,7 @@ class Design:
 
         See Also
         --------
-        DesignTree.from_spec
+        experimentator.DesignTree.from_spec
 
         Examples
         --------
