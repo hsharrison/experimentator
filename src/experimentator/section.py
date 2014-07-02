@@ -23,7 +23,7 @@ class ExperimentSection():
     |ExperimentSection| implements Python's sequence protocol;
     its contents are |ExperimentSection| instances at the level below.
     In other words, children can be accessed using the ``[index]`` notation,
-    as well as with slices (``[3:6]``) or iteration (``for section in experiment_section:``).
+    as well as with slices (``[3:6]``) or iteration (``for section in experiment_section``).
     However, |ExperimentSection| breaks the Python convention of 0-based indexing,
     using 1-based indexing to match the convention in experimental science.
 
