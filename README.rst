@@ -145,9 +145,11 @@ It also depends on the following Python libraries:
 - `PyYAML <http://pyyaml.org/wiki/PyYAML>`_
 
 Required for tests:
+
 - `pytest <http://pytest.org/latest/>`_
 
 Required for generating docs:
+
 - `Sphinx <http://sphinx-doc.org/>`_
 - `numpydoc <https://github.com/numpy/numpydoc>`_
 - `sphinx-rtd-theme <https://github.com/snide/sphinx_rtd_theme>`_
