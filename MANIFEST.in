@@ -4,7 +4,6 @@ graft src
 
 include LICENSE.rst
 include README.rst
-include requirements.txt
 include .travis.yml
 include tox.ini
 
