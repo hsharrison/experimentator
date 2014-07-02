@@ -63,9 +63,7 @@ for a specified amount of time,
 and ask the participant to identify it.
 We'll use a factorial 2 (side) x 3 (display time) design,
 and have a total of 60 trials per participant (10 per condition).
-Here's how it might look in experimentator:
-
-.. code-block:: python
+Here's how it might look in experimentator::
 
     import random
     from time import time
@@ -109,23 +107,17 @@ Here's how it might look in experimentator:
         experiment.save()
 
 Running this script will create the experiment in the file ``exp_1.dat``.
-We can now run sessions from the command line:
-
-.. code-block:: bash
+We can now run sessions from the command line::
 
     exp run exp_1.dat participant 1
     # or
     exp run exp_1.dat --next participant
 
-Eventually, we can export the data to a text file:
-
-.. code-block:: bash
+Eventually, we can export the data to a text file::
 
     exp export exp_1.dat exp_1_data.csv
 
-Or, access the data in a Python session:
-
-.. code-block:: python
+Or, access the data in a Python session::
 
     from experimentator import Experiment
 
