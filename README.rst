@@ -7,7 +7,7 @@ experimentator: Python experiment builder
 .. image:: https://coveralls.io/repos/hsharrison/experimentator/badge.png?branch=master
    :target: https://coveralls.io/r/hsharrison/experimentator?branch=master
 
-* `Documentation contents <http://experimentator.readthedocs.org/index.html#contents>`_
+* `Documentation contents <http://experimentator.readthedocs.org/en/latest/#contents>`_
 * `Git repository <https://github.com/hsharrison/experimentator>`_
 * `Mercurial repository <https://bitbucket.org/hharrison/experimentator>`_
 
