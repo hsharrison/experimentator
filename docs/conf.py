@@ -320,6 +320,7 @@ rst_epilog = """
 .. |context-manager docs| replace:: :ref:`context-manager docs <contexts>`
 .. |callbacks| replace:: :ref:`callbacks <callbacks>`
 .. |callback docs| replace:: :ref:`callback docs <callbacks>`
+.. |description in the docs| replace:: :ref:`description in the docs <design-spec>`
 
 .. |Experiment| replace:: :class:`~experimentator.Experiment`
 .. |ExperimentSection| replace:: :class:`~experimentator.section.ExperimentSection`
