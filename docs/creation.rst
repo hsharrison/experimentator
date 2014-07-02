@@ -291,7 +291,7 @@ Create a dictionary with the following keys:
   Use this field to associate your experiment with a data file.
   This is saved in the |Experiment.filename| attribute.
   Note that the |Experiment| will not be saved automatically;
-  you still have to call :meth:`Experiment.save() <experimentator.experiment.Experiment.save>`.
+  you still have to call :meth:`Experiment.save() <experimentator.Experiment.save>`.
 
 * Any remaining fields will be saved as a dictionary in |Experiment.experiment_data|.
   This is a good place to put local configuration that you read during a :ref:`callback <callbacks>`.
@@ -533,7 +533,7 @@ Here is an example of using a `Box-Behnken design <http://pythonhosted.org/pyDOE
     {'target_position': 0.0, 'target_size': 20, 'target_speed': 10}]
 
 
-:meth:`Design.get_order <experimentator.design.Design.get_order>` (usually called behind the scenes)
+:meth:`Design.get_order <experimentator.Design.get_order>` (usually called behind the scenes)
 gives us a list of conditions, each a dictionary.
 We can see here the correspondence between the design matrix and the conditions.
 Because we used ``None`` with ``'target_position'``, its values are taken directly from the matrix.

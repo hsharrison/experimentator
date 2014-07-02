@@ -323,10 +323,10 @@ rst_epilog = """
 .. |callbacks| replace:: :ref:`callbacks <callbacks>`
 .. |callback docs| replace:: :ref:`callback docs <callbacks>`
 
-.. |Experiment| replace:: :class:`~experimentator.experiment.Experiment`
+.. |Experiment| replace:: :class:`~experimentator.Experiment`
 .. |ExperimentSection| replace:: :class:`~experimentator.section.ExperimentSection`
-.. |Design| replace:: :class:`~experimentator.design.Design`
-.. |DesignTree| replace:: :class:`~experimentator.design.DesignTree`
+.. |Design| replace:: :class:`~experimentator.Design`
+.. |DesignTree| replace:: :class:`~experimentator.DesignTree`
 .. |Ordering| replace:: :class:`~experimentator.order.Ordering`
 .. |Shuffle| replace:: :class:`~experimentator.order.Shuffle`
 .. |NonAtomicOrdering| replace:: :class:`~experimentator.order.NonAtomicOrdering`
@@ -336,20 +336,20 @@ rst_epilog = """
 .. |Sorted| replace:: :class:`~experimentator.order.Sorted`
 .. |LatinSquare| replace:: :class:`~experimentator.order.LatinSquare`
 
-.. |Experiment.base_section| replace:: :attr:`Experiment.base_section <experimentator.experiment.Experiment.base_section>`
+.. |Experiment.base_section| replace:: :attr:`Experiment.base_section <experimentator.Experiment.base_section>`
 .. |Experiment.session_data| replace:: :attr:`Experiment.session_data`
-.. |Experiment.dataframe| replace:: :attr:`Experiment.dataframe <experimentator.experiment.Experiment.dataframe>`
-.. |Experiment.save| replace:: :meth:`Experiment.save <experimentator.experiment.Experiment.save>`
-.. |Experiment.filename| replace:: :attr:`Experiment.filename <experimentator.experiment.Experiment.filename>`
-.. |Experiment.experiment_data| replace:: :attr:`Experiment.experiment_data <experimentator.experiment.Experiment.experiment_data>`
-.. |Experiment.from_yaml_file| replace:: :meth:`Experiment.from_yaml_file <experimentator.experiment.Experiment.from_yaml_file>`
-.. |Experiment.from_dict| replace:: :meth:`Experiment.from_dict <experimentator.experiment.Experiment.from_dict>`
-.. |Experiment.run_section| replace:: :meth:`Experiment.run_section <experimentator.experiment.Experiment.run_section>`
-.. |Experiment.set_context_manager| replace:: :meth:`Experiment.set_context_manager <experimentator.experiment.Experiment.set_context_manager>`
-.. |Experiment.set_run_callback| replace:: :meth:`Experiment.set_run_callback <experimentator.experiment.Experiment.set_run_callback>`
-.. |Experiment.within_subjects| replace:: :meth:`Experiment.within_subjects <experimentator.experiment.Experiment.within_subjects>`
-.. |Experiment.blocked| replace:: :meth:`Experiment.blocked <experimentator.experiment.Experiment.blocked>`
-.. |Experiment.basic| replace:: :meth:`Experiment.basic <experimentator.experiment.Experiment.basic>`
+.. |Experiment.dataframe| replace:: :attr:`Experiment.dataframe <experimentator.Experiment.dataframe>`
+.. |Experiment.save| replace:: :meth:`Experiment.save <experimentator.Experiment.save>`
+.. |Experiment.filename| replace:: :attr:`Experiment.filename <experimentator.Experiment.filename>`
+.. |Experiment.experiment_data| replace:: :attr:`Experiment.experiment_data <experimentator.Experiment.experiment_data>`
+.. |Experiment.from_yaml_file| replace:: :meth:`Experiment.from_yaml_file <experimentator.Experiment.from_yaml_file>`
+.. |Experiment.from_dict| replace:: :meth:`Experiment.from_dict <experimentator.Experiment.from_dict>`
+.. |Experiment.run_section| replace:: :meth:`Experiment.run_section <experimentator.Experiment.run_section>`
+.. |Experiment.set_context_manager| replace:: :meth:`Experiment.set_context_manager <experimentator.Experiment.set_context_manager>`
+.. |Experiment.set_run_callback| replace:: :meth:`Experiment.set_run_callback <experimentator.Experiment.set_run_callback>`
+.. |Experiment.within_subjects| replace:: :meth:`Experiment.within_subjects <experimentator.Experiment.within_subjects>`
+.. |Experiment.blocked| replace:: :meth:`Experiment.blocked <experimentator.Experiment.blocked>`
+.. |Experiment.basic| replace:: :meth:`Experiment.basic <experimentator.Experiment.basic>`
 
 .. |ExperimentSection.add_data| replace:: :meth:`ExperimentSection.add_data <experimentator.section.ExperimentSection.add_data>`
 .. |ExperimentSection.append_child| replace:: :meth:`ExperimentSection.append_child <experimentator.section.ExperimentSection.append_child>`
@@ -357,11 +357,11 @@ rst_epilog = """
 .. |ExperimentSection.subsection| replace:: :meth:`ExperimentSection.subsection <experimentator.section.ExperimentSection.subsection>`
 .. |ExperimentSection.data| replace:: :attr:`ExperimentSection.data <experimentator.section.ExperimentSection.data>`
 .. |data| replace:: :attr:`data <experimentator.section.ExperimentSection.data>`
-.. |Design.first_pass| replace:: :meth:`Design.first_pass <experimentator.design.Design.first_pass>`
-.. |first_pass| replace:: :meth:`~experimentator.design.Design.first_pass`
-.. |Design.from_dict| replace:: :meth:`Design.from_dict <experimentator.design.Design.from_dict>`
-.. |DesignTree.from_spec| replace:: :meth:`DesignTree.from_spec <experimentator.design.DesignTree.from_spec>`
-.. |run_experiment_section| replace:: :func:`~experimentator.experiment.run_experiment_section`
+.. |Design.first_pass| replace:: :meth:`Design.first_pass <experimentator.Design.first_pass>`
+.. |first_pass| replace:: :meth:`~experimentator.Design.first_pass`
+.. |Design.from_dict| replace:: :meth:`Design.from_dict <experimentator.Design.from_dict>`
+.. |DesignTree.from_spec| replace:: :meth:`DesignTree.from_spec <experimentator.DesignTree.from_spec>`
+.. |run_experiment_section| replace:: :func:`~experimentator.Experiment.run_experiment_section`
 .. |Ordering.number| replace:: :attr:`Ordering.number <experimentator.order.Ordering.number>`
 .. |latin_square| replace:: :func:`~experimentator.order.latin_square`
 .. |balanced_latin_square| replace:: :func:`~experimentator.order.balanced_latin_square`
