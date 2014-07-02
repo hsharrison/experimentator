@@ -42,5 +42,5 @@ experimentator.order
 ====================
 
 .. automodule:: experimentator.order
-    :members:
+    :members: Ordering, Shuffle, NonAtomicOrdering, CompleteCounterbalance, Sorted, LatinSquare
     :show-inheritance:
