@@ -151,12 +151,14 @@ It also depends on the following Python libraries:
 - `docopt <http://docopt.org/>`_
 - `schema <https://github.com/halst/schema>`_
 - `PyYAML <http://pyyaml.org/wiki/PyYAML>`_
+
+Required for tests:
 - `pytest <http://pytest.org/latest/>`_
-  (Required only for running tests)
+
+Required for generating docs:
 - `Sphinx <http://sphinx-doc.org/>`_
-  (Required only for generating docs)
 - `numpydoc <https://github.com/numpy/numpydoc>`_
-  (Required only for generating docs)
+- `sphinx-rtd-theme <https://github.com/snide/sphinx_rtd_theme>`_
 
 The easiest way to install these libraries, especially on Windows,
 is with Continuum's free Python distribution `Anaconda <https://store.continuum.io/cshop/anaconda/>`_.
