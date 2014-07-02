@@ -223,10 +223,10 @@ but they're included here for completeness:
       A stimulus-presentation library with an emphasis on calibration and temporal precision.
       Unfortunately, at the time of this writing it is not yet Python3-compatible, and so cannot be easily combined with experimentator.
     - `Pygame <http://pygame.org/news.html>`_:
-       Very popular.
+      Very popular.
     - `Pyglet <http://www.pyglet.org/>`_:
-       A smaller community than Pygame, but has several advantages, including cross-compatibility and a more pythonic API.
-       Includes OpenGL bindings.
+      A smaller community than Pygame, but has several advantages, including cross-compatibility and a more pythonic API.
+      Includes OpenGL bindings.
     - `PyOpenGL <http://pyopengl.sourceforge.net/>`_:
       If all you need is to make OpenGL calls.
 - *graphical user interfaces*
