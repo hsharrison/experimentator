@@ -7,7 +7,7 @@ Creating an experiment
 The typical workflow using experimentator is relatively straightforward:
 
 1. Create an |Experiment| instance.
-2. Run the experiment using the :ref:`CLI <cli>`.
+2. Run the experiment using the :ref:`command-line interface <cli>`.
 3. Inspect, analyze or export the resulting data.
 
 .. _constructors:
@@ -426,6 +426,16 @@ is at the |block| level of the second session.
 In other places on the design tree, we have to create an IV ``'difficulty'`` with only one level (``'easy'``)
 to ensure that we never generate a trial without assigning a value to the IV ``'difficulty'``.
 
+Manually modifying experiments
+------------------------------
+
+Another way to create complex experiment structures is to first construct a simple experiment,
+then manually modify it.
+For example, you can use the method |ExperimentSection.append_child| to add a child under any given section,
+or |ExperimentSection.append_design_tree| to add an entire sub-tree.
+See these methods' docstrings for details.
+Be sure to call |Experiment.save| after to make the changes permanent.
+
 .. _design-matrices:
 
 Design matrices
@@ -496,11 +506,9 @@ Here is an example of using a `Box-Behnken design <http://pythonhosted.org/pyDOE
     [ 0.  0.  0.]
     [ 0.  0.  0.]]
    >>> trial_design = Design.from_dict(dict(
-   ...     ivs=[
-   ...         ('target_size', [10, 20, 30]),
-   ...         ('target_speed', [5, 10, 20]),
-   ...         ('target_position', None),
-   ...     ],
+   ...     ivs=[('target_size', [10, 20, 30]),
+   ...          ('target_speed', [5, 10, 20]),
+   ...          ('target_position', None)],
    ...     design_matrix=design_matrix,
    ... ))
    >>> # The following is just to demonstrate the conditions that are created.
@@ -536,7 +544,164 @@ For the other IVs, the values are taken from the list of possible values that we
 Callbacks
 =========
 
+Up to this point, we've explained how to create an experiment of arbitrary complexity.
+But presumably you actually something to happen when you run a trial.
+This is accomplished with *callbacks*.
+In general, a callback is a function that you supply that is automatically triggered at a certain time.
+There are two types of callbacks in experimentator,
+the :ref:`run callback <run-callback>` and :ref:`context-managers <contexts>`,
+set with |Experiment.set_run_callback| and |Experiment.set_context_manager|, respectively.
+
+.. note::
+
+   Be sure to save your experiment to disk after setting a callback, using |Experiment.save|,
+   to make the changes permanent.
+
+.. note::
+
+   Experimentator does not store the callbacks with your |Experiment|, but rather
+   every time you load your experiment, the callbacks are re-imported.
+   Experimentator looks for a Python file with the same name as the functions were originally defined in.
+   As a result, the data file exported by |Experiment.save| is not sufficient when you want to move an experiment
+   between computers.
+   You will also need to move the Python file(s) in which any callbacks are defined.
+
+   |Experiment.set_run_callback| and |Experiment.set_context_manager| also take optional keyword arguments
+   ``func_name`` and ``func_module`` that you can set to tell experimentator where to look for the callback.
+
+.. _run-callback:
+
+Run callback
+------------
+
+The run callback is essentially the "trial function".
+It is the function that is run for every trial.
+
+The run callback should take two positional arguments.
+It will be passed the current |Experiment| and |ExperimentSection| instances, respectively.
+Everything that the run callback might need to know can be taken from these arguments.
+Here are the most useful attributes:
+
+* |ExperimentSection.data|:
+  This is the |ChainMap| that contains the condition (IV values) for the currently running trial.
+  It also includes the section numbers, for example ``section.data['trial']`` will get the current trial number.
+
+* |Experiment.experiment_data|:
+  This is a dictionary that you can use to store persistent data that every callback will have access to.
+  By default, it is empty, but you can put data in here and it will always be available,
+  even across sessions of the Python interpreter.
+  This means that everything you put here must be |picklable|, so not everything will work.
+
+* |Experiment.session_data|:
+  This is where you can store data that is only persistent within the current session of the Python interpreter.
+  Every time Python exits, this dictionary is emptied.
+  This means you can store data here even if it is not |picklable|.
+  This is the place to store external resources like multimedia data.
+  You can reload these resources during a :ref:`context-manager callback <contexts>`.
+
+The run callback should return a dictionary, mapping dependent variable (DV) names to values.
+The DV names are only used to label the columns in the final representation of the experiment's data,
+|Experiment.dataframe|.
+
+Set the run callback using the |Experiment.set_run_callback| method.
+You can also pass this method arbitrary positional and keyword arguments.
+Therefore, the full signature for a run callback is ``func(experiment, section, *args, **kwargs)``,
+where ``func`` (the callback itself), ``*args``, and ``**kwargs``, are arguments to |Experiment.set_run_callback|.
+
 .. _contexts:
 
 Context-managers
 ----------------
+
+The second type of callback is the context manager.
+The name context manager is taken from the Python standard library, where they are referred to as |context-managers|
+(the ``with`` statement is one way to *use* context managers,
+but it is not generally used to *create* them).
+Fundamentally, a context manager specifies behavior that should occur *before* something,
+and behavior that should occur *after*.
+In experimentator, the idea is that you will use context managers
+to define behavior that occurs before, between, and after sections of the experiment.
+One may want to open external resources (e.g., a sound file) at the beginning of each session,
+and close them afterward, for example.
+Another common use case would be to offer a break between blocks.
+
+The most verbose way to create a context manager is to make a class that contains the magic methods
+``__enter__`` and ``__exit__`` with "before" and "after" behavior, respectively.
+See :ref:`typecontextmanager`.
+
+A much more convenient way is to use the |contextlib.contextmanager| decorator in the standard library.
+See the documentation for details, but it works like this:
+first you code the "before" behavior, then the keyword ``yield``, then the "after" behavior.
+Here is an example context manager that offers a break between blocks:
+
+.. code-block:: python
+
+   from contextlib import contextmanager
+
+   @contextmanager
+   def offer_break(experiment, section):
+       # Don't need to offer a break before the first block.
+       if section.data['block'] > 1:
+           input('Take a break if you would like.\nPress ENTER when you are ready to continue.')
+
+       yield
+       print('Block {} completed.'.format(section.data['block']))
+
+
+As you see, the signature of a context manager is the same as the signature of the run callback.
+All the same data in the |Experiment| and |ExperimentSection| objects are also available to context managers.
+
+.. note::
+
+   In the above example, we could make the ``offer_break`` function work on any level of the experiment.
+   Every |ExperimentSection| stores its level name in the attribute
+   :attr:`~experimentator.section.ExperimentSection.level`.
+   If we replace ``section.data['block']`` with ``section.data[section.level]``
+   (we'd want to change the ``print`` message as well),
+   then we could use ``offer_break`` at multiple levels.
+
+Unlike the run callback, each context manager is associated with a specific level.
+Pass the level name to |Experiment.set_context_manager|:
+
+.. code-block:: python
+
+   experiment.set_context_manager('block', offer_break)
+
+If you are using the context manager to close resources,
+it may be a good idea to use a try-finally block (see :ref:`tut-cleanup`)
+to ensure that the resource is still closed in the case of an exception occurring.
+Here is an example that loads audio using the library `pyglet <http://pyget.org>`_:
+
+.. code-block:: python
+
+   from contextlib import contextmanager
+   import pyglet
+
+   @contextmanager
+   def load_audio(experiment, section):
+       player = pyglet.media.Player()
+       source = pyglet.media.load('background_music.mp3')
+
+       # Make the Player available to other callbacks by saving it in session_data.
+       experiment.session_data['player'] = player
+
+       try:
+           # Run the section.
+           yield
+
+       finally:
+           # This block will run even if an error occurs during the try block.
+           # If no error occurs, it will run after the section ends.
+           player.delete()
+
+.. note::
+
+   This example is just for illustration.
+   Pyglet is actually smart enough to delete ``player`` for you when the Python interpreter exits.
+
+An alternative to manually editing |Experiment.session_data| is to put objects after the ``yield`` keyword.
+Anything yielded by a context manager is stored in ``experiment.session_data[level_name]``
+for the duration of the session.
+In the above example, if we have ``yield player``, then we can access ``player`` from other callbacks
+as ``experiment.session_data['session']``
+(assuming ``load_audio`` is set as the context manager of the level |session|).

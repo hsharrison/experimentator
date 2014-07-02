@@ -45,10 +45,16 @@ class ExperimentSection():
     ----------
     tree : |DesignTree|
     data : |ChainMap|
-    dataframe
-    heterogeneous_design_iv_name
+    dataframe : |DataFrame|
+        All data associated with the |ExperimentSection| and its descendants.
+    heterogeneous_design_iv_name : str
+        IV name determining which branch of the |DesignTree| to follow.
     level : str
         The level of the hierarchy at which this section lives.
+    levels : list of str
+        Level names below this section.
+    local_levels : set
+        Level names of this section's children. Usually a single-element set.
     is_bottom_level : bool
         If true, this is the lowest level of the hierarchy.
     has_start : bool
@@ -81,28 +87,16 @@ class ExperimentSection():
 
     @property
     def heterogeneous_design_iv_name(self):
-        """
-        (str) IV name determining which branch of the |DesignTree| to follow.
-
-        """
         return self.tree.levels_and_designs[0].design[0].heterogeneous_design_iv_name
 
     @property
     def dataframe(self):
-        """
-        (|DataFrame|) All data associated with the |ExperimentSection| and its descendants.
-
-        """
         from pandas import DataFrame
         data = DataFrame(section.data for section in self.walk() if section.is_bottom_level)
         return data.set_index(self.levels)
 
     @property
     def levels(self):
-        """
-        (list of str) Level names below this section.
-
-        """
         levels = []
         for section in self.walk():
             for level in section.local_levels:
@@ -112,10 +106,6 @@ class ExperimentSection():
 
     @property
     def local_levels(self):
-        """
-        (set) Set of level names of this section's children. Usually a single-element set.
-        
-        """
         return {child.level for child in self}
 
     def __repr__(self):

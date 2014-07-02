@@ -20,7 +20,7 @@ setup(name='experimentator',
       author='Henry S. Harrison',
       author_email='henry.schafer.harrison@gmail.com',
 
-      url='https://bitbucket.org/hharrison/experimentator',
+      url='http://experimentator.readthedocs.org',
       download_url='https://bitbucket.org/hharrison/experimentator/get/default.tar.gz',
 
       packages=find_packages('src'),

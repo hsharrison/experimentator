@@ -17,7 +17,7 @@ Run/resume options:
                     <n> can also be a comma-separated list of ints; see run_experiment_section for details
                     (specifically, --from=<n> works like the parameter from_section).
 
-Export options (see pandas.Dataframe.to_csv documentation) :
+Export options (see pandas.DataFrame.to_csv documentation):
   --no-index-label    Don't put column labels on index columns (e.g. participant, trial), for easier importing into R.
   --delim=<sep>       Field delimiter [default: ,].
   --skip=<columns>    Comma-separated list of columns to skip.

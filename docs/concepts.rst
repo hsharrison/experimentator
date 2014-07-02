@@ -1,8 +1,15 @@
 .. _concepts:
 
-================
+========
 Concepts
-================
+========
+
+.. admonition:: About this documentation
+   :class: Note
+
+   This documentation aims to be comprehensive, but be aware that there is also rich information available in docstrings.
+   These can be accessed at the interactive prompt with the ``help`` function;
+   they are also reproduced in :ref:`api_reference`.
 
 .. _structure:
 
@@ -38,6 +45,7 @@ but lets each block figure out its constitutent trials.
 The only exception to this rule is in the case of :ref:`non-atomic orderings <non-atomic-orderings>`.
 
 .. note::
+
    For simplicity, this documentation uses the term *trial* to mean the lowest level of an experiment,
    even though experimentator will let you use whatever string you want to name this level.
 
@@ -45,6 +53,7 @@ Navigating structure
 --------------------
 
 .. note::
+
    Be aware that experimentator uses 1-based indexing when numbering sections and indexing
    |ExperimentSection| instances, as in the diagram above.
 
@@ -179,6 +188,7 @@ The block that the trial is part of may have an additional condition, like ``{'p
 When the trial is run, these conditions are effectively merged.
 
 .. note::
+
    This merging is implemented with the standard-library object |collections.ChainMap|.
    A |ChainMap| can be accessed just like a dictionary;
    this is the sense in which it is correct to say that the conditions are merged.

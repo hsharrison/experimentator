@@ -114,7 +114,7 @@ pygments_style = 'sphinx'
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'nature'
+# html_theme = 'nature'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -318,6 +318,8 @@ rst_epilog = """
 .. |Experiment.basic| replace:: :meth:`Experiment.basic <experimentator.experiment.Experiment.basic>`
 
 .. |ExperimentSection.add_data| replace:: :meth:`ExperimentSection.add_data <experimentator.section.ExperimentSection.add_data>`
+.. |ExperimentSection.append_child| replace:: :meth:`ExperimentSection.append_child <experimentator.section.ExperimentSection.append_child>`
+.. |ExperimentSection.append_design_tree| replace:: :meth:`ExperimentSection.append_design_tree <experimentator.section.ExperimentSection.append_design_tree>`
 .. |ExperimentSection.subsection| replace:: :meth:`ExperimentSection.subsection <experimentator.section.ExperimentSection.subsection>`
 .. |ExperimentSection.data| replace:: :attr:`ExperimentSection.data <experimentator.section.ExperimentSection.data>`
 .. |data| replace:: :attr:`data <experimentator.section.ExperimentSection.data>`

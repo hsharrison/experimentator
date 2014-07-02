@@ -7,6 +7,10 @@ experimentator: Python experiment builder
 .. image:: https://coveralls.io/repos/hsharrison/experimentator/badge.png?branch=master
   :target: https://coveralls.io/r/hsharrison/experimentator?branch=master
 
+* `Documentation contents <http://experimentator.readthedocs.org/index.html#contents>`_
+* `Git repository <https://github.com/hsharrison/experimentator>`_
+* `Mercurial repository <https://bitbucket.org/hharrison/experimentator>`_
+
 Do you write code to run experiments?
 If so, you've probably had the experience of sitting down to code an experiment
 but getting side-tracked by all the logistics:

@@ -1,46 +1,46 @@
-experimentator package
-======================
+.. _api_reference:
 
-Submodules
-----------
+=============
+API reference
+=============
 
-experimentator.design module
-----------------------------
+Experiment
+==========
 
-.. automodule:: experimentator.design
+.. autoclass:: experimentator.Experiment
     :members:
-    :undoc-members:
     :show-inheritance:
+    :inherited-members:
 
-experimentator.experiment module
---------------------------------
+Helper functions
+================
 
-.. automodule:: experimentator.experiment
+.. autofunction:: experimentator.run_experiment_section
+
+.. autofunction:: experimentator.export_experiment_data
+
+ExperimentSection
+=================
+
+.. autoclass:: experimentator.section.ExperimentSection
+   :members:
+
+Design
+======
+
+.. autoclass:: experimentator.Design
     :members:
-    :undoc-members:
-    :show-inheritance:
 
-experimentator.order module
----------------------------
+DesignTree
+==========
+
+.. autoclass:: experimentator.DesignTree
+    :members:
+
+
+experimentator.order
+====================
 
 .. automodule:: experimentator.order
     :members:
-    :undoc-members:
-    :show-inheritance:
-
-experimentator.section module
------------------------------
-
-.. automodule:: experimentator.section
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-
-Module contents
----------------
-
-.. automodule:: experimentator
-    :members:
-    :undoc-members:
     :show-inheritance:

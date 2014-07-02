@@ -68,8 +68,10 @@ class Design:
     heterogeneous_design_iv_name : str
         The IV name that triggers a heterogeneous (i.e., branching) tree structure when it is encountered.
         ``'design'`` by default.
-    is_heterogeneous
-    branches
+    is_heterogeneous : bool
+        True if this |Design| is the lowest level before the tree structure diverges.
+    branches : dict
+        The IV values corresponding to named heterogeneous branches in the tree structure following this |Design|.
 
     See Also
     --------
@@ -309,19 +311,10 @@ class Design:
 
     @property
     def is_heterogeneous(self):
-        """
-        True if this |Design| is the lowest level before the tree structure diverges.
-
-        """
         return self.heterogeneous_design_iv_name in self.iv_names
 
     @property
     def branches(self):
-        """
-        The IV names corresponding to named heterogeneous branches
-        in the tree structure following this |Design|.
-
-        """
         return dict(zip(self.iv_names, self.iv_values)).get(self.heterogeneous_design_iv_name, ())
 
 
