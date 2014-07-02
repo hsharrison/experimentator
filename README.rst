@@ -174,6 +174,15 @@ For example, to install dependencies to a clean environment (with name ``experim
     conda install numpy pandas pyyaml
     pip install docopt schema
 
+From PyPi
+---------
+
+To install (and upgrade) experimentator::
+
+    pip install --upgrade experimentator
+
+Be sure to run ``pip`` from a Python 3 environment.
+
 From source (development version)
 ---------------------------------
 
