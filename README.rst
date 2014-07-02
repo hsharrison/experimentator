@@ -193,7 +193,7 @@ From the latter::
 
     hg clone https://bitbucket.org/hharrison/experimentator
     cd experimentator
-    pip install .
+    pip install -e . --upgrade
 
 Other libraries
 ===============
