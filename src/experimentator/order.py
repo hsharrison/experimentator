@@ -12,7 +12,7 @@ the order in one section is independent of the order in another.
 However, if one wants to ensure, for example, that possible block orders are evenly distributed among participants
 (a |counterbalanced design|),
 the block orders within each participants are not independent.
-Each participate can decide its order of blocks only in the context of the other participants' block orders.
+Each participant can decide its order of blocks only in the context of the other participants' block orders.
 This means that the *parent* section must handle orderings
 (in the example of counterbalanced blocks,
 the |Experiment.base_section|--the experiment itself, essentially--must tell each participant what block order to use).
@@ -407,7 +407,7 @@ class LatinSquare(NonAtomicOrdering):
     -----
     The algorithm for computing unbalanced Latin squares is not very efficient.
     It is not recommended to construct unbalanced, uniform Latin squares of order above 5;
-    for non-uniform, unbalanced Latin squares it is safe to go up to an order of 10
+    for non-uniform, unbalanced Latin squares it is safe to go up to an order of 10.
     Higher than that, computation times increase rapidly.
 
     The algorithm for computing balanced Latin squares is fast only because it is not robust;
