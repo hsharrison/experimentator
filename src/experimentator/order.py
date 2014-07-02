@@ -26,7 +26,7 @@ from math import factorial
 
 logger = logging.getLogger(__name__)
 
-IndependentVariable = namedtuple('IndependentValue', ('name', 'values'))
+IndependentVariable = namedtuple('IndependentVariable', ('name', 'values'))
 
 
 class Ordering():
