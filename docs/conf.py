@@ -13,7 +13,35 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
+# Mock imports
+# https://read-the-docs.readthedocs.org/en/latest/faq.html
 import sys
+
+
+class Mock:
+    __all__ = []
+
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def __call__(self, *args, **kwargs):
+        return Mock()
+
+    @classmethod
+    def __getattr__(cls, name):
+        if name in ('__file__', '__path__'):
+            return '/dev/null'
+        elif name[0] == name[0].upper():
+            mockType = type(name, (), {})
+            mockType.__module__ = __name__
+            return mockType
+        else:
+            return Mock()
+
+MOCK_MODULES = ['numpy', 'pandas']
+for mod_name in MOCK_MODULES:
+    sys.modules[mod_name] = Mock()
+
 import os
 import re
 from datetime import date
@@ -284,36 +312,6 @@ intersphinx_mapping = {
     'numpy': ('http://docs.scipy.org/doc/numpy/', None),
     'pandas': ('http://pandas.pydata.org/pandas-docs/stable', None),
 }
-
-
-# Mock imports
-# https://read-the-docs.readthedocs.org/en/latest/faq.html
-import sys
-
-
-class Mock:
-    __all__ = []
-
-    def __init__(self, *args, **kwargs):
-        pass
-
-    def __call__(self, *args, **kwargs):
-        return Mock()
-
-    @classmethod
-    def __getattr__(cls, name):
-        if name in ('__file__', '__path__'):
-            return '/dev/null'
-        elif name[0] == name[0].upper():
-            mockType = type(name, (), {})
-            mockType.__module__ = __name__
-            return mockType
-        else:
-            return Mock()
-
-MOCK_MODULES = ['numpy', 'pandas']
-for mod_name in MOCK_MODULES:
-    sys.modules[mod_name] = Mock()
 
 rst_epilog = """
 .. |IV docs| replace:: :ref:`IV docs <IVs>`
