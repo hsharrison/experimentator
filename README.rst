@@ -3,9 +3,9 @@ experimentator: Python experiment builder
 =========================================
 
 .. image:: https://travis-ci.org/hsharrison/experimentator.png?branch=master
-    :target: https://travis-ci.org/hsharrison/experimentator
+   :target: https://travis-ci.org/hsharrison/experimentator
 .. image:: https://coveralls.io/repos/hsharrison/experimentator/badge.png?branch=master
-  :target: https://coveralls.io/r/hsharrison/experimentator?branch=master
+   :target: https://coveralls.io/r/hsharrison/experimentator?branch=master
 
 * `Documentation contents <http://experimentator.readthedocs.org/index.html#contents>`_
 * `Git repository <https://github.com/hsharrison/experimentator>`_
@@ -146,8 +146,8 @@ Dependencies
 Experimentator requires Python 3.3 or later.
 It also depends on the following Python libraries:
 
-- `numpy <http://www.numpy.org/>`_
-- `pandas <http://pandas.pydata.org/>`_
+- `numpy`_
+- `pandas`_
 - `docopt <http://docopt.org/>`_
 - `schema <https://github.com/halst/schema>`_
 - `PyYAML <http://pyyaml.org/wiki/PyYAML>`_
@@ -247,9 +247,9 @@ but they're included here for completeness:
     - `PyGTK <http://www.pygtk.org/>`_:
       Python bindings for GTK+.
 - *statistics and data processing*
-    - `pandas <http://pandas.pydata.org/>`_:
+    - `pandas`_:
       Convenient data structures. Experimental data in experimentator is stored in a pandas ``DataFrame``.
-    - `NumPy <http://www.numpy.org/>`_:
+    - `numpy`_:
       Matrix operations. The core of the Python scientific computing stack.
     - `SciPy <http://docs.scipy.org/doc/scipy/reference/>`_:
       A comprehensive scientific computing library spanning many domains.
@@ -267,3 +267,6 @@ License
 
 .. include:: ../LICENSE.rst
     :start-after: The MIT License (MIT)
+
+.. _numpy: http://www.numpy.org
+.. _pandas: http://pandas.pydata.org
