@@ -265,8 +265,5 @@ License
 
 *Licensed under the MIT license.*
 
-.. include:: ../LICENSE.rst
-    :start-after: The MIT License (MIT)
-
 .. _numpy: http://www.numpy.org
 .. _pandas: http://pandas.pydata.org
