@@ -2,10 +2,26 @@
 experimentator: Python experiment builder
 =========================================
 
+.. image:: https://pypip.in/license/experimentator/badge.png
+    :target: https://pypi.python.org/pypi/experimentator/
+    :alt: License
+
+.. image:: https://pypip.in/download/experimentator/badge.png
+    :target: https://pypi.python.org/pypi/experimentator/
+    :alt: Downloads
+
+.. image:: https://pypip.in/version/experimentator/badge.png
+    :target: https://pypi.python.org/pypi/experimentator/
+    :alt: Latest Version
+
+
 .. image:: https://travis-ci.org/hsharrison/experimentator.png?branch=master
-   :target: https://travis-ci.org/hsharrison/experimentator
+    :target: https://travis-ci.org/hsharrison/experimentator
+    :alt: Tests
+
 .. image:: https://coveralls.io/repos/hsharrison/experimentator/badge.png?branch=master
-   :target: https://coveralls.io/r/hsharrison/experimentator?branch=master
+    :target: https://coveralls.io/r/hsharrison/experimentator?branch=master
+    :alt: Coverage
 
 * `Documentation contents <http://experimentator.readthedocs.org/en/latest/#contents>`_
 * `Git repository <https://github.com/hsharrison/experimentator>`_
