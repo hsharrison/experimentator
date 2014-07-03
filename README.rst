@@ -148,6 +148,14 @@ and two data columns with labels ``'reaction_time'`` and ``'correct'``
 Installation
 ============
 
+.. note::
+
+    If you use experimentator in your work, published or not,
+    please `let me know <mailto:henry.schafer.harrison@gmail.com>`_.
+    I'm not going to ask you to cite something :sub:`(yet)`, but I would be grateful to hear about your experience,
+    positive or negative, even just to know that someone else out there has found this useful.
+    Thanks!
+
 Dependencies
 ------------
 
