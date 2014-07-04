@@ -11,3 +11,6 @@ install:
 
 script:
   - travis_wait tox -e $TOX_ENV
+
+after_success:
+  - coveralls
