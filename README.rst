@@ -2,30 +2,39 @@
 experimentator: Python experiment builder
 =========================================
 
-.. image:: https://pypip.in/license/experimentator/badge.png
-    :target: https://pypi.python.org/pypi/experimentator/
-    :alt: License
++--------------------+-------------------+---------------+
+| | |travis-badge|   | | |version-badge| | | |git-badge| |
+| | |coverage-badge| | | |license-badge| | | |hg-badge|  |
++--------------------+-------------------+---------------+
 
-.. image:: https://pypip.in/download/experimentator/badge.png
-    :target: https://pypi.python.org/pypi/experimentator/
-    :alt: Downloads
-
-.. image:: https://pypip.in/version/experimentator/badge.png
-    :target: https://pypi.python.org/pypi/experimentator/
-    :alt: Latest Version
-
-
-.. image:: https://travis-ci.org/hsharrison/experimentator.png?branch=master
+.. |travis-badge| image:: http://img.shields.io/travis/hsharrison/experimentator.png?style=flat
+    :alt: Travis-CI Build Status
     :target: https://travis-ci.org/hsharrison/experimentator
-    :alt: Tests
 
-.. image:: https://coveralls.io/repos/hsharrison/experimentator/badge.png?branch=master
-    :target: https://coveralls.io/r/hsharrison/experimentator?branch=master
-    :alt: Coverage
+.. |coverage-badge| image:: http://img.shields.io/coveralls/hsharrison/experimentatorsys.png?style=flat
+    :alt: Coverage Status
+    :target: https://coveralls.io/r/hsharrison/experimentator
 
-* `Documentation contents <http://experimentator.readthedocs.org/en/latest/#contents>`_
-* `Git repository <https://github.com/hsharrison/experimentator>`_
-* `Mercurial repository <https://bitbucket.org/hharrison/experimentator>`_
+.. |version-badge| image:: http://img.shields.io/pypi/v/experimentator.png?style=flat
+    :alt: PyPi Package
+    :target: https://pypi.python.org/pypi/experimentator
+
+.. |license-badge| image:: http://img.shields.io/badge/license-MIT-blue.png?style=flat
+    :alt: License
+    :target: https://pypi.python.org/pypi/experimentator
+
+.. |git-badge| image:: http://img.shields.io/badge/repo-git-lightgrey.png?style=flat
+    :alt: Git Repository
+    :target: https://github.com/hsharrison/experimentator
+
+.. |hg-badge| image:: http://img.shields.io/badge/repo-hg-lightgrey.png?style=flat
+    :alt: Mercurial Repository
+    :target: https://bitbucket.org/hharrison/experimentator
+
+`Documentation contents`_
+
+.. _Documentation contents: http://experimentator.readthedocs.org/en/latest/#contents
+
 
 Do you write code to run experiments?
 If so, you've probably had the experience of sitting down to code an experiment
