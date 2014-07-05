@@ -11,7 +11,7 @@ experimentator: Python experiment builder
     :alt: Travis-CI Build Status
     :target: https://travis-ci.org/hsharrison/experimentator
 
-.. |coverage-badge| image:: http://img.shields.io/coveralls/hsharrison/experimentatorsys.png?style=flat
+.. |coverage-badge| image:: http://img.shields.io/coveralls/hsharrison/experimentator.png?style=flat
     :alt: Coverage Status
     :target: https://coveralls.io/r/hsharrison/experimentator
 
