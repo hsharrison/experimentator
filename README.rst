@@ -88,7 +88,9 @@ for a specified amount of time,
 and ask the participant to identify it.
 We'll use a factorial 2 (side) x 3 (display time) design,
 and have a total of 60 trials per participant (10 per condition).
-Here's how it might look in experimentator::
+Here's how it might look in experimentator:
+
+.. code-block:: python
 
     import random
     from time import time
@@ -142,7 +144,9 @@ Eventually, we can export the data to a text file::
 
     exp export exp_1.dat exp_1_data.csv
 
-Or, access the data in a Python session::
+Or, access the data in a Python session:
+
+.. code-block:: python
 
     from experimentator import Experiment
 
