@@ -66,6 +66,7 @@ Given an |Experiment| object, any section can be found by direct indexing:
    experiment[1]        # first participant
    experiment[1][2]     # second block of first participant
    experiment[1][2][2]  # second trial of second block of first participant
+   experiment[1, 2, 2]  # same as previous
 
 Alternatively, the :meth:`~experimentator.section.ExperimentSection.subsection` method can be used.
 The following finds the same sections as the previous example:

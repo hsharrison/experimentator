@@ -192,3 +192,8 @@ def test_walk():
         all_sections.extend(block)
 
     assert all_sections == list(session.walk())
+
+
+def test_tuple_indexing():
+    session = ExperimentSection(make_tree(['session', 'block', 'trial'], {}), ChainMap())
+    assert session[1, 2] is session[1][2]

@@ -499,6 +499,11 @@ class ExperimentSection():
                 return slice(self._convert_index(item.start), self._convert_index(item.stop), item.step)
             except IndexError:
                 raise IndexError('Use 1-based indexing with ExperimentSection instances')
+
+        # Tuples will be converted when they come through as individual indices.
+        elif isinstance(item, tuple):
+            return item
+
         else:
             return self._convert_index(item)
 
@@ -523,6 +528,13 @@ class ExperimentSection():
 
         if isinstance(item, slice):
             return list(itertools.islice(self._children, *item.indices(len(self))))
+
+        elif isinstance(item, tuple):
+            section = self
+            for idx in item:
+                section = section[idx]
+            return section
+
         else:
             return self._children[item]
 
