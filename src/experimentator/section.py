@@ -494,14 +494,13 @@ class ExperimentSection():
         Change an indexing object (slice or int) from using 1-based indexing to using 0-based indexing.
 
         """
-        try:
-            if isinstance(item, slice):
+        if isinstance(item, slice):
+            try:
                 return slice(self._convert_index(item.start), self._convert_index(item.stop), item.step)
-            else:
-                return self._convert_index(item)
-
-        except IndexError:
-            raise IndexError('Use 1-based indexing with ExperimentSection instances')
+            except IndexError:
+                raise IndexError('Use 1-based indexing with ExperimentSection instances')
+        else:
+            return self._convert_index(item)
 
     @staticmethod
     def _convert_index(idx):
