@@ -45,6 +45,8 @@ class ExperimentSection():
     ----------
     tree : |DesignTree|
     data : |ChainMap|
+    description : str
+        The name and number of the section (e.g., ``'trial 3'``).
     dataframe : |DataFrame|
         All data associated with the |ExperimentSection| and its descendants.
     heterogeneous_design_iv_name : str
@@ -107,6 +109,14 @@ class ExperimentSection():
     @property
     def local_levels(self):
         return {child.level for child in self}
+
+    @property
+    def description(self):
+        try:
+            n = ' {}'.format(self.data[self.level])
+        except KeyError:
+            n = ''
+        return '{}{}'.format(self.level, n)
 
     def __repr__(self):
         return 'ExperimentSection({}, {})'.format(self.tree.__repr__(), self.data.__repr__())

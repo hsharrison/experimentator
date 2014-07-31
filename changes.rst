@@ -1,6 +1,11 @@
 Changes
 =======
 
+0.2.4 (07/31/2014)
+------------------
+
+- Add |ExperimentSection.description| property.
+
 0.2.3 (07/21/2014)
 ------------------
 
@@ -17,3 +22,6 @@ Changes
 ------------------
 
 - Minor documentation improvements.
+
+
+.. |ExperimentSection.description| replace:: :attr:`ExperimentSection.property <experimentator.ExperimentSection.description>`
