@@ -472,14 +472,7 @@ class Experiment(ExperimentSection):
         """
         logger.debug('Running {}.'.format(section.description))
 
-        if isinstance(from_section, int):
-            from_section = [from_section]
-        if from_section is None:
-            from_section = [1]
-        if len(from_section) > 1:
-            next_from_section = from_section[1:]
-        else:
-            next_from_section = [1]
+        from_section, next_from_section = self._parse_from_section(from_section)
 
         # Handle parent callbacks and set parent has_started to True.
         with self._parent_context(section, parent_callbacks=parent_callbacks):
@@ -499,8 +492,10 @@ class Experiment(ExperimentSection):
 
                 else:  # Not bottom level.
                     for next_section in section[from_section[0]:]:
-                        self.run_section(
-                            next_section, demo=demo, parent_callbacks=False, from_section=next_from_section)
+                        self.run_section(next_section,
+                                         demo=demo,
+                                         parent_callbacks=False,
+                                         from_section=next_from_section)
 
             if not demo:
                 section.has_finished = True
@@ -513,6 +508,18 @@ class Experiment(ExperimentSection):
             for parent in reversed(list(self.parents(section))):
                 if all(child.has_finished for child in parent):
                     parent.has_finished = True
+
+    @staticmethod
+    def _parse_from_section(from_section):
+        if isinstance(from_section, int):
+            from_section = [from_section]
+        if from_section is None:
+            from_section = [1]
+        if len(from_section) > 1:
+            next_from_section = from_section[1:]
+        else:
+            next_from_section = [1]
+        return from_section, next_from_section
 
     @contextmanager
     def _parent_context(self, section, parent_callbacks=True):
