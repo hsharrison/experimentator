@@ -475,7 +475,7 @@ class Experiment(ExperimentSection):
         from_section, next_from_section = self._parse_from_section(from_section)
 
         # Handle parent callbacks and set parent has_started to True.
-        with self._parent_context(section, parent_callbacks=parent_callbacks):
+        with self._parent_context(section, parent_callbacks=parent_callbacks, demo=demo):
 
             # Back to the regular behavior.
             with self.context_managers.get(
@@ -522,10 +522,11 @@ class Experiment(ExperimentSection):
         return from_section, next_from_section
 
     @contextmanager
-    def _parent_context(self, section, parent_callbacks=True):
+    def _parent_context(self, section, parent_callbacks=True, demo=False):
         with ExitStack() as stack:
             for parent in self.parents(section):
-                parent.has_started = True
+                if not demo:
+                    parent.has_started = True
                 if parent_callbacks:
                     logger.debug('Entering {} context.'.format(parent.description))
                     self.session_data[parent.level] = stack.enter_context(

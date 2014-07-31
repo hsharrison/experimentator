@@ -6,6 +6,7 @@ Changes
 
 - Add |ExperimentSection.description| property.
 - Reduce number of debug messages when running sections.
+- Fix bug where parent sections would be marked as having started after running demo trials.
 
 0.2.3 (07/21/2014)
 ------------------

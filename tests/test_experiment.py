@@ -418,3 +418,9 @@ def test_doc_yaml():
     assert len(second_experimental_section) == 2
     assert second_experimental_section[1].level == 'block'
     assert len(second_experimental_section[1]) == len(second_experimental_section[2]) == 30
+
+
+def test_demo_parent_has_started():
+    experiment = Experiment.from_yaml_file('tests/test.yml')
+    experiment.run_section(experiment[1][2], demo=True)
+    assert not experiment.has_started
