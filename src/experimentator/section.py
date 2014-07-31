@@ -120,7 +120,12 @@ class ExperimentSection():
 
     def __eq__(self, other):
         if isinstance(other, type(self)):
-            return self.__dict__ == other.__dict__
+            # Workaround pandas issue
+            # https://github.com/pydata/pandas/issues/7830
+            try:
+                return self.__dict__ == other.__dict__
+            except ValueError:
+                return False
 
     def get_next_tree(self):
         """

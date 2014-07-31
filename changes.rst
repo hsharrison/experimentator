@@ -7,6 +7,7 @@ Changes
 - Add |ExperimentSection.description| property.
 - Reduce number of debug messages when running sections.
 - Fix bug where parent sections would be marked as having started after running demo trials.
+- Workaround for pandas bug (issue 7380) where comparing two different DataFrames would raise an exception instead of returning ``False``.
 
 0.2.3 (07/21/2014)
 ------------------

@@ -204,3 +204,16 @@ def test_description():
     assert block.description == 'block'
     for i, trial in enumerate(block):
         assert trial.description == 'trial {}'.format(i + 1)
+
+
+def test_section_equality_bug():
+    """Exception raised on testing section equality (while running __contains__),
+    when Section.data attributes contain DataFrames with different shapes.
+
+    """
+    blocks = [ExperimentSection(make_tree(['block', 'trial'], {}), ChainMap())
+              for _ in range(2)]
+    assert blocks[0] == blocks[1]
+    blocks[0].data['df'] = pd.DataFrame([[1, 2], [3, 4]])
+    blocks[1].data['df'] = pd.DataFrame([[1, 2], [3, 4], [5, 6]])
+    assert blocks[0] != blocks[1]
