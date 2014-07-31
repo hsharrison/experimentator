@@ -5,6 +5,7 @@ Changes
 ------------------
 
 - Add |ExperimentSection.description| property.
+- Reduce number of debug messages when running sections.
 
 0.2.3 (07/21/2014)
 ------------------

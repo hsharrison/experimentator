@@ -2,11 +2,8 @@
 This module contains the |ExperimentSection| class, which is imported in `__init__.py`.
 
 """
-import logging
 import collections
 import itertools
-
-logger = logging.getLogger(__name__)
 
 
 class ExperimentSection():
@@ -207,9 +204,7 @@ class ExperimentSection():
 
         child_data = self.data.new_child()
         child_data.update(data)
-        level = tree.levels_and_designs[0].name
 
-        logger.debug('Generating {} with data {}.'.format(level, child_data))
         child = ExperimentSection(tree, child_data)
         if to_start:
             self._children.appendleft(child)
