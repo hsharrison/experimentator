@@ -518,3 +518,10 @@ def test_simple_design_tree_spec():
     participant = next(tree)
     yield check_length, participant, 1
     yield check_equality, participant.levels_and_designs[0][0], None
+
+
+def test_bizarre_equality():
+    design = Design()
+    assert (design == 1) is False
+    tree = DesignTree([('a', design)])
+    assert (tree == 1) is False

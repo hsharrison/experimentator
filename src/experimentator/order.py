@@ -128,6 +128,7 @@ class Ordering():
     def __eq__(self, other):
         if isinstance(other, type(self)):
             return self.__dict__ == other.__dict__
+        return False
 
 
 class Shuffle(Ordering):

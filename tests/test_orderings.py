@@ -175,3 +175,7 @@ def check_repr(obj):
 def test_reprs():
     for ord in (CompleteCounterbalance(), Shuffle(), LatinSquare(), Ordering(), Sorted()):
         yield check_repr, ord
+
+
+def test_bizarre_inequality():
+    assert (Shuffle() == 1) is False
