@@ -126,6 +126,7 @@ class ExperimentSection():
                 return self.__dict__ == other.__dict__
             except ValueError:
                 return False
+        return False
 
     def get_next_tree(self):
         """

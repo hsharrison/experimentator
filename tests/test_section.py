@@ -217,3 +217,8 @@ def test_section_equality_bug():
     blocks[0].data['df'] = pd.DataFrame([[1, 2], [3, 4]])
     blocks[1].data['df'] = pd.DataFrame([[1, 2], [3, 4], [5, 6]])
     assert blocks[0] != blocks[1]
+
+
+def test_bizarre_equality():
+    block = ExperimentSection(make_tree(['block', 'trial'], {}), ChainMap())
+    assert (block == 1) is False

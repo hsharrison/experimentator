@@ -187,6 +187,7 @@ class Design:
     def __eq__(self, other):
         if isinstance(other, type(self)):
             return self.__dict__ == other.__dict__
+        return False
 
     def get_order(self, data=None):
         """Order the conditions.
@@ -460,6 +461,7 @@ class DesignTree:
     def __eq__(self, other):
         if isinstance(other, type(self)):
             return self.__dict__ == other.__dict__
+        return False
 
     @staticmethod
     def first_pass(levels_and_designs):
