@@ -482,13 +482,7 @@ class Experiment(ExperimentSection):
             next_from_section = [1]
 
         # Handle parent callbacks and set parent has_started to True.
-        with ExitStack() as stack:
-            for parent in self.parents(section):
-                parent.has_started = True
-                if parent_callbacks:
-                    logger.debug('Entering {} context.'.format(parent.description))
-                    self.session_data[parent.level] = stack.enter_context(
-                        self.context_managers.get(parent.level, _dummy_context_manager)(self, parent))
+        with self._parent_context(section, parent_callbacks=parent_callbacks):
 
             # Back to the regular behavior.
             with self.context_managers.get(
@@ -519,6 +513,17 @@ class Experiment(ExperimentSection):
             for parent in reversed(list(self.parents(section))):
                 if all(child.has_finished for child in parent):
                     parent.has_finished = True
+
+    @contextmanager
+    def _parent_context(self, section, parent_callbacks=True):
+        with ExitStack() as stack:
+            for parent in self.parents(section):
+                parent.has_started = True
+                if parent_callbacks:
+                    logger.debug('Entering {} context.'.format(parent.description))
+                    self.session_data[parent.level] = stack.enter_context(
+                        self.context_managers.get(parent.level, _dummy_context_manager)(self, parent))
+            yield
 
     def resume_section(self, section, **kwargs):
         """Rerun a section that has been started but not finished, starting where running last left off.
