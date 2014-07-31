@@ -470,7 +470,7 @@ class Experiment(ExperimentSection):
         The wrapper function :func:`run_experiment_section` should be used instead of this method, if possible.
 
         """
-        logger.debug('Running {} with data {}.'.format(section.level, section.data))
+        logger.debug('Running {}.'.format(section.description))
 
         if isinstance(from_section, int):
             from_section = [from_section]
@@ -483,12 +483,10 @@ class Experiment(ExperimentSection):
 
         # Handle parent callbacks and set parent has_started to True.
         with ExitStack() as stack:
-            if parent_callbacks:
-                logger.debug('Entering all parent levels...')
             for parent in self.parents(section):
                 parent.has_started = True
                 if parent_callbacks:
-                    logger.debug('Entering {} with data {}...'.format(parent.level, parent.data))
+                    logger.debug('Entering {} context.'.format(parent.description))
                     self.session_data[parent.level] = stack.enter_context(
                         self.context_managers.get(parent.level, _dummy_context_manager)(self, parent))
 
@@ -501,7 +499,6 @@ class Experiment(ExperimentSection):
 
                 if section.is_bottom_level:
                     results = self.run_callback(self, section)
-                    logger.debug('Results: {}.'.format(results))
 
                     if not demo:
                         section.add_data(results)
