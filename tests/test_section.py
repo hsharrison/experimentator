@@ -197,3 +197,10 @@ def test_walk():
 def test_tuple_indexing():
     session = ExperimentSection(make_tree(['session', 'block', 'trial'], {}), ChainMap())
     assert session[1, 2] is session[1][2]
+
+
+def test_description():
+    block = ExperimentSection(make_tree(['block', 'trial'], {}), ChainMap())
+    assert block.description == 'block'
+    for i, trial in enumerate(block):
+        assert trial.description == 'trial {}'.format(i + 1)
