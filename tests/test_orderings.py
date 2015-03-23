@@ -56,6 +56,13 @@ def test_ordering():
             yield check_ordering, o, len(conditions)
 
 
+def test_ordering_generator_condition():
+    n = 3
+    o = Ordering(n)
+    o.first_pass(c for c in CONDITIONS_3)
+    yield check_ordering, o, len(CONDITIONS_3)
+
+
 def check_shuffle(o, n_conditions):
     assert len(o.get_order()) == n_conditions * o.number
     # It is technically possible to get the same order twice. But for three to be equal? Very unlikely.
@@ -78,6 +85,18 @@ def test_shuffle():
             o.first_pass(conditions)
             yield check_shuffle, o, len(conditions)
             yield check_repeats, o.get_order()
+
+
+def test_shuffle_generator_condition():
+    n = 3
+    o = Shuffle(number=n)
+    o.first_pass(c for c in CONDITIONS_3)
+    yield check_shuffle, o, len(CONDITIONS_3)
+
+    o = Shuffle(n, avoid_repeats=True)
+    o.first_pass(c for c in CONDITIONS_3)
+    yield check_shuffle, o, len(CONDITIONS_3)
+    yield check_repeats, o.get_order()
 
 
 def check_unique(o, iv_values):
@@ -108,6 +127,14 @@ def test_counterbalance():
     yield check_counterbalance_number, o, len(CONDITIONS_WITH_REPEAT), iv_values, 2
 
 
+def test_counterbalance_generator_condition():
+    n = 2
+    o = CompleteCounterbalance(n)
+    _, iv_values = o.first_pass(c for c in CONDITIONS_3)
+    yield check_unique, o, iv_values
+    yield check_counterbalance_number, o, len(CONDITIONS_3), iv_values, 1
+
+
 def check_sorted(o, n_conditions):
     assert len(o.get_order({o.iv_name: 'ascending'})) == n_conditions * o.number
     if o.order == 'both':
@@ -135,6 +162,14 @@ def test_sorted():
             o.first_pass(conditions)
 
 
+def test_sorted_generator_condition():
+    n = 2
+    for sort in ('both', 'ascending', 'descending'):
+        o = Sorted(n, order=sort)
+        o.first_pass(c for c in CONDITIONS_3)
+        yield check_sorted, o, len(CONDITIONS_3)
+
+
 def check_latin_square_row(row):
     assert not any(first == second for first, second in zip(row[:-1], row[1:]))
 
@@ -156,6 +191,16 @@ def test_latin_square():
                         yield check_unique, o, iv_values
                         for iv_value in iv_values:
                             yield check_latin_square_row, o.get_order({iv_name: iv_value})
+
+
+def test_latin_square_generator_condition():
+    uniform = False
+    balanced = False
+    o = LatinSquare(balanced=balanced, uniform=uniform)
+    iv_name, iv_values = o.first_pass(c for c in CONDITIONS_3)
+    yield check_unique, o, iv_values
+    for iv_value in iv_values:
+        yield check_latin_square_row, o.get_order({iv_name: iv_value})
 
 
 def test_latin_square_repeat():
