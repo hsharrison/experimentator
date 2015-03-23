@@ -1,6 +1,10 @@
 Changes
 =======
 
+0.2.5 (05/23/2015)
+------------------
+- Fix bug that occurred when using |Sorted| caused by conditions being a generator object.
+
 0.2.4 (07/31/2014)
 ------------------
 
@@ -27,5 +31,5 @@ Changes
 
 - Minor documentation improvements.
 
-
 .. |ExperimentSection.description| replace:: :attr:`ExperimentSection.property <experimentator.ExperimentSection.description>`
+.. |Sorted| replace:: :class:`Sorted <experimentator.order.Sorted>`
