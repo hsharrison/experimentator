@@ -340,10 +340,9 @@ class Sorted(NonAtomicOrdering):
             Otherwise, empty tuple.
 
         """
-        if len(conditions[0]) > 1:
-            raise ValueError("Ordering method 'Sorted' only works with one IV")
-
         self.all_conditions = self.number * list(conditions)
+        if len(self.all_conditions[0]) > 1:
+            raise ValueError("Ordering method 'Sorted' only works with one IV")
         self.order_ivs = {'ascending': sorted(self.all_conditions,
                                               key=lambda condition: list(condition.values())[0]),
                           'descending': sorted(self.all_conditions,
