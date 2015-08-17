@@ -56,7 +56,7 @@ class ExperimentSection():
         Level names of this section's children. Usually a single-element set.
     is_bottom_level : bool
         If true, this is the lowest level of the hierarchy.
-    has_start : bool
+    has_started: bool
         Whether this section has started to be run.
     has_finished : bool
         Whether this section has finished running.
