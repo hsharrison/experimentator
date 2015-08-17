@@ -72,8 +72,6 @@ class ExperimentSection():
     def __init__(self, tree, data):
         self.data = data
         self.tree = tree
-        self.level = self.tree[0].name
-        self.is_bottom_level = len(self.tree) == 1
 
         self._children = collections.deque()
         self.has_started = False
@@ -83,6 +81,14 @@ class ExperimentSection():
             # Create the section tree. Creating any section also creates the sections below it.
             self.append_design_tree(self.get_next_tree(), _renumber=False)
             self._number_children()
+
+    @property
+    def level(self):
+        return self.tree[0].name
+
+    @property
+    def is_bottom_level(self):
+        return len(self.tree) == 1
 
     @property
     def heterogeneous_design_iv_name(self):
