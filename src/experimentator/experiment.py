@@ -136,12 +136,15 @@ class Experiment(ExperimentSection):
     Functionality added on top of |ExperimentSection| includes
     various constructors, saving to disk, and management of |callbacks|.
 
-    Parameters
-    ----------
-    tree : |DesignTree|
-        A |DesignTree| instance defining the experiment hierarchy.
-    filename : str, optional
-        A file location where the |Experiment| will be saved.
+    To create a new experiment, rather than instantiating directly
+    it is recommended to use one of the constructor methods:
+
+        - |Experiment.new|
+        - |Experiment.from_dict|
+        - |Experiment.from_yaml_file|
+        - |Experiment.within_subjects|
+        - |Experiment.blocked|
+        - |Experiment.basic|
 
     Attributes
     ----------
@@ -192,6 +195,16 @@ class Experiment(ExperimentSection):
 
     @classmethod
     def new(cls, tree, filename=None):
+        """Make a new |Experiment|.
+
+        Parameters
+        ----------
+        tree : |DesignTree|
+            A |DesignTree| instance defining the experiment hierarchy.
+        filename : str, optional
+            A file location where the |Experiment| will be saved.
+
+        """
         tree.add_base_level()
         self = super(Experiment, cls).new(tree)
         self.filename = filename
@@ -300,7 +313,7 @@ class Experiment(ExperimentSection):
         levels_and_designs = [('participant', [Design(ordering=order.Shuffle(n_participants))]),
                               ('trial', [Design(ivs=ivs, design_matrix=design_matrix, ordering=ordering)])]
 
-        return cls.new(DesignTree(levels_and_designs), filename=filename)
+        return cls.new(DesignTree.new(levels_and_designs), filename=filename)
 
     @classmethod
     def blocked(cls, trial_ivs, n_participants, design_matrices=None, orderings=None, block_ivs=None, filename=None):
@@ -358,7 +371,7 @@ class Experiment(ExperimentSection):
                                                 design_matrix=design_matrices.get('trial'),
                                                 ordering=orderings.get('trial'))])]
 
-        return cls.new(DesignTree(levels_and_designs), filename=filename)
+        return cls.new(DesignTree.new(levels_and_designs), filename=filename)
 
     @classmethod
     def basic(cls, levels, ivs_by_level, design_matrices_by_level=None, ordering_by_level=None, filename=None):
@@ -405,7 +418,7 @@ class Experiment(ExperimentSection):
                                        ordering=ordering_by_level.get(level))])
                               for level in levels]
 
-        return cls.new(DesignTree(levels_and_designs), filename=filename)
+        return cls.new(DesignTree.new(levels_and_designs), filename=filename)
 
     def save(self, filename=None):
         """Save the |Experiment| to disk.

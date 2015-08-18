@@ -15,7 +15,8 @@ The typical workflow using experimentator is relatively straightforward:
 Constructor methods
 ===================
 
-There are a number of ways to create an |Experiment|.
+The `most general <from-scratch>`_ way to create an |Experiment| is to use |Experiment.new|, but
+there are a number of other methods that may be easier for many use cases.
 
 .. _simple-constructors:
 
@@ -341,7 +342,8 @@ You can then create instantiate an |Experiment|, assuming the YAML above is stor
 Constructing an Experiment from a DesignTree
 --------------------------------------------
 
-A final option for constructing an |Experiment| is to pass a |DesignTree| directly to the constructor.
+A final option for constructing an |Experiment| is to pass a |DesignTree|
+directly to the general constructor |Experiment.new|.
 For example, the following code would create the same |Experiment| as the previous example:
 
 .. code-block:: python
@@ -359,7 +361,7 @@ For example, the following code would create the same |Experiment| as the previo
    ...              'display_time': [0.1, 0.55, 1]},
    ...          n=5),
    ... ])
-   >>> experiment = Experiment(tree, filename='mixed_experiment.dat')
+   >>> experiment = Experiment.new(tree, filename='mixed_experiment.dat')
 
 .. _constructing-heterogeneity:
 

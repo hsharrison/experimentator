@@ -24,19 +24,9 @@ class ExperimentSection:
     However, |ExperimentSection| breaks the Python convention of 0-based indexing,
     using 1-based indexing to match the convention in experimental science.
 
-    Parameters
-    ----------
-    tree : |DesignTree|
-        Describes the design of the experiment hierarchy.
-    data : |ChainMap|
-        All data to be associated with the |ExperimentSection|,
-        including the values of independent variables,
-        the section numbers indicating the section's location in the experiment,
-        and any results associated with this section,
-        arising from either the run callback of the |Experiment| or from the method |ExperimentSection.add_data|.
-        `data` should be a  |collections.ChainMap|,
-        which behaves like a dictionary but has a hierarchical organization such that
-        children can access values from the parent but not vice-versa.
+    The direct constructor is used to create an arbitrary |ExperimentSection|
+    (i.e., possibly reloading an in-progress section),
+    whereas |ExperimentSection.new| creates a section that hasn't yet started.
 
     Attributes
     ----------
@@ -79,6 +69,23 @@ class ExperimentSection:
 
     @classmethod
     def new(cls, tree, data=None):
+        """Create a new |ExperimentSection|.
+
+        Parameters
+        ----------
+        tree : |DesignTree|
+            Describes the design of the experiment hierarchy.
+        data : |ChainMap|
+            All data to be associated with the |ExperimentSection|,
+            including the values of independent variables,
+            the section numbers indicating the section's location in the experiment,
+            and any results associated with this section,
+            arising from either the run callback of the |Experiment| or from the method |ExperimentSection.add_data|.
+            `data` should be a  |collections.ChainMap|,
+            which behaves like a dictionary but has a hierarchical organization such that
+            children can access values from the parent but not vice-versa.
+
+        """
         self = cls(tree, data)
         if not self.is_bottom_level:
             # Create the section tree. Creating any section also creates the sections below it.

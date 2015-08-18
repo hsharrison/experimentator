@@ -349,17 +349,20 @@ rst_epilog = """
 .. |Experiment.within_subjects| replace:: :meth:`Experiment.within_subjects <experimentator.Experiment.within_subjects>`
 .. |Experiment.blocked| replace:: :meth:`Experiment.blocked <experimentator.Experiment.blocked>`
 .. |Experiment.basic| replace:: :meth:`Experiment.basic <experimentator.Experiment.basic>`
+.. |Experiment.new| replace:: :meth:`Experiment.new <experimentator.Experiment.new>`
 
 .. |ExperimentSection.add_data| replace:: :meth:`ExperimentSection.add_data <experimentator.section.ExperimentSection.add_data>`
 .. |ExperimentSection.append_child| replace:: :meth:`ExperimentSection.append_child <experimentator.section.ExperimentSection.append_child>`
 .. |ExperimentSection.append_design_tree| replace:: :meth:`ExperimentSection.append_design_tree <experimentator.section.ExperimentSection.append_design_tree>`
 .. |ExperimentSection.subsection| replace:: :meth:`ExperimentSection.subsection <experimentator.section.ExperimentSection.subsection>`
 .. |ExperimentSection.data| replace:: :attr:`ExperimentSection.data <experimentator.section.ExperimentSection.data>`
+.. |ExperimentSection.new| replace:: :meth:`ExperimentSection.new <experimentator.ExperimentSection.new>`
 .. |data| replace:: :attr:`data <experimentator.section.ExperimentSection.data>`
 .. |Design.first_pass| replace:: :meth:`Design.first_pass <experimentator.Design.first_pass>`
 .. |first_pass| replace:: :meth:`~experimentator.Design.first_pass`
 .. |Design.from_dict| replace:: :meth:`Design.from_dict <experimentator.Design.from_dict>`
 .. |DesignTree.from_spec| replace:: :meth:`DesignTree.from_spec <experimentator.DesignTree.from_spec>`
+.. |DesignTree.new| replace:: :meth:`DesignTree.new <experimentator.DesignTree.new>`
 .. |run_experiment_section| replace:: :func:`~experimentator.Experiment.run_experiment_section`
 .. |Ordering.number| replace:: :attr:`Ordering.number <experimentator.order.Ordering.number>`
 .. |latin_square| replace:: :func:`~experimentator.order.latin_square`

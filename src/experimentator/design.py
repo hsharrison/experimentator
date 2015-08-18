@@ -4,7 +4,6 @@ Public objects are imported in ``__init__.py``.
 
 """
 from collections.abc import Iterable
-from operator import ne
 import itertools
 import collections
 from copy import copy
@@ -304,25 +303,8 @@ class DesignTree:
     will return another |DesignTree| with the top level removed.
     In this way, the entire experimental hierarchy can be created by recursively calling ``next``.
 
-    Parameters
-    ----------
-    levels_and_designs : |OrderedDict| or list of tuple
-        This input defines the structure of the tree, and is either an |OrderedDict| or a list of 2-tuples.
-        Keys (or first element of each tuple) are level names.
-        Values (or second element of each tuple) are design specifications,
-        in the form of either a |Design| instance, or a list of |Design| instances to occur in sequence.
-
-    **other_designs
-        Named design trees, can be other |DesignTree| instances or suitable `levels_and_designs` inputs
-        (i.e., |OrderedDict| or list of tuples).
-        These designs allow for heterogeneous design structures
-        (i.e. not every section at the same level has the same |Design|).
-        To make a heterogeneous |DesignTree|,
-        use an IV named ``'design'`` at the level where the heterogeneity should occur.
-        Values of this IV should be strings,
-        each corresponding to the name of a |DesignTree| from` other_designs`.
-        The value of the IV ``'design'`` at each section
-        determines which |DesignTree| is used for children of that section.
+    Use |DesignTree.new| to create a new tree, the generic constructor is for instantiating trees
+    whose attributes have already been processed (i.e., reloading already-created trees).
 
     Attributes
     ----------
@@ -340,9 +322,36 @@ class DesignTree:
     and the values are the corresponding |DesignTree| instances.
 
     """
-    def __init__(self, levels_and_designs, **other_designs):
-        self.other_designs = other_designs
+    def __init__(self, levels_and_designs=None, other_designs=None, branches=None):
+        self.levels_and_designs = levels_and_designs or []
+        self.other_designs = other_designs or {}
+        self.branches = branches or {}
 
+    @classmethod
+    def new(cls, levels_and_designs, **other_designs):
+        """Create a new |DesignTree|.
+
+        Parameters
+        ----------
+        levels_and_designs : |OrderedDict| or list of tuple
+            This input defines the structure of the tree, and is either an |OrderedDict| or a list of 2-tuples.
+            Keys (or first element of each tuple) are level names.
+            Values (or second element of each tuple) are design specifications,
+            in the form of either a |Design| instance, or a list of |Design| instances to occur in sequence.
+
+        **other_designs
+            Named design trees, can be other |DesignTree| instances or suitable `levels_and_designs` inputs
+            (i.e., |OrderedDict| or list of tuples).
+            These designs allow for heterogeneous design structures
+            (i.e. not every section at the same level has the same |Design|).
+            To make a heterogeneous |DesignTree|,
+            use an IV named ``'design'`` at the level where the heterogeneity should occur.
+            Values of this IV should be strings,
+            each corresponding to the name of a |DesignTree| from` other_designs`.
+            The value of the IV ``'design'`` at each section
+            determines which |DesignTree| is used for children of that section.
+
+        """
         if isinstance(levels_and_designs, collections.OrderedDict):
             levels_and_designs = list(levels_and_designs.items())
 
@@ -352,24 +361,26 @@ class DesignTree:
                 levels_and_designs[i] = (level, [design])
 
         # Convert to namedtuples.
-        self.levels_and_designs = [Level(*level) for level in levels_and_designs]
+        levels_and_designs = [Level(*level) for level in levels_and_designs]
 
         # Handle heterogeneous trees.
-        bottom_level_design = self.levels_and_designs[-1].design[0]
+        bottom_level_design = levels_and_designs[-1].design[0]
         if bottom_level_design.is_heterogeneous:
-            self.branches = {name: branch for name, branch in other_designs.items()
-                             if branch in bottom_level_design.branches and isinstance(branch, DesignTree)}
+            branches = {name: branch for name, branch in other_designs.items()
+                        if branch in bottom_level_design.branches and isinstance(branch, DesignTree)}
             for branch_name in bottom_level_design.branches:
-                if branch_name not in self.branches:
+                if branch_name not in branches:
                     designs_to_pass = other_designs.copy()
                     del designs_to_pass[branch_name]
-                    tree = DesignTree(other_designs[branch_name], **designs_to_pass)
-                    self.branches[branch_name] = tree
+                    tree = DesignTree.new(other_designs[branch_name], **designs_to_pass)
+                    branches[branch_name] = tree
 
         else:
-            self.branches = {}
+            branches = {}
 
+        self = cls(levels_and_designs, other_designs, branches)
         self.first_pass(self.levels_and_designs)
+        return self
 
     @classmethod
     def from_spec(cls, spec):
@@ -400,7 +411,7 @@ class DesignTree:
             main_tree = list(cls._design_specs_to_designs(spec))
             other_trees = {}
 
-        return cls(main_tree, **other_trees)
+        return cls.new(main_tree, **other_trees)
 
     @staticmethod
     def _design_specs_to_designs(specs):
@@ -426,15 +437,6 @@ class DesignTree:
                         designs.append(name_and_design[1])
 
                 yield name, designs
-
-    def __repr__(self):
-        if self.levels_and_designs[0].name == '_base':
-            levels_and_designs = self.levels_and_designs[1:]
-        else:
-            levels_and_designs = self.levels_and_designs
-        return 'DesignTree({}{}{})'.format(
-            levels_and_designs, ', ' if self.other_designs else '',
-            ', '.join('{}={}'.format(*other_design) for other_design in self.other_designs.items()))
 
     def __next__(self):
         if len(self) == 1:

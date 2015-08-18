@@ -14,7 +14,7 @@ from tests.test_design import make_heterogeneous_tree
 def make_tree(levels, data):
     designs = [[Design([('a', range(len(levels))), ('b', [False, True])], extra_data=data, ordering=Ordering())]
                for _ in levels]
-    return DesignTree(list(zip(levels, designs)))
+    return DesignTree.new(list(zip(levels, designs)))
 
 
 def test_constructor():

@@ -47,10 +47,10 @@ def make_standard_exp():
 
 
 def make_manual_exp():
-    tree = DesignTree([('participant', [Design(ordering=Shuffle(2))]),
-                       ('block', [Design(ivs={'b': [0, 1, 2]}, ordering=CompleteCounterbalance())]),
-                       ('trial', [Design({'a': [False, True]}, ordering=Shuffle(4))]),
-                       ])
+    tree = DesignTree.new([('participant', [Design(ordering=Shuffle(2))]),
+                           ('block', [Design(ivs={'b': [0, 1, 2]}, ordering=CompleteCounterbalance())]),
+                           ('trial', [Design({'a': [False, True]}, ordering=Shuffle(4))]),
+                           ])
     exp = Experiment.new(tree)
     exp.set_run_callback(trial)
     return exp

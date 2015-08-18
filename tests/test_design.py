@@ -189,7 +189,7 @@ def test_design_tree():
                                       ('block', [practice_block_design, block_design]),
                                       ('trial', trial_design)])
 
-    tree = DesignTree(levels_and_designs)
+    tree = DesignTree.new(levels_and_designs)
     tree.add_base_level()
 
     levels, designs = zip(*tree.levels_and_designs)
@@ -253,7 +253,7 @@ def make_heterogeneous_tree():
         ],
     }
 
-    return DesignTree(main_structure, **other_structures)
+    return DesignTree.new(main_structure, **other_structures)
 
 
 def test_heterogeneous_design_tree():
@@ -301,26 +301,7 @@ def test_bad_heterogeneity():
         ],
     }
     with pytest.raises(ValueError):
-        DesignTree(main_structure, **other_structures)
-
-
-def test_repr():
-    main_structure = [
-        ('participant', Design(ivs={'a': [1, 2], 'b': [1, 2]}, ordering=Shuffle(3))),
-        ('session', Design(ivs={'design': ['practice', 'test']}, design_matrix=[[0], [1], [1]])),
-    ]
-    other_structures = {
-        'practice': [
-            ('block', Design()),
-            ('trial', Design(ivs={'difficulty': [1, 2]}, ordering=Shuffle(20))),
-        ],
-        'test': [
-            ('block', Design(ordering=Ordering(2))),
-            ('trial', Design(ivs={'difficulty': [1, 3, 5, 7]}, ordering=Shuffle(5))),
-        ],
-    }
-    tree = DesignTree(main_structure, **other_structures)
-    assert tree == eval(repr(tree))
+        DesignTree.new(main_structure, **other_structures)
 
 
 def test_bad_design_matrix():
@@ -523,5 +504,5 @@ def test_simple_design_tree_spec():
 def test_bizarre_equality():
     design = Design()
     assert (design == 1) is False
-    tree = DesignTree([('a', design)])
+    tree = DesignTree.new([('a', design)])
     assert (tree == 1) is False
