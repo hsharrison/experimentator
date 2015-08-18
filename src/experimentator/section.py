@@ -57,6 +57,7 @@ class ExperimentSection():
     is_bottom_level : bool
         If true, this is the lowest level of the hierarchy.
     has_started: bool
+3
         Whether this section has started to be run.
     has_finished : bool
         Whether this section has finished running.
@@ -69,18 +70,22 @@ class ExperimentSection():
     This better corresponds to the language commonly used by scientists to identify participants, trials, etc.
 
     """
-    def __init__(self, tree, data):
-        self.data = data
+    def __init__(self, tree, data=None, has_started=False, has_finished=False, _children=None):
         self.tree = tree
+        self.data = data or collections.ChainMap()
+        self.has_started = has_started
+        self.has_finished = has_finished
+        self._children = collections.deque() if _children is None else _children
 
-        self._children = collections.deque()
-        self.has_started = False
-        self.has_finished = False
-
+    @classmethod
+    def new(cls, tree, data=None):
+        self = cls(tree, data)
         if not self.is_bottom_level:
             # Create the section tree. Creating any section also creates the sections below it.
             self.append_design_tree(self.get_next_tree(), _renumber=False)
             self._number_children()
+
+        return self
 
     @property
     def level(self):
@@ -120,9 +125,6 @@ class ExperimentSection():
         except KeyError:
             n = ''
         return '{}{}'.format(self.level, n)
-
-    def __repr__(self):
-        return 'ExperimentSection({}, {})'.format(self.tree.__repr__(), self.data.__repr__())
 
     def __eq__(self, other):
         if isinstance(other, type(self)):
@@ -217,7 +219,7 @@ class ExperimentSection():
         child_data = self.data.new_child()
         child_data.update(data)
 
-        child = ExperimentSection(tree, child_data)
+        child = ExperimentSection.new(tree, child_data)
         if to_start:
             self._children.appendleft(child)
         else:

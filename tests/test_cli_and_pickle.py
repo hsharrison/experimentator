@@ -12,8 +12,7 @@ from contextlib import contextmanager
 from numpy import isnan
 import pytest
 
-from experimentator import run_experiment_section, QuitSession, Experiment, DesignTree, Design
-from experimentator.design import Level
+from experimentator import run_experiment_section, QuitSession, Experiment
 from experimentator.__main__ import main
 from experimentator.order import Ordering
 from tests.test_experiment import make_blocked_exp, check_trial
@@ -206,11 +205,3 @@ def test_exception():
     assert e.__str__() == 'message'
     with pytest.raises(QuitSession):
         raise e
-
-
-def test_exp_repr():
-    make_deterministic_exp()
-    e = Experiment.load('test.pkl')
-    assert e == eval(repr(e))
-    for file in glob('test.pkl*'):
-        os.remove(file)

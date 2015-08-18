@@ -51,7 +51,7 @@ def make_manual_exp():
                        ('block', [Design(ivs={'b': [0, 1, 2]}, ordering=CompleteCounterbalance())]),
                        ('trial', [Design({'a': [False, True]}, ordering=Shuffle(4))]),
                        ])
-    exp = Experiment(tree)
+    exp = Experiment.new(tree)
     exp.set_run_callback(trial)
     return exp
 

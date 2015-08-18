@@ -168,20 +168,34 @@ class Experiment(ExperimentSection):
         Everything stored here must be |picklable|.
 
     """
-    def __init__(self, tree, filename=None):
-        tree.add_base_level()
-        super().__init__(tree, ChainMap())
-
+    def __init__(self, tree,
+                 data=None,
+                 has_started=False,
+                 has_finished=False,
+                 _children=None,
+                 filename=None,
+                 run_callback=None,
+                 context_managers=None,
+                 session_data=None,
+                 experiment_data=None,
+                 _callback_info=None,
+                 _context_info=None,
+                ):
+        super().__init__(tree, data=data, has_started=has_started, has_finished=has_finished, _children=_children)
         self.filename = filename
+        self.run_callback = _dummy_run_callback if run_callback is None else run_callback
+        self.context_managers = {} if context_managers is None else context_managers
+        self.session_data = {} if session_data is None else session_data
+        self.experiment_data = {} if experiment_data is None else experiment_data
+        self._callback_info = _callback_info
+        self._context_info = {} if _context_info is None else _context_info
 
-        self.run_callback = _dummy_run_callback
-        self.context_managers = {}
-
-        self._callback_info = None
-        self._context_info = {}
-
-        self.session_data = {}
-        self.experiment_data = {}
+    @classmethod
+    def new(cls, tree, filename=None):
+        tree.add_base_level()
+        self = super(Experiment, cls).new(tree)
+        self.filename = filename
+        return self
 
     @staticmethod
     def load(filename):
@@ -228,7 +242,7 @@ class Experiment(ExperimentSection):
         """
         tree = DesignTree.from_spec(spec.pop('design'))
         filename = spec.pop('filename', spec.pop('file', None))
-        self = cls(tree, filename=filename)
+        self = cls.new(tree, filename=filename)
         self.experiment_data = spec
         return self
 
@@ -286,7 +300,7 @@ class Experiment(ExperimentSection):
         levels_and_designs = [('participant', [Design(ordering=order.Shuffle(n_participants))]),
                               ('trial', [Design(ivs=ivs, design_matrix=design_matrix, ordering=ordering)])]
 
-        return cls(DesignTree(levels_and_designs), filename=filename)
+        return cls.new(DesignTree(levels_and_designs), filename=filename)
 
     @classmethod
     def blocked(cls, trial_ivs, n_participants, design_matrices=None, orderings=None, block_ivs=None, filename=None):
@@ -344,7 +358,7 @@ class Experiment(ExperimentSection):
                                                 design_matrix=design_matrices.get('trial'),
                                                 ordering=orderings.get('trial'))])]
 
-        return cls(DesignTree(levels_and_designs), filename=filename)
+        return cls.new(DesignTree(levels_and_designs), filename=filename)
 
     @classmethod
     def basic(cls, levels, ivs_by_level, design_matrices_by_level=None, ordering_by_level=None, filename=None):
@@ -391,10 +405,7 @@ class Experiment(ExperimentSection):
                                        ordering=ordering_by_level.get(level))])
                               for level in levels]
 
-        return cls(DesignTree(levels_and_designs), filename=filename)
-
-    def __repr__(self):
-        return "Experiment({}, filename='{}')".format(self.tree.__repr__(), self.filename)
+        return cls.new(DesignTree(levels_and_designs), filename=filename)
 
     def save(self, filename=None):
         """Save the |Experiment| to disk.
@@ -556,7 +567,6 @@ class Experiment(ExperimentSection):
             raise ValueError('Cannot resume a section that has finished')
 
         levels, _ = zip(*section.tree)
-
         start_at_numbers = []
         start_at_section = section
         for level in levels[1:]:

@@ -1,12 +1,10 @@
 """Tests for ExperimentSection class.
 
 """
-from collections import ChainMap
 import pandas as pd
 import pytest
 
 from experimentator import Design, DesignTree
-from experimentator.design import Level
 from experimentator.section import ExperimentSection
 from experimentator.order import Ordering
 
@@ -20,7 +18,13 @@ def make_tree(levels, data):
 
 
 def test_constructor():
-    section = ExperimentSection(make_tree(['session', 'block', 'trial'], {}), ChainMap())
+    section = ExperimentSection(make_tree(['block', 'trial'], {}), has_started=True)
+    assert section.has_started
+    assert not section.has_finished
+
+
+def test_new():
+    section = ExperimentSection.new(make_tree(['session', 'block', 'trial'], {}))
     assert len(section) == 3*2
     assert len(section[1]) == 3*2
     assert section.level == 'session'
@@ -49,7 +53,7 @@ def test_constructor():
 
 
 def test_appending_tree():
-    section = ExperimentSection(make_tree(['session', 'block', 'trial'], {}), ChainMap())
+    section = ExperimentSection.new(make_tree(['session', 'block', 'trial'], {}))
     assert section.local_levels == {'block'}
     
     section.append_design_tree(make_tree(['block-test', 'trial-test'], {'foo': 'bar'}), to_start=True)
@@ -68,11 +72,11 @@ def test_appending_tree():
     assert section[9].data['block'] == 5
 
     with pytest.raises(ValueError):
-        section.append_design_tree(make_tree(['session', 'block', 'trial'], {}), ChainMap())
+        section.append_design_tree(make_tree(['session', 'block', 'trial'], {}))
 
 
 def test_append_child():
-    section = ExperimentSection(make_tree(['session', 'block', 'trial'], {}), ChainMap())
+    section = ExperimentSection.new(make_tree(['session', 'block', 'trial'], {}))
     section.append_child(dict(test=True))
     yield check_test_data, section[-1]
     assert section[-1].data['block'] == 7
@@ -92,7 +96,7 @@ def check_test_data(section):
 
 
 def test_add_data():
-    section = ExperimentSection(make_tree(['session', 'block', 'trial'], {}), ChainMap())
+    section = ExperimentSection.new(make_tree(['session', 'block', 'trial'], {}))
     section.add_data(dict(test=True))
     yield check_test_data, section
     for block in section:
@@ -101,13 +105,8 @@ def test_add_data():
             yield check_test_data, trial
 
 
-def test_repr():
-    section = ExperimentSection(make_tree(['session', 'block', 'trial'], {}), ChainMap())
-    assert section == eval(repr(section))
-
-
 def test_dataframe():
-    data = ExperimentSection(make_tree(['session', 'block', 'trial'], {}), ChainMap()).dataframe
+    data = ExperimentSection.new(make_tree(['session', 'block', 'trial'], {})).dataframe
     assert len(data) == 3*2*3*2
     assert set(data.columns) == {'a', 'b'}
     assert int(sum(data['a'] == 0)) == int(sum(data['a'] == 1)) == int(sum(data['a'] == 2)) == 6*6//3
@@ -115,7 +114,7 @@ def test_dataframe():
 
 
 def test_find_all_sections():
-    section = ExperimentSection(make_tree(['session', 'block', 'trial'], {}), ChainMap())
+    section = ExperimentSection.new(make_tree(['session', 'block', 'trial'], {}))
     sections = list(section.all_subsections(block=[2, 4], trial=[4, 6]))
     assert len(sections) == 4
     for subsection in sections:
@@ -124,7 +123,7 @@ def test_find_all_sections():
 
 
 def test_heterogeneous_tree_section():
-    participant = ExperimentSection(make_heterogeneous_tree(), ChainMap())
+    participant = ExperimentSection.new(make_heterogeneous_tree())
     assert participant.level == 'participant'
     assert len(participant) == 3
     practice_session = participant[1]
@@ -147,7 +146,7 @@ def test_heterogeneous_tree_section():
 
 
 def test_breadth_first_search():
-    section = ExperimentSection(make_tree(['session', 'block', 'trial'], {}), ChainMap())
+    section = ExperimentSection.new(make_tree(['session', 'block', 'trial'], {}))
     section[1][2].data['foo'] = True
 
     key = lambda node: node.data.get('foo', False)
@@ -158,7 +157,7 @@ def test_breadth_first_search():
 
 
 def test_depth_first_search():
-    section = ExperimentSection(make_tree(['session', 'block', 'trial'], {}), ChainMap())
+    section = ExperimentSection.new(make_tree(['session', 'block', 'trial'], {}))
     section[1][2].data['foo'] = True
 
     key = lambda node: node.data.get('foo', False)
@@ -169,7 +168,7 @@ def test_depth_first_search():
 
 
 def test_depth_first_path_search():
-    section = ExperimentSection(make_tree(['session', 'block', 'trial'], {}), ChainMap())
+    section = ExperimentSection.new(make_tree(['session', 'block', 'trial'], {}))
     section[2][1].data['foo'] = True  # Target.
     section[1][2].data['foo'] = True  # Red herring.
     section.data['bar'] = True
@@ -185,7 +184,7 @@ def test_depth_first_path_search():
 
 
 def test_walk():
-    session = ExperimentSection(make_tree(['session', 'block', 'trial'], {}), ChainMap())
+    session = ExperimentSection.new(make_tree(['session', 'block', 'trial'], {}))
     all_sections = [session]
     for block in session:
         all_sections.append(block)
@@ -195,12 +194,12 @@ def test_walk():
 
 
 def test_tuple_indexing():
-    session = ExperimentSection(make_tree(['session', 'block', 'trial'], {}), ChainMap())
+    session = ExperimentSection.new(make_tree(['session', 'block', 'trial'], {}))
     assert session[1, 2] is session[1][2]
 
 
 def test_description():
-    block = ExperimentSection(make_tree(['block', 'trial'], {}), ChainMap())
+    block = ExperimentSection.new(make_tree(['block', 'trial'], {}))
     assert block.description == 'block'
     for i, trial in enumerate(block):
         assert trial.description == 'trial {}'.format(i + 1)
@@ -211,7 +210,7 @@ def test_section_equality_bug():
     when Section.data attributes contain DataFrames with different shapes.
 
     """
-    blocks = [ExperimentSection(make_tree(['block', 'trial'], {}), ChainMap())
+    blocks = [ExperimentSection.new(make_tree(['block', 'trial'], {}))
               for _ in range(2)]
     assert blocks[0] == blocks[1]
     blocks[0].data['df'] = pd.DataFrame([[1, 2], [3, 4]])
@@ -220,5 +219,5 @@ def test_section_equality_bug():
 
 
 def test_bizarre_equality():
-    block = ExperimentSection(make_tree(['block', 'trial'], {}), ChainMap())
+    block = ExperimentSection.new(make_tree(['block', 'trial'], {}))
     assert (block == 1) is False
