@@ -10,7 +10,7 @@ from logging import getLogger
 from importlib import import_module
 from contextlib import contextmanager, ExitStack
 from datetime import datetime
-from collections import ChainMap, namedtuple
+from collections import namedtuple
 
 try:
     import yaml

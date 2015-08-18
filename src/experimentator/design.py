@@ -11,7 +11,6 @@ import numpy as np
 from schema import Schema, Or, Optional, And, Use
 
 import experimentator.order as order
-from collections import ChainMap
 
 Level = collections.namedtuple('Level', ('name', 'design'))
 
