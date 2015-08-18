@@ -3,10 +3,13 @@ This module contains objects related to experimental design abstractions.
 Public objects are imported in ``__init__.py``.
 
 """
+from collections.abc import Iterable
+from operator import ne
 import itertools
 import collections
 from copy import copy
 import numpy as np
+from schema import Schema, Or, Optional, And, Use
 
 import experimentator.order as order
 from collections import ChainMap
@@ -144,41 +147,36 @@ class Design:
         Level(name='block', design=Design(ivs=[('speed', [1, 2, 3]), ('size', [15, 30])], design_matrix=None, ordering=Shuffle(number=3, avoid_repeats=False), extra_data={}))
 
         """
-        inputs = spec.copy()
+        inputs = Schema({
+            Optional('name'): And(str, len),
+            Optional('ivs'): And(Use(dict), {Optional(And(str, len)): Iterable}),
+            Optional('design_matrix'): Use(np.asarray),
+            Optional(Or('order', 'ordering')): Use(order.OrderSchema.from_any),
+            Optional(Or('n', 'number')): int,
+            Optional(
+                lambda x: x not in {'name', 'ivs', 'design_matrix', 'order', 'ordering', 'n', 'number'}
+                # Necessary due to https://github.com/keleshev/schema/issues/57
+            ): object,
+        }).validate(spec)
+        if 'n' in inputs:
+            inputs['number'] = inputs.pop('n')
+        if 'order' in inputs:
+            inputs['ordering'] = inputs.pop('order')
 
-        ordering_spec = inputs.pop('ordering', inputs.pop('order', None))
-        ordering_class = 'Ordering' if 'design_matrix' in inputs else 'Shuffle'
-        ordering_args = ()
-        number = inputs.pop('number', inputs.pop('n', None))
-        ordering_kwargs = {'number': number} if number else {}
+        if 'ordering' not in inputs:
+            inputs['ordering'] = order.Ordering() if 'design_matrix' in inputs else order.Shuffle()
+
+        if 'number' in inputs:
+            inputs['ordering'].number = inputs.pop('number')
 
         name = inputs.pop('name', None)
-        design_kwargs = {key: inputs.get(key)
-                         for key in inputs
-                         if key in ('ivs', 'design_matrix', 'extra_data')}
-        inputs.pop('ivs', None)
-        inputs.pop('design_matrix', None)
-        inputs.pop('extra_data', None)
-        design_kwargs['extra_data'] = inputs
 
-        if isinstance(ordering_spec, str):
-            ordering_class = ordering_spec
+        extra_keys = set(inputs) - {'ivs', 'design_matrix', 'ordering'}
+        if extra_keys:
+            inputs['extra_data'] = {key: inputs.pop(key) for key in extra_keys}
 
-        elif isinstance(ordering_spec, dict):
-            ordering_class = ordering_spec.pop('class', ordering_class)
-            ordering_kwargs.update(ordering_spec)
-
-        elif isinstance(ordering_spec, collections.Sequence):
-            ordering_class = ordering_spec[0]
-            ordering_args = ordering_spec[1:]
-
-        ordering = getattr(order, ordering_class)(*ordering_args, **ordering_kwargs)
-
-        self = cls(ordering=ordering, **design_kwargs)
-        if name:
-            return Level(name, self)
-        else:
-            return self
+        self = cls(**inputs)
+        return Level(name, self) if name else self
 
     def __repr__(self):
         return 'Design(ivs={}, design_matrix={}, ordering={}, extra_data={})'.format(
