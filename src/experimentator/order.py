@@ -23,6 +23,7 @@ import random
 import logging
 from collections import deque, namedtuple
 from math import factorial
+from experimentator._util import ClassSchema
 
 logger = logging.getLogger(__name__)
 
@@ -681,3 +682,27 @@ def _new_row(order, reduced_row=None):
         random.shuffle(new_row)
 
     return new_row
+
+
+by_name = {
+    'ordering': Ordering,
+    'shuffle': Shuffle,
+    'completecounterbalance': CompleteCounterbalance,
+    'complete_counterbalance': CompleteCounterbalance,
+    'counterbalance': CompleteCounterbalance,
+    'counterbalanced': CompleteCounterbalance,
+    'sorted': Sorted,
+    'sort': Sorted,
+    'latinsquare': LatinSquare,
+    'latin_square': LatinSquare,
+}
+
+
+class OrderSchema(ClassSchema):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if 'n' in self.kwargs:
+            self.number = self.kwargs.pop('n')
+
+    def lookup_name(self):
+        return by_name[self.name.lower()]

@@ -5,7 +5,7 @@ from math import factorial
 from itertools import product
 import pytest
 
-from experimentator.order import Shuffle, LatinSquare, Ordering, CompleteCounterbalance, Sorted
+from experimentator.order import Shuffle, LatinSquare, Ordering, CompleteCounterbalance, Sorted, OrderSchema
 
 CONDITIONS_3 = [{'a': c} for c in range(3)]
 
@@ -224,3 +224,19 @@ def test_reprs():
 
 def test_bizarre_inequality():
     assert (Shuffle() == 1) is False
+
+
+def test_schema_string():
+    assert OrderSchema.from_any('Ordering') == Ordering()
+
+
+def test_schema_list():
+    assert OrderSchema.from_any(['Shuffle', 2]) == Shuffle(2)
+
+
+def test_schema_dict():
+    spec = {
+        'name': 'sorted',
+        'order': 'both',
+    }
+    assert OrderSchema.from_any(spec) == Sorted(order='both')
