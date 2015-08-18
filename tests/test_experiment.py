@@ -59,8 +59,8 @@ def make_manual_exp():
 def test_construction():
     exp = make_simple_exp()
     assert exp.tree.levels_and_designs[0][0] == exp.level == '_base'
-    assert exp.levels == type(exp.levels)([exp[1].level, exp[1][1].level]) \
-        == type(exp.levels)(['participant', 'trial'])
+    assert (exp.levels == type(exp.levels)([exp[1].level, exp[1][1].level])
+            == type(exp.levels)(['participant', 'trial']))
 
 
 def test_data_before_running():
@@ -297,11 +297,11 @@ def test_callbacks_and_data():
     assert exp.session_data['participants_seen'] == {1}
     assert exp.session_data['blocks_seen'] == {1, 2, 3}
 
-    assert exp.session_data['blocks_started'] == \
-        exp.session_data['blocks_ended'] == 3
+    assert (exp.session_data['blocks_started'] ==
+            exp.session_data['blocks_ended'] == 3)
 
-    assert exp.session_data['participants_started'] == \
-        exp.session_data['participants_ended'] == 1
+    assert (exp.session_data['participants_started'] ==
+            exp.session_data['participants_ended'] == 1)
 
 
 def test_experiment_from_spec():

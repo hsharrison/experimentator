@@ -180,7 +180,7 @@ class Experiment(ExperimentSection):
                  experiment_data=None,
                  _callback_info=None,
                  _context_info=None,
-                ):
+                 ):
         super().__init__(tree, data=data, has_started=has_started, has_finished=has_finished, _children=_children)
         self.filename = filename
         self.run_callback = _dummy_run_callback if run_callback is None else run_callback

@@ -6,7 +6,7 @@ import collections
 import itertools
 
 
-class ExperimentSection():
+class ExperimentSection:
     """
     A section of the experiment, at any level of the hierarchy.
     Single trials and groups of trials (blocks, sessions, participants, etc.)

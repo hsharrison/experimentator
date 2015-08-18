@@ -17,14 +17,14 @@ MAX_ORDER_FOR_BALANCED = 10
 
 
 def check_latin_square(matrix):
-    assert np.shape(matrix)[0] == np.shape(matrix)[1] and \
-        all(len(row) == len(set(row)) for row in matrix) and \
-        all(len(col) == len(set(col)) for col in np.transpose(matrix))
+    assert (np.shape(matrix)[0] == np.shape(matrix)[1] and
+            all(len(row) == len(set(row)) for row in matrix) and
+            all(len(col) == len(set(col)) for col in np.transpose(matrix)))
 
 
 def check_reduced(matrix):
-    assert list(matrix[0]) == list(range(len(matrix[0]))) and \
-        list(np.transpose(matrix)[0]) == list(range(len(matrix[0])))
+    assert (list(matrix[0]) == list(range(len(matrix[0]))) and
+            list(np.transpose(matrix)[0]) == list(range(len(matrix[0]))))
 
 
 def check_balanced(matrix):

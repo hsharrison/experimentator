@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 IndependentVariable = namedtuple('IndependentVariable', ('name', 'values'))
 
 
-class Ordering():
+class Ordering:
     """
     The base ordering class.
     It will keep conditions in the order they are defined by the |Design| instance
