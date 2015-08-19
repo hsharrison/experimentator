@@ -23,7 +23,7 @@ def trial(experiment, section):
 def make_simple_exp():
     ivs = {'a': [False, True], 'b': [0, 1, 2]}
     exp = Experiment.within_subjects(ivs, 10, ordering=Shuffle(4))
-    exp.set_run_callback(trial)
+    exp.add_callback('trial', trial)
     return exp
 
 
@@ -31,7 +31,7 @@ def make_blocked_exp():
     exp = Experiment.blocked({'a': [False, True]}, 2,
                              block_ivs={'b': [0, 1, 2]},
                              orderings={'trial': Shuffle(4), 'block': CompleteCounterbalance()})
-    exp.set_run_callback(trial)
+    exp.add_callback('trial', trial)
     return exp
 
 
@@ -42,7 +42,7 @@ def make_standard_exp():
                            ordering_by_level={'trial': Shuffle(4),
                                               'block': CompleteCounterbalance(),
                                               'participant': Shuffle(2)})
-    exp.set_run_callback(trial)
+    exp.add_callback('trial', trial)
     return exp
 
 
@@ -52,7 +52,7 @@ def make_manual_exp():
                            ('trial', [Design({'a': [False, True]}, ordering=Shuffle(4))]),
                            ])
     exp = Experiment.new(tree)
-    exp.set_run_callback(trial)
+    exp.add_callback('trial', trial)
     return exp
 
 
@@ -286,7 +286,7 @@ def context(experiment, section):
 def test_callbacks_and_data():
     exp = make_blocked_exp()
     for level in ('participant', 'block', 'trial'):
-        exp.set_context_manager(level, context)
+        exp.add_callback(level, context, is_context=True)
 
     exp.experiment_data.update({level: level + 's_seen' for level in ('participant', 'block', 'trial')})
     exp.run_section(exp[1])

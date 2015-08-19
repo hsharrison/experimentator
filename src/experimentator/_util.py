@@ -41,9 +41,3 @@ class ClassSchema(metaclass=ABCMeta):
             return cls.from_iterable(data)
 
         raise TypeError('Cannot process {}'.format(data))
-
-
-@contextmanager
-def as_context(function, *args, **kwargs):
-    result = function(*args, **kwargs)
-    yield result

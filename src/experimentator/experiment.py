@@ -152,12 +152,14 @@ class Experiment(ExperimentSection):
         The |DesignTree| instance defining the experiment's hierarchy.
     filename : str
         The file location where the |Experiment| will be pickled.
-    run_callback : func
-        The function to be run when the bottom of the tree is reached (i.e., the trial function).
-    context_managers : dict
-        A dictionary, mapping level names to |context-managers|
+    callback_by_level : dict
+        A dictionary, mapping level names to functions or |context-managers|
         (e.g., generator functions decorated with |contextlib.contextmanager|).
-        Defines behavior to run before and/or after each section at the associated level.
+        Defines behavior to run at each section (for functions)
+        or before and/or after each section (for context managers) at the associated level.
+    callback_type_by_level : dict
+        A dictionary mapping level names to either the string ``'context'`` or ``'function'``.
+        This keeps track of which callbacks in |Experiment.callback_by_level| are context managers.
     session_data : dict
         A dictionary where temporary data can be stored,
         persistent only within one session of the Python interpreter.
@@ -177,21 +179,19 @@ class Experiment(ExperimentSection):
                  has_finished=False,
                  _children=None,
                  filename=None,
-                 run_callback=None,
-                 context_managers=None,
+                 callback_by_level=None,
+                 callback_type_by_level=None,
                  session_data=None,
                  experiment_data=None,
                  _callback_info=None,
-                 _context_info=None,
                  ):
         super().__init__(tree, data=data, has_started=has_started, has_finished=has_finished, _children=_children)
         self.filename = filename
-        self.run_callback = _dummy_run_callback if run_callback is None else run_callback
-        self.context_managers = {} if context_managers is None else context_managers
+        self.callback_by_level = {} if callback_by_level is None else callback_by_level
+        self.callback_type_by_level = {} if callback_type_by_level is None else callback_type_by_level
         self.session_data = {} if session_data is None else session_data
         self.experiment_data = {} if experiment_data is None else experiment_data
-        self._callback_info = _callback_info
-        self._context_info = {} if _context_info is None else _context_info
+        self._callback_info = {} if _callback_info is None else _callback_info
 
     @classmethod
     def new(cls, tree, filename=None):
@@ -496,30 +496,17 @@ class Experiment(ExperimentSection):
         """
         logger.debug('Running {}.'.format(section.description))
 
-        from_section, next_from_section = self._parse_from_section(from_section)
+        with ExitStack() as stack:
+            stack.enter_context(self._parent_context(section, parent_callbacks=parent_callbacks, demo=demo))
+            stack.enter_context(self._section_context(section, demo=demo))
 
-        # Handle parent callbacks and set parent has_started to True.
-        with self._parent_context(section, parent_callbacks=parent_callbacks, demo=demo):
-
-            # Back to the regular behavior.
-            with self.context_managers.get(
-                    section.level, _dummy_context_manager)(self, section) as self.session_data[section.level]:
-
-                if not demo:
-                    section.has_started = True
-
-                if section.is_bottom_level:
-                    results = self.run_callback(self, section)
-
-                    if not demo:
-                        section.add_data(results)
-
-                else:  # Not bottom level.
-                    for next_section in section[from_section[0]:]:
-                        self.run_section(next_section,
-                                         demo=demo,
-                                         parent_callbacks=False,
-                                         from_section=next_from_section)
+            if len(section):  # If the section has children.
+                from_section, next_from_section = self._parse_from_section(from_section)
+                for next_section in section[from_section[0]:]:
+                    self.run_section(next_section,
+                                     demo=demo,
+                                     parent_callbacks=False,
+                                     from_section=next_from_section)
 
             if not demo:
                 section.has_finished = True
@@ -532,6 +519,24 @@ class Experiment(ExperimentSection):
             for parent in reversed(list(self.parents(section))):
                 if all(child.has_finished for child in parent):
                     parent.has_finished = True
+
+    @contextmanager
+    def _section_context(self, section, demo=False):
+        with ExitStack() as stack:
+            if not demo:
+                section.has_started = True
+
+            if self.callback_type_by_level.get(section.level) == 'context':
+                self.session_data[section.level] = stack.enter_context(
+                    self.callback_by_level[section.level](self, section)
+                )
+
+            elif self.callback_type_by_level.get(section.level) == 'function':
+                results = self.callback_by_level[section.level](self, section)
+                if results and not demo:
+                    section.add_data(results)
+
+            yield
 
     @staticmethod
     def _parse_from_section(from_section):
@@ -549,12 +554,9 @@ class Experiment(ExperimentSection):
     def _parent_context(self, section, parent_callbacks=True, demo=False):
         with ExitStack() as stack:
             for parent in self.parents(section):
-                if not demo:
-                    parent.has_started = True
                 if parent_callbacks:
                     logger.debug('Entering {} context.'.format(parent.description))
-                    self.session_data[parent.level] = stack.enter_context(
-                        self.context_managers.get(parent.level, _dummy_context_manager)(self, parent))
+                    stack.enter_context(self._section_context(parent, demo=demo))
             yield
 
     def resume_section(self, section, **kwargs):
@@ -588,32 +590,35 @@ class Experiment(ExperimentSection):
 
         self.run_section(section, from_section=start_at_numbers, **kwargs)
 
-    def set_context_manager(self, level, manager, *args,
-                            func_module=None, func_name=None, **kwargs):
-        """Set a context manager to run at a certain level.
+    def add_callback(self, level, callback, *args, is_context=False, func_module=None, func_name=None, **kwargs):
+        """Add a callback to run at a certain level.
 
-        Define a |context-manager| `manager` to run at every section at a particular level.
-        A context manager is a convenient way to define behavior
-        to occur at the beginning and end of every section at a particular level.
+        A callback can be either a regular function, or a |context-manager|.
+        The latter is useful for defining code to run at the start and end of every section at the level.
+        For example, a block context manager could specify behavior that occurs before every trial in the block,
+        and behavior that occurs after every trial in the block.
         See |contextlib| for various ways to create context managers,
         and experimentator's |context-manager docs| for more details.
 
-        Any value returned by the ``__exit__`` method of `manager`
-        (equivalently, yielded by a function decorated with |contextlib.contextmanager|)
+        Any value returned by the ``__enter__`` method of a context manager
         will be stored in |Experiment.session_data| under the key `level`.
+
+        If the callback is not a context manager, it should return a dictionary (or nothing),
+        which is automatically passed to |ExperimentSection.add_data|.
+        In theory, it should map dependent-variable names to results.
+        See the |callback docs| for more details.
 
         Parameters
         ----------
         level : str
             Which level of the hierarchy to manage.
-        func : func
-            The context manager function.
-            `func` should have the signature ``func(experiment, section, *args, **kwargs)``
+        callback : function or |context-manager|
+            The callback should have the signature ``callback(experiment, section, *args, **kwargs)``
             where `experiment` and `section`
             are the current |Experiment| and |ExperimentSection| instances, respectively,
             and `args` and `kwargs` are arbitrary arguments passed to this method.
         *args
-            Any arbitrary positional arguments to be passed to `func`.
+            Any arbitrary positional arguments to be passed to `callback`.
         func_module : str, optional
         func_name : str, optional
             These two arguments specify where the given function should be imported from in future Python sessions
@@ -621,48 +626,15 @@ class Experiment(ExperimentSection):
             Usually, this is figured out automatically by introspection;
             these arguments are provided for the rare situation where introspection fails.
         **kwargs
-            Any arbitrary keyword arguments to be passed to `func`.
-
-
-        """
-        self.context_managers[level] = _callback_partial(manager, args, kwargs)
-
-        reference = _get_func_reference(manager)
-        reference = FunctionReference(func_module or reference[0],
-                                      func_name or reference[1])
-        self._context_info[level] = [reference, args, kwargs]
-
-    def set_run_callback(self, func, *args, func_module=None, func_name=None, **kwargs):
-        """Define a function to run at the lowest level of the experiment
-        (i.e., the trial function).
-        See the |callback docs| for more details.
-
-        Parameters
-        ----------
-        func : func
-            The function to be set as the run callback.
-            `func` should have the signature ``func(experiment, section, *args, **kwargs)``
-            where `experiment` and `section`
-            are the current |Experiment| and |ExperimentSection| instances, respectively,
-            and `args` and `kwargs` are arbitrary arguments passed to this method.
-        *args
-            Any arbitrary positional arguments to be passed to `func`.
-        func_module : str, optional
-        func_name : str, optional
-            These two arguments specify where the given function should be imported from in future Python sessions
-            (i.e., ``from <func_module> import <func_name>``).
-            Usually, this is figured out automatically by introspection;
-            these arguments are provided for the rare situation where introspection fails.
-        **kwargs
-            Any arbitrary keyword arguments to be passed to `func`.
+            Any arbitrary keyword arguments to be passed to `callback`.
 
         """
-        self.run_callback = _callback_partial(func, args, kwargs)
+        self.callback_by_level[level] = _callback_partial(callback, args, kwargs)
+        self.callback_type_by_level[level] = 'context' if is_context else 'function'
 
-        reference = _get_func_reference(func)
-        reference = FunctionReference(func_module or reference[0],
-                                      func_name or reference[1])
-        self._callback_info = [reference, args, kwargs]
+        reference = _get_func_reference(callback)
+        reference = FunctionReference(func_module or reference[0], func_name or reference[1])
+        self._callback_info[level] = [reference, args, kwargs]
 
     def __getstate__(self):
         state = self.__dict__.copy()
@@ -670,23 +642,16 @@ class Experiment(ExperimentSection):
         state['session_data'] = {}
 
         # Clear functions.
-        del state['context_managers']
-        state['run_callback'] = None
+        del state['callback_by_level']
 
         return state
 
     def __setstate__(self, state):
         self.__dict__.update(state)
 
-        # Reload run callback.
-        self.run_callback = _callback_partial(*self._callback_info) if self._callback_info else _dummy_run_callback
-
-        # Reload context-managers.
-        self.context_managers = {}
-        for level in self.levels:
-            if level in self._context_info:
-                self.context_managers[level] = _callback_partial(*self._context_info[level])
-                self.context_managers[level] = _callback_partial(*self._context_info[level])
+        # Reload callbacks.
+        self.callback_by_level = {level: _callback_partial(*self._callback_info[level])
+                                  for level in self._callback_info}
 
 
 def _get_func_reference(func):
@@ -709,12 +674,3 @@ def _callback_partial(func, args, kwargs):
     if isinstance(func, FunctionReference):
         func = _load_func_reference(*func)
     return lambda experiment, section: func(experiment, section, *args, **kwargs)
-
-
-def _dummy_run_callback(experiment, section):
-    return {}
-
-
-@contextmanager
-def _dummy_context_manager(experiment, section):
-    yield

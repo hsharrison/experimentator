@@ -47,8 +47,8 @@ def block_context(experiment, section):
 
 def test_cli():
     exp = make_blocked_exp()
-    exp.set_context_manager('participant', participant_context)
-    exp.set_context_manager('block', block_context)
+    exp.add_callback('participant', participant_context, is_context=True)
+    exp.add_callback('block', block_context, is_context=True)
     exp.filename = 'test.pkl'
     exp.save()
 
@@ -132,7 +132,7 @@ def test_cli():
 
 def test_pickle_error():
     exp = make_blocked_exp()
-    exp.set_context_manager('block', block_context, func_module='not_a_module')
+    exp.add_callback('block', block_context, func_module='not_a_module', is_context=True)
     exp.filename = 'test.pkl'
     exp.save()
 
@@ -148,7 +148,7 @@ def context(experiment, section):
 
 def test_options():
     exp = make_blocked_exp()
-    exp.set_context_manager('block', context)
+    exp.add_callback('block', context, is_context=True)
     exp.filename = 'test.pkl'
     exp.save()
     call_cli('exp run test.pkl --next participant -o pass,through,option')
@@ -190,7 +190,7 @@ def bad_trial(experiment, section):
 
 def test_exception():
     exp = make_blocked_exp()
-    exp.set_run_callback(bad_trial)
+    exp.add_callback('trial', bad_trial)
     exp.save()
     exp.save('test.pkl')
     with pytest.raises(QuitSession):

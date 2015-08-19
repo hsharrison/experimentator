@@ -551,8 +551,8 @@ But presumably you actually something to happen when you run a trial.
 This is accomplished with *callbacks*.
 In general, a callback is a function that you supply that is automatically triggered at a certain time.
 There are two types of callbacks in experimentator,
-the :ref:`run callback <run-callback>` and :ref:`context-managers <contexts>`,
-set with |Experiment.set_run_callback| and |Experiment.set_context_manager|, respectively.
+the :ref:`function callbacks <run-callback>` and :ref:`context-managers <contexts>`.
+Both are set with |Experiment.add_callback|.
 
 .. note::
 
@@ -568,18 +568,20 @@ set with |Experiment.set_run_callback| and |Experiment.set_context_manager|, res
    between computers.
    You will also need to move the Python file(s) in which any callbacks are defined.
 
-   |Experiment.set_run_callback| and |Experiment.set_context_manager| also take optional keyword arguments
+   |Experiment.add_callback| also takes optional keyword arguments
    ``func_name`` and ``func_module`` that you can set to tell experimentator where to look for the callback.
 
 .. _run-callback:
 
-Run callback
-------------
+Function callbacks
+------------------
 
-The run callback is essentially the "trial function".
-It is the function that is run for every trial.
+The most basic callbacks are function callbacks.
+A function callback runs at the start of every section at its level.
+Most commonly, this is used at the trial level to set the "trial function";
+on other words, the behavior of every trial.
 
-The run callback should take two positional arguments.
+Callbacks should take two positional arguments.
 It will be passed the current |Experiment| and |ExperimentSection| instances, respectively.
 Everything that the run callback might need to know can be taken from these arguments.
 Here are the most useful attributes:
@@ -601,14 +603,14 @@ Here are the most useful attributes:
   This is the place to store external resources like multimedia data.
   You can reload these resources during a :ref:`context-manager callback <contexts>`.
 
-The run callback should return a dictionary, mapping dependent variable (DV) names to values.
+The callback should return a dictionary, mapping dependent variable (DV) names to values.
 The DV names are only used to label the columns in the final representation of the experiment's data,
 |Experiment.dataframe|.
 
-Set the run callback using the |Experiment.set_run_callback| method.
+Set function callbacks using the |Experiment.add_callback| method.
 You can also pass this method arbitrary positional and keyword arguments.
-Therefore, the full signature for a run callback is ``func(experiment, section, *args, **kwargs)``,
-where ``func`` (the callback itself), ``*args``, and ``**kwargs``, are arguments to |Experiment.set_run_callback|.
+Therefore, the full signature for a callback is ``func(experiment, section, *args, **kwargs)``,
+where ``func`` (the callback itself), ``*args``, and ``**kwargs``, are arguments to |Experiment.add_callback|.
 
 .. _contexts:
 
@@ -650,7 +652,7 @@ Here is an example context manager that offers a break between blocks:
        print('Block {} completed.'.format(section.data['block']))
 
 
-As you see, the signature of a context manager is the same as the signature of the run callback.
+As you see, the signature of a context manager is the same as the signature of a function callback.
 All the same data in the |Experiment| and |ExperimentSection| objects are also available to context managers.
 
 .. note::
@@ -662,12 +664,15 @@ All the same data in the |Experiment| and |ExperimentSection| objects are also a
    (we'd want to change the ``print`` message as well),
    then we could use ``offer_break`` at multiple levels.
 
-Unlike the run callback, each context manager is associated with a specific level.
-Pass the level name to |Experiment.set_context_manager|:
+Context-manager callbacks have the same signature as regular function callbacks, and are the added the same way.
+The only exception is to pass the keyword argument ``is_context=True`` to |Experiment.add_callback|.
+
+With both types of callback, pass the level name to |Experiment.add_callback|.
+Continuing the previous example:
 
 .. code-block:: python
 
-   experiment.set_context_manager('block', offer_break)
+   experiment.add_callback('block', offer_break, is_context=True)
 
 If you are using the context manager to close resources,
 it may be a good idea to use a try-finally block (see :ref:`tut-cleanup`)

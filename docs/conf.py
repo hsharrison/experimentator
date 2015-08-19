@@ -344,8 +344,7 @@ rst_epilog = """
 .. |Experiment.from_yaml_file| replace:: :meth:`Experiment.from_yaml_file <experimentator.Experiment.from_yaml_file>`
 .. |Experiment.from_dict| replace:: :meth:`Experiment.from_dict <experimentator.Experiment.from_dict>`
 .. |Experiment.run_section| replace:: :meth:`Experiment.run_section <experimentator.Experiment.run_section>`
-.. |Experiment.set_context_manager| replace:: :meth:`Experiment.set_context_manager <experimentator.Experiment.set_context_manager>`
-.. |Experiment.set_run_callback| replace:: :meth:`Experiment.set_run_callback <experimentator.Experiment.set_run_callback>`
+.. |Experiment.add_callback| replace:: :meth:`Experiment.add_callback <experimentator.Experiment.add_callback>`
 .. |Experiment.within_subjects| replace:: :meth:`Experiment.within_subjects <experimentator.Experiment.within_subjects>`
 .. |Experiment.blocked| replace:: :meth:`Experiment.blocked <experimentator.Experiment.blocked>`
 .. |Experiment.basic| replace:: :meth:`Experiment.basic <experimentator.Experiment.basic>`

@@ -130,7 +130,7 @@ Here's how it might look in experimentator:
                                                 filename='exp_1.dat')
 
         experiment.experiment_data['stimuli'] = stimuli_and_answers
-        experiment.set_run_callback(run_trial)
+        experiment.add_callback('trial', run_trial)
         experiment.save()
 
 Running this script will create the experiment in the file ``exp_1.dat``.
