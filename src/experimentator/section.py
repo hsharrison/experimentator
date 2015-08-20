@@ -4,6 +4,7 @@ This module contains the |ExperimentSection| class, which is imported in `__init
 """
 import collections
 import itertools
+import networkx as nx
 
 
 class ExperimentSection:
@@ -46,8 +47,9 @@ class ExperimentSection:
         Level names of this section's children. Usually a single-element set.
     is_bottom_level : bool
         If true, this is the lowest level of the hierarchy.
+    is_top_level : bool
+        If true, this is the highest level of the hierarchy (likely an |Experiment|).
     has_started: bool
-3
         Whether this section has started to be run.
     has_finished : bool
         Whether this section has finished running.
@@ -103,6 +105,10 @@ class ExperimentSection:
         return len(self.tree) == 1
 
     @property
+    def is_top_level(self):
+        return self.level not in self.data
+
+    @property
     def heterogeneous_design_iv_name(self):
         return self.tree.levels_and_designs[0].design[0].heterogeneous_design_iv_name
 
@@ -133,6 +139,21 @@ class ExperimentSection:
             n = ''
         return '{}{}'.format(self.level, n)
 
+    @property
+    def _solo_id(self):
+        return self.level, 1 if self.is_top_level else self.data[self.level]
+
+    @property
+    def _saveworthy_data(self):
+        combined = self.data.copy()
+        combined.update(
+            _has_started=self.has_started,
+            _has_finished=self.has_finished,
+        )
+        if not self.is_top_level:
+            del combined[self.level]
+        return combined
+
     def __eq__(self, other):
         if isinstance(other, type(self)):
             # Workaround pandas issue
@@ -142,6 +163,33 @@ class ExperimentSection:
             except ValueError:
                 return False
         return False
+
+    def _add_to_graph(self, graph, id_list=None):
+        parent_id_list = id_list or []
+        id_list = parent_id_list + [self._solo_id]
+
+        graph.add_node(tuple(id_list), self._saveworthy_data)
+
+        if parent_id_list:
+            graph.add_edge(tuple(parent_id_list), tuple(id_list))
+
+        for child in self:
+            child._add_to_graph(graph, id_list)
+
+    def as_graph(self):
+        """
+        Build a |networkx.DiGraph| out of the experiment structure, starting at this section.
+        Nodes are sections and graphs are parent-child relations.
+        Node data are non-duplicated entries in |ExperimentSection.data|.
+
+        Returns
+        -------
+        |networkx.DiGraph|
+        """
+
+        graph = nx.DiGraph()
+        self._add_to_graph(graph)
+        return graph
 
     def get_next_tree(self):
         """

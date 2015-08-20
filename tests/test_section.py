@@ -221,3 +221,13 @@ def test_section_equality_bug():
 def test_bizarre_equality():
     block = ExperimentSection.new(make_tree(['block', 'trial'], {}))
     assert (block == 1) is False
+
+
+def test_as_graph():
+    section = ExperimentSection.new(make_tree(['session', 'block', 'trial'], {'d': 1}))
+    graph = section.as_graph()
+    assert len(graph.nodes()) == 1 + 6 + 6**2
+    assert len(graph.edges()) == 6 + 6**2
+    assert len(graph[(('session', 1),)]) == 6
+    assert set(graph.node[(('session', 1),)]) == {'_has_started', '_has_finished'}
+    assert set(graph.node[(('session', 1), ('block', 1))]) == {'_has_started', '_has_finished', 'a', 'b', 'd'}

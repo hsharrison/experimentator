@@ -382,6 +382,7 @@ rst_epilog = """
 .. |numpy array| replace:: :class:`numpy array <numpy.ndarray>`
 .. |DataFrame| replace:: :class:`~pandas.DataFrame`
 .. |DataFrame.to_csv| replace:: :meth:`pandas.DataFrame.to_csv`
+.. |networkx.DiGraph| replace:: :class:`networkx.DiGraph`
 
 .. |trial| replace:: ``'trial'``
 .. |block| replace:: ``'block'``

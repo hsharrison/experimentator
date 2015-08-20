@@ -180,6 +180,7 @@ It also depends on the following Python libraries:
 - `docopt <http://docopt.org/>`_
 - `schema <https://github.com/halst/schema>`_
 - `PyYAML <http://pyyaml.org/wiki/PyYAML>`_
+- `NetworkX <http://networkx.readthedocs.org/en/stable/index.html>`_
 
 Required for tests:
 

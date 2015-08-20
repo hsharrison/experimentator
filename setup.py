@@ -53,5 +53,6 @@ setup(name='experimentator',
           'docopt',
           'schema',
           'pyyaml',
+          'networkx',
       ],
       )
