@@ -49,74 +49,74 @@ def test_cli():
     exp = make_blocked_exp()
     exp.add_callback('participant', participant_context, is_context=True)
     exp.add_callback('block', block_context, is_context=True)
-    exp.filename = 'test.pkl'
+    exp.filename = 'test.yaml'
     exp.save()
 
-    call_cli('exp run test.pkl --next participant')
-    exp = Experiment.load('test.pkl')
+    call_cli('exp run test.yaml --next participant')
+    exp = Experiment.load('test.yaml')
     for row in exp.dataframe.iterrows():
         if row[0][0] == 1:
             yield check_trial, row
         else:
             assert isnan(row[1]['result'])
 
-    call_cli('exp --demo run test.pkl participant 2 block 1')
+    call_cli('exp --demo run test.yaml participant 2 block 1')
     for row in exp.dataframe.iterrows():
         if row[0][0] == 1:
             yield check_trial, row
         else:
             assert isnan(row[1]['result'])
 
-    call_cli('exp run test.pkl participant 2 block 1')
-    exp = Experiment.load('test.pkl')
+    call_cli('exp run test.yaml participant 2 block 1')
+    exp = Experiment.load('test.yaml')
     for row in exp.dataframe.iterrows():
         if row[0][0] == 1 or (row[0][0] == 2 and row[0][1] == 1):
             yield check_trial, row
         else:
             assert isnan(row[1]['result'])
 
-    call_cli('exp resume test.pkl participant')
-    exp = Experiment.load('test.pkl')
+    call_cli('exp resume test.yaml participant')
+    exp = Experiment.load('test.yaml')
     for row in exp.dataframe.iterrows():
         if row[0][0] <= 2:
             yield check_trial, row
         else:
             assert isnan(row[1]['result'])
 
-    call_cli('exp run test.pkl --next trial')
-    exp = Experiment.load('test.pkl')
+    call_cli('exp run test.yaml --next trial')
+    exp = Experiment.load('test.yaml')
     for row in exp.dataframe.iterrows():
         if row[0][0] <= 2 or row[0] == (3, 1, 1):
             yield check_trial, row
         else:
             assert isnan(row[1]['result'])
 
-    call_cli('exp resume test.pkl participant 3 block 1 --demo')
-    exp = Experiment.load('test.pkl')
+    call_cli('exp resume test.yaml participant 3 block 1 --demo')
+    exp = Experiment.load('test.yaml')
     for row in exp.dataframe.iterrows():
         if row[0][0] <= 2 or row[0] == (3, 1, 1):
             yield check_trial, row
         else:
             assert isnan(row[1]['result'])
 
-    call_cli('exp --debug resume test.pkl participant 3 block 1')
-    exp = Experiment.load('test.pkl')
+    call_cli('exp --debug resume test.yaml participant 3 block 1')
+    exp = Experiment.load('test.yaml')
     for row in exp.dataframe.iterrows():
         if row[0][0] <= 2 or row[0][:2] == (3, 1):
             yield check_trial, row
         else:
             assert isnan(row[1]['result'])
 
-    call_cli('exp run test.pkl participant 3 block 3 --from 3')
-    exp = Experiment.load('test.pkl')
+    call_cli('exp run test.yaml participant 3 block 3 --from 3')
+    exp = Experiment.load('test.yaml')
     for row in exp.dataframe.iterrows():
         if row[0][0] <= 2 or row[0][:2] == (3, 1) or (row[0][:2] == (3, 3) and row[0][-1] >= 3):
             yield check_trial, row
         else:
             assert isnan(row[1]['result'])
 
-    call_cli('exp run test.pkl participant 3 --from 2,4')
-    exp = Experiment.load('test.pkl')
+    call_cli('exp run test.yaml participant 3 --from 2,4')
+    exp = Experiment.load('test.yaml')
     for row in exp.dataframe.iterrows():
         if (row[0][0] <= 2
                 or row[0][:2] == (3, 1)
@@ -126,18 +126,18 @@ def test_cli():
         else:
             assert isnan(row[1]['result'])
 
-    for file in glob('test.pkl*'):
+    for file in glob('test.yaml*'):
         os.remove(file)
 
 
 def test_pickle_error():
     exp = make_blocked_exp()
     exp.add_callback('block', block_context, func_module='not_a_module', is_context=True)
-    exp.filename = 'test.pkl'
+    exp.filename = 'test.yaml'
     exp.save()
 
     with pytest.raises(ImportError):
-        call_cli('exp run test.pkl --next participant')
+        call_cli('exp run test.yaml --next participant')
 
 
 @contextmanager
@@ -149,9 +149,9 @@ def context(experiment, section):
 def test_options():
     exp = make_blocked_exp()
     exp.add_callback('block', context, is_context=True)
-    exp.filename = 'test.pkl'
+    exp.filename = 'test.yaml'
     exp.save()
-    call_cli('exp run test.pkl --next participant -o pass,through,option')
+    call_cli('exp run test.yaml --next participant -o pass,through,option')
 
 
 def make_deterministic_exp():
@@ -160,28 +160,28 @@ def make_deterministic_exp():
                      ordering_by_level={'trial': Ordering(4),
                                         'block': Ordering(4),
                                         'participant': Ordering()},
-                     filename='test.pkl').save()
+                     filename='test.yaml').save()
 
 
 def test_export():
     make_deterministic_exp()
-    call_cli('exp export test.pkl test.csv')
+    call_cli('exp export test.yaml test.csv')
     assert (filecmp.cmp('tests/test_data.csv', 'test.csv')
             or filecmp.cmp('tests/test_data_alt.csv', 'test.csv'))
     os.remove('test.csv')
 
-    call_cli('exp export --no-index-label test.pkl test.csv')
+    call_cli('exp export --no-index-label test.yaml test.csv')
     assert (filecmp.cmp('tests/test_data_no_index_label.csv', 'test.csv')
             or filecmp.cmp('tests/test_data_no_index_label_alt.csv', 'test.csv'))
     os.remove('test.csv')
 
-    call_cli('exp export test.pkl test.csv --skip counterbalance_order')
+    call_cli('exp export test.yaml test.csv --skip counterbalance_order')
     assert (filecmp.cmp('tests/test_data_skip_order.csv', 'test.csv')
             or filecmp.cmp('tests/test_data_skip_order_alt.csv', 'test.csv'))
     os.remove('test.csv')
 
-    for file in glob('test.pkl*'):
-        os.remove(file)
+#    for file in glob('test.yaml*'):
+#        os.remove(file)
 
 
 def bad_trial(experiment, section):
@@ -192,14 +192,14 @@ def test_exception():
     exp = make_blocked_exp()
     exp.add_callback('trial', bad_trial)
     exp.save()
-    exp.save('test.pkl')
+    exp.save('test.yaml')
     with pytest.raises(QuitSession):
-        run_experiment_section('test.pkl', participant=1)
+        run_experiment_section('test.yaml', participant=1)
 
-    exp = Experiment.load('test.pkl')
+    exp = Experiment.load('test.yaml')
     assert exp.subsection(participant=1, block=1, trial=1).has_started
     assert not exp.subsection(participant=1, block=1, trial=1).has_finished
-    os.remove('test.pkl')
+    os.remove('test.yaml')
 
     e = QuitSession('message')
     assert e.__str__() == 'message'

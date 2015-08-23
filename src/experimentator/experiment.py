@@ -12,11 +12,7 @@ from contextlib import contextmanager, ExitStack
 from datetime import datetime
 from collections import namedtuple
 
-try:
-    import yaml
-except ImportError:
-    yaml = None
-
+from experimentator import yaml
 from experimentator.section import ExperimentSection
 from experimentator.design import DesignTree, Design
 import experimentator.order as order
@@ -225,8 +221,8 @@ class Experiment(ExperimentSection):
         |Experiment|
 
         """
-        with open(filename, 'rb') as f:
-            self = pickle.load(f)
+        with open(filename, 'r') as f:
+            self = yaml.load(f)
         self.filename = filename
         return self
 
@@ -432,8 +428,8 @@ class Experiment(ExperimentSection):
         filename = filename or self.filename
         if filename:
             logger.debug('Saving Experiment instance to {}.'.format(filename))
-            with open(filename, 'wb') as f:
-                pickle.dump(self, f)
+            with open(filename, 'w') as f:
+                yaml.dump(self, f)
 
         else:
             logger.warning('Cannot save experiment: No filename provided.')
