@@ -302,13 +302,13 @@ However, using levels makes it possible to...
 
   ::
 
-     exp run my_exp.dat participant 1 block 2
+     exp run my_exp.exp participant 1 block 2
 
   rather than the more awkward
 
   ::
 
-     exp run my_exp.dat participant 1 --from 11
+     exp run my_exp.exp participant 1 --from 11
 
 - index the data by level, after running the experiment, using :ref:`hierarchical indexing <indexing.hierarchical>`.
   For example, to get the third trial of the first participant's second block you could do

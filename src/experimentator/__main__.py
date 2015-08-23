@@ -30,16 +30,16 @@ Other options:
 
 Commands:
   run <exp-file> --next <level>        Runs the first <level> that hasn't started. E.g.:
-                                         exp run exp1.dat --next session
+                                         exp run exp1.exp --next session
 
   run <exp-file> (<level> <n>)...      Runs the section specified by any number of <level> <n> pairs. E.g.:
-                                         exp run exp1.dat participant 3 session 1
+                                         exp run exp1.exp participant 3 session 1
 
   resume <exp-file> <level>            Resume the first section at <level> that has been started but not finished.
 
   resume <exp-file> (<level> <n>)...   Resume the section specified by any number of <level> <n> pairs. The specified
                                        section must have been started but not finished. E.g.:
-                                         exp resume exp1.dat participant 2 session 2
+                                         exp resume exp1.exp participant 2 session 2
 
   export <exp-file> <data-file>      Export the data in <exp-file> to csv format as <data-file>.
                                      Note: This will not produce readable csv files for experiments with results as

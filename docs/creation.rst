@@ -324,7 +324,7 @@ Porting the previous mixed-design example into a YAML file would look like this:
          display_time: [0.1, 0.55, 1]
        n: 5
 
-   filename: mixed_experiment.dat
+   filename: mixed_experiment.exp
 
 The only new piece of information here is the filename.
 It probably makes sense to include the filename in your YAML file,
@@ -337,6 +337,15 @@ You can then create instantiate an |Experiment|, assuming the YAML above is stor
    >>> from experimentator import Experiment
    >>> experiment = Experiment.from_yaml_file('mixed_experiment.yaml')
 
+.. note::
+
+   This method is specifically for creating an |Experiment| from scratch.
+   The data format used by |Experiment.save| for saving an in-progress experiment is also YAML,
+   but using a different syntax, so it could be confused.
+   This is why we recommend a different file suffix (our examples use ``.exp``).
+   The in-progress experiment file with the ``.exp`` suffix will still contain YAML data,
+   but it will be less likely to be confused with the YAML file passed to |Experiment.from_yaml|.
+   
 .. _from-scratch:
 
 Constructing an Experiment from a DesignTree
@@ -361,7 +370,7 @@ For example, the following code would create the same |Experiment| as the previo
    ...              'display_time': [0.1, 0.55, 1]},
    ...          n=5),
    ... ])
-   >>> experiment = Experiment.new(tree, filename='mixed_experiment.dat')
+   >>> experiment = Experiment.new(tree, filename='mixed_experiment.exp')
 
 .. _constructing-heterogeneity:
 

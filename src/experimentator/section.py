@@ -323,12 +323,12 @@ class ExperimentSection:
 
         Examples
         --------
-        Assuming the levels of the experiment saved in ``'example.dat'`` are
+        Assuming the levels of the experiment saved in ``'example.exp'`` are
         ``('participant', 'session', 'block', 'trial')``,
         this will return the third block of the second participant's first session:
 
         >>> from experimentator import Experiment
-        >>> exp = Experiment.load('example.dat')
+        >>> exp = Experiment.load('example.exp')
         >>> some_block = exp.subsection(participant=2, session=1, block=3)
 
         """
@@ -361,11 +361,11 @@ class ExperimentSection:
 
         Examples
         --------
-        Assuming the levels of the experiment saved in ``'example.dat'`` are
+        Assuming the levels of the experiment saved in ``'example.exp'`` are
         ``('participant', 'session', 'block', 'trial')``:
 
         >>> from experimentator import Experiment
-        >>> exp = Experiment.load('example.dat')
+        >>> exp = Experiment.load('example.exp')
 
         Get the  first session of each participant:
 
