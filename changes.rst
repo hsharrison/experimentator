@@ -1,6 +1,11 @@
 Changes
 =======
 
+0.3.0
+-----
+- Change the save format from pickle to YAML. This allows experiment changes to be diffed.
+- Unify run callbacks and context managers. Now |Experiment.add_callback| takes an optional argument ``is_context`` to differentiate the two.
+
 0.2.5 (05/23/2015)
 ------------------
 - Fix bug that occurred when using |Sorted| caused by conditions being a generator object.
