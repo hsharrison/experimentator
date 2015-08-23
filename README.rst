@@ -127,22 +127,22 @@ Here's how it might look in experimentator:
         experiment = Experiment.within_subjects(independent_variables,
                                                 n_participants=20,
                                                 ordering=order.Shuffle(10),
-                                                filename='exp_1.dat')
+                                                filename='exp_1.exp')
 
         experiment.experiment_data['stimuli'] = stimuli_and_answers
         experiment.add_callback('trial', run_trial)
         experiment.save()
 
-Running this script will create the experiment in the file ``exp_1.dat``.
+Running this script will create the experiment in the file ``exp_1.exp``.
 We can now run sessions from the command line::
 
-    exp run exp_1.dat participant 1
+    exp run exp_1.exp participant 1
     # or
-    exp run exp_1.dat --next participant
+    exp run exp_1.exp --next participant
 
 Eventually, we can export the data to a text file::
 
-    exp export exp_1.dat exp_1_data.csv
+    exp export exp_1.exp exp_1_data.csv
 
 Or, access the data in a Python session:
 
@@ -150,7 +150,7 @@ Or, access the data in a Python session:
 
     from experimentator import Experiment
 
-    data = Experiment.load('exp_1.dat').dataframe
+    data = Experiment.load('exp_1.exp').dataframe
 
 In this example the data will be a pandas ``DataFrame`` with six columns:
 two index columns with labels ``'participant'`` and ``'trial'``,
