@@ -180,8 +180,8 @@ def test_export():
             or filecmp.cmp('tests/test_data_skip_order_alt.csv', 'test.csv'))
     os.remove('test.csv')
 
-#    for file in glob('test.yaml*'):
-#        os.remove(file)
+    for file in glob('test.yaml*'):
+        os.remove(file)
 
 
 def bad_trial(experiment, section):
