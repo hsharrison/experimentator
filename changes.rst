@@ -1,8 +1,8 @@
 Changes
 =======
 
-0.3.0
------
+0.3.0 (08/25/2015)
+------------------
 - Change the save format from pickle to YAML. This allows experiment changes to be diffed.
 - Unify run callbacks and context managers. Now |Experiment.add_callback| takes an optional argument ``is_context`` to differentiate the two.
 
