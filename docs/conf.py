@@ -342,6 +342,7 @@ rst_epilog = """
 .. |Experiment.save| replace:: :meth:`Experiment.save <experimentator.Experiment.save>`
 .. |Experiment.filename| replace:: :attr:`Experiment.filename <experimentator.Experiment.filename>`
 .. |Experiment.experiment_data| replace:: :attr:`Experiment.experiment_data <experimentator.Experiment.experiment_data>`
+.. |Experiment.callback_by_level| replace:: :attr:`Experiment.callback_by_level <experimentator.Experiment.callback_by_level>`
 .. |Experiment.from_yaml_file| replace:: :meth:`Experiment.from_yaml_file <experimentator.Experiment.from_yaml_file>`
 .. |Experiment.from_dict| replace:: :meth:`Experiment.from_dict <experimentator.Experiment.from_dict>`
 .. |Experiment.run_section| replace:: :meth:`Experiment.run_section <experimentator.Experiment.run_section>`

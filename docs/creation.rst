@@ -344,7 +344,7 @@ You can then create instantiate an |Experiment|, assuming the YAML above is stor
    but using a different syntax, so it could be confused.
    This is why we recommend a different file suffix (our examples use ``.exp``).
    The in-progress experiment file with the ``.exp`` suffix will still contain YAML data,
-   but it will be less likely to be confused with the YAML file passed to |Experiment.from_yaml|.
+   but it will be less likely to be confused with the YAML file passed to |Experiment.from_yaml_file|.
    
 .. _from-scratch:
 
