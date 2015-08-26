@@ -22,7 +22,7 @@ install:
   - source activate test-environment
   - conda install --file="$TRAVIS_BUILD_DIR"/docs/requirements.txt
   - pip install pytest-cov python-coveralls
-  - pip install -er "$TRAVIS_BUILD_DIR"/requirements.txt
+  - pip install -er "$TRAVIS_BUILD_DIR"
   - mkdir "$TRAVIS_BUILD_DIR"/tmp
 
 script:
