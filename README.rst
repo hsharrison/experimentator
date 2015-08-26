@@ -203,7 +203,7 @@ For example, to install dependencies to a clean environment (with name ``experim
     conda update conda
     conda create -n experiment python=3 pip
     source activate experiment
-    conda install numpy pandas pyyaml
+    conda install numpy pandas pyyaml networkx
     pip install docopt schema
 
 From PyPi
