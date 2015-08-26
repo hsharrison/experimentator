@@ -2,13 +2,31 @@ language: python
 python: 3.4
 sudo: false
 
-env:
-  - TOX_ENV=py33
-  - TOX_ENV=py34
-  - TOX_ENV=docs-coverage
-
 install:
-  - pip install tox
+  # We do this conditionally because it saves us some downloading if the
+  # version is the same.
+  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
+      wget https://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh;
+    else
+      wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+    fi
+  - bash miniconda.sh -b -p $HOME/miniconda
+  - export PATH="$HOME/miniconda/bin:$PATH"
+  - hash -r
+  - conda config --set always_yes yes --set changeps1 no
+  - conda update -q conda
+  # Useful for debugging any issues with conda
+  - conda info -a
+
+  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION numpy pandas networkx pyyaml pip
+  - source activate test-environment
+  - conda install --file="$TRAVIS_BUILD_DIR"/docs/requirements.txt
+  - pip install -er "$TRAVIS_BUILD_DIR"/requirements.txt
+  - mkdir "$TRAVIS_BUILD_DIR"/tmp
 
 script:
-  - travis_wait tox -e $TOX_ENV
+  - sphinx-build -b html -d "$TRAVIS_BUILD_DIR"/tmp/doctrees "$TRAVIS_BUILD_DIR"/docs "$TRAVIS_BUILD_DIR"/tmp/html
+  - py.test "$TRAVIS_BUILD_DIR"/tests/ --cov "$TRAVIS_BUILD_DIR"/src/ --cov-report term-missing
+
+after-success:
+  - coveralls
