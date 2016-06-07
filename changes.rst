@@ -1,6 +1,11 @@
 Changes
 =======
 
+0.3.1 (06/07/2016)
+------------------
+- Give experimentator a `DOI <https://zenodo.org/badge/latestdoi/22554/hsharrison/experimentator>`_.
+
+
 0.3.0 (08/25/2015)
 ------------------
 - Change the save format from pickle to YAML. This allows experiment changes to be diffed.
