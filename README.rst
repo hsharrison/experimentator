@@ -2,10 +2,10 @@
 experimentator: Python experiment builder
 =========================================
 
-+--------------------+-------------------+---------------+
-| | |travis-badge|   | | |version-badge| | | |git-badge| |
-| | |coverage-badge| | | |license-badge| | | |hg-badge|  |
-+--------------------+-------------------+---------------+
++--------------------+-------------------+-------------------+
+| | |travis-badge|   | | |version-badge| | | |git-badge|     |
+| | |coverage-badge| | | |doi-badge|     | | |license-badge| |
++--------------------+-------------------+-------------------+
 
 .. |travis-badge| image:: http://img.shields.io/travis/hsharrison/experimentator.png?style=flat
     :alt: Travis-CI Build Status
@@ -26,10 +26,10 @@ experimentator: Python experiment builder
 .. |git-badge| image:: http://img.shields.io/badge/repo-git-lightgrey.png?style=flat
     :alt: Git Repository
     :target: https://github.com/hsharrison/experimentator
-
-.. |hg-badge| image:: http://img.shields.io/badge/repo-hg-lightgrey.png?style=flat
-    :alt: Mercurial Repository
-    :target: https://bitbucket.org/hharrison/experimentator
+    
+.. |doi-badge| image:: https://zenodo.org/badge/22554/hsharrison/experimentator.svg
+    :alt: doi
+    :target: https://zenodo.org/badge/latestdoi/22554/hsharrison/experimentator
 
 `Documentation contents`_
 
@@ -165,9 +165,8 @@ Installation
 
     If you use experimentator in your work, published or not,
     please `let me know <mailto:henry.schafer.harrison@gmail.com>`_.
-    I'm not going to ask you to cite something :sub:`(yet)`, but I would be grateful to hear about your experience,
-    positive or negative, even just to know that someone else out there has found this useful.
-    Thanks!
+    I'm curious to know what you use it for!
+    If you do publish, citation information can be found `here <https://zenodo.org/badge/latestdoi/22554/hsharrison/experimentator>`_.
 
 Dependencies
 ------------
@@ -218,12 +217,10 @@ Be sure to run ``pip`` from a Python 3 environment.
 From source (development version)
 ---------------------------------
 
-Experimentator is hosted on both
-`GitHub <https://github.com/hsharrison/experimentator>`_
-and `BitBucket <https://bitbucket.org/hharrison/experimentator>`_.
-From the latter::
+Experimentator is hosted on
+`GitHub <https://github.com/hsharrison/experimentator>`_::
 
-    hg clone https://bitbucket.org/hharrison/experimentator
+    git clone git@github.com:hsharrison/experimentator
     cd experimentator
     pip install -e . --upgrade
 
