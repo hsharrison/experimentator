@@ -168,7 +168,7 @@ class ExperimentSection:
         parent_id_list = id_list or []
         id_list = parent_id_list + [self._solo_id]
 
-        graph.add_node(tuple(id_list), self._saveworthy_data)
+        graph.add_node(tuple(id_list), **self._saveworthy_data)
 
         if parent_id_list:
             graph.add_edge(tuple(parent_id_list), tuple(id_list))
