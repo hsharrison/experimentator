@@ -1,6 +1,10 @@
 Changes
 =======
 
+0.3.2 (01/23/2018)
+------------------
+- Fix issue #24 to provide compatibility with networkx 2.0. Earlier versions of networkx are no longer supported.
+
 0.3.1 (06/07/2016)
 ------------------
 - Give experimentator a `DOI <https://zenodo.org/badge/latestdoi/22554/hsharrison/experimentator>`_.
